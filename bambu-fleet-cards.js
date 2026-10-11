@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.2.2";
+  const CARD_VERSION = "1.2.3";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -334,6 +334,17 @@
         if (!s || s.state === "unavailable" || s.state === "unknown") return fallback;
         return s.state;
       };
+      const toCelsiusStr = (s, fallback = "—", decimals = 0) => {
+        if (!s || s.state === "unavailable" || s.state === "unknown") return fallback;
+        const num = parseFloat(s.state);
+        if (isNaN(num)) return fallback;
+        const uom = String(s.attributes?.unit_of_measurement || "").toUpperCase();
+        const cVal = uom.includes("F") ? ((num - 32) * (5 / 9)) : num;
+        if (decimals <= 0) return String(Math.round(cVal));
+        const factor = Math.pow(10, decimals);
+        return String(Math.round(cVal * factor) / factor);
+      };
+      const stTempC = (domain, suffix, fallback = "—", decimals = 0) => toCelsiusStr(st(domain, suffix), fallback, decimals);
 
       const online = st("binary_sensor", "online")?.state === "on";
       const printStatus = stVal("sensor", "print_status", online ? "idle" : "offline");
@@ -341,11 +352,11 @@
       const progressNum = parseFloat(stVal("sensor", "print_progress", "0"));
       const progress = isNaN(progressNum) ? 0 : Math.min(100, Math.max(0, progressNum));
 
-      const nozzleTemp = stVal("sensor", "nozzle_temperature", "—");
-      const nozzleTarget = stVal("sensor", "nozzle_target_temperature", "0");
-      const bedTemp = stVal("sensor", "bed_temperature", "—");
-      const bedTarget = stVal("sensor", "bed_target_temperature", "0");
-      const chamberTempRaw = stVal("sensor", "chamber_temperature", "—");
+      const nozzleTemp = stTempC("sensor", "nozzle_temperature", "—", 0);
+      const nozzleTarget = stTempC("sensor", "nozzle_target_temperature", "0", 0);
+      const bedTemp = stTempC("sensor", "bed_temperature", "—", 0);
+      const bedTarget = stTempC("sensor", "bed_target_temperature", "0", 0);
+      const chamberTempRaw = stTempC("sensor", "chamber_temperature", "—", 0);
       const chamberTemp = (chamberTempRaw !== "—" && !isNaN(parseFloat(chamberTempRaw)) && parseFloat(chamberTempRaw) > 0)
         ? String(Math.round(parseFloat(chamberTempRaw)))
         : "—";
@@ -517,6 +528,10 @@
           const humidityPct = (!isNaN(humPctVal) && humPctVal > 0) ? Math.round(humPctVal) : null;
           const isVeryWet = humidityPct !== null ? humidityPct >= 55 : false;
           const isWet = humidityPct !== null ? humidityPct >= 45 : false;
+          const amsTempC = tempKey
+            ? toCelsiusStr(hass.states[tempKey], amsMeta.code === "AMSHT" ? "85" : "—", 1)
+            : (amsMeta.code === "AMSHT" ? "85" : "—");
+          const isOpenAir = amsMeta.code === "AMSLITE" || ((amsTempC === "0" || amsTempC === "0.0" || amsTempC === "—") && humidityPct === null);
 
           return {
             id: amsDev.id || ("ams_" + prefix + "_" + unitIdx),
@@ -526,12 +541,13 @@
             modelNorm: amsMeta.code,
             subLabel: amsMeta.sub,
             img: amsMeta.img,
+            isOpenAir,
             humidityIndex,
             humidityPct,
             isWet,
             isVeryWet,
-            temperature: tempKey && hass.states[tempKey]?.state !== "unavailable" ? hass.states[tempKey].state : (amsMeta.code === "AMSHT" ? "85" : "—"),
-            tempUnit: (tempKey && hass.states[tempKey]?.attributes?.unit_of_measurement) || "°C",
+            temperature: isOpenAir ? "—" : amsTempC,
+            tempUnit: "°C",
             drying: dryKey ? hass.states[dryKey]?.state === "on" : (amsMeta.code === "AMSHT"),
             trays
           };
@@ -2487,9 +2503,12 @@
                 </div>
               </div>
               <div class="ams-Readouts">
-                <span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
-                <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
-                ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}
+                ${ams.isOpenAir
+                  ? '<span class="ams-chip" title="AMS Lite Open-Air Rotary Feeder (No Enclosure Sensor)">🌬️ Open-Air Rotary</span>'
+                  : `<span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
+                     <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
+                     ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}`
+                }
               </div>
             </div>
             <div class="ams-slots-grid">
@@ -2602,13 +2621,13 @@
         <div class="p-telemetry-grid">
           <div class="t-tile">
             <div class="t-lbl">🔥 Nozzle</div>
-            <div class="t-val">${p.nozzleTemp !== '—' ? p.nozzleTemp + '°' : '—'}</div>
-            <div class="t-sub">Target ${p.nozzleTarget}° • ${p.nozzleSize}mm</div>
+            <div class="t-val">${p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—'}</div>
+            <div class="t-sub">Target ${p.nozzleTarget}°C • ${p.nozzleSize}mm</div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">${hasChamber ? '🛏️ Bed & Chamber' : '🛏️ Build Plate'}</div>
-            <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°</span>` : ''}</div>
-            <div class="t-sub">Target ${p.bedTarget}° • ${bedSubDetail}</div>
+            <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°C' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°C</span>` : ''}</div>
+            <div class="t-sub">Target ${p.bedTarget}°C • ${bedSubDetail}</div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">🌀 Cooling & Speed</div>

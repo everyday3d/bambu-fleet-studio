@@ -5,6 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-10-11
+
+### Fixed
+- **Automatic Fahrenheit (`°F`) → Celsius (`°C`) Temperature Normalization (`#12`)**: Fixed an issue on Home Assistant systems configured with Imperial/US units where printer temperature sensors (`nozzle_temperature`, `nozzle_target_temperature`, `bed_temperature`, `bed_target_temperature`, `chamber_temperature`, and `ams_*_temperature`) reported in `°F` (e.g. `73.4°` nozzle / `75.2°` bed / `Target 32.0°` when idle at room temperature, and falsely triggered the `> 60°C` Smart Plug thermal safety lock). All printer and AMS temperature sensors now automatically inspect `attributes.unit_of_measurement` and normalize `°F` values to 3D-printing Celsius (`°C`) with explicit `°C` unit labels.
+- **AMS Lite Open-Air Sensor Handling (`#12`)**: Because the Bambu `AMS Lite` is an open-air rotary feeder with no enclosure temperature or humidity sensor (`ha-bambulab` reports `0°C` / `32.0°F` and `0%` humidity), `AMS Lite` decks now display a clean **`🌬️ Open-Air Rotary`** hardware badge instead of dummy `🌡️ 0°C` / `💧 Idx 1` enclosure chips.
+
 ## [1.2.2] - 2026-10-11
 
 ### Added
