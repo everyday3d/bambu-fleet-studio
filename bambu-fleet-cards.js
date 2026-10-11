@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.1.1";
+  const CARD_VERSION = "1.2.0";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -1066,6 +1066,128 @@
           font-size: 14px;
         }
       }
+      .net-scan-box {
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid rgba(56, 189, 248, 0.32);
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .net-scan-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .net-scan-title {
+        font-size: 12px;
+        font-weight: 800;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .net-scan-sub {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+      .net-scan-btn {
+        background: rgba(56, 189, 248, 0.16);
+        border: 1px solid rgba(56, 189, 248, 0.42);
+        color: #38bdf8;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .net-scan-btn:hover {
+        background: rgba(56, 189, 248, 0.26);
+      }
+      .net-scan-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        max-height: 196px;
+        overflow-y: auto;
+      }
+      .disc-card {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 8px 11px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .disc-card:hover {
+        border-color: rgba(56, 189, 248, 0.55);
+        background: rgba(56, 189, 248, 0.09);
+      }
+      .disc-card.is-new {
+        border-color: rgba(16, 185, 129, 0.48);
+        background: rgba(16, 185, 129, 0.09);
+      }
+      .disc-card.selected {
+        border-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.14);
+        box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35);
+      }
+      .disc-img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        flex-shrink: 0;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+      }
+      .disc-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .disc-top {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .disc-name {
+        font-size: 13px;
+        font-weight: 800;
+        color: #f8fafc;
+      }
+      .disc-badge {
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 999px;
+        letter-spacing: 0.03em;
+      }
+      .disc-meta {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 2px;
+        font-family: monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .disc-cta {
+        font-size: 11px;
+        font-weight: 800;
+        color: #fde68a;
+        background: rgba(245, 158, 11, 0.16);
+        border: 1px solid rgba(245, 158, 11, 0.38);
+        padding: 5px 10px;
+        border-radius: 8px;
+        flex-shrink: 0;
+      }
     `;
 
     if (mode === "camera") {
@@ -1452,6 +1574,19 @@
               <button class="x-btn" id="xBtn">✕</button>
             </div>
 
+            <div class="net-scan-box" id="netScanBox">
+              <div class="net-scan-hdr">
+                <div>
+                  <div class="net-scan-title">📡 Auto-Discovered Bambu Printers on Network</div>
+                  <div class="net-scan-sub" id="netScanSub">Scanning local subnet on Port 8883 TLS...</div>
+                </div>
+                <button type="button" class="net-scan-btn" id="scanLanBtn">🔄 Scan LAN</button>
+              </div>
+              <div class="net-scan-list" id="netScanList">
+                <div style="font-size:12px;color:#38bdf8;padding:8px 4px;">⏳ Probing local /24 network for Bambu Lab printers (Port 8883 TLS &amp; HA Registry)...</div>
+              </div>
+            </div>
+
             <button class="cloud-banner" id="cloudBtn">
               ☁️ Prefer Cloud Login? Launch Official HA Bambu Cloud Wizard ↗
             </button>
@@ -1477,7 +1612,7 @@
               <div class="fld">
                 <label>Local IP Address *</label>
                 <input id="hostInp" type="text" placeholder="192.168.1.xxx" />
-                <div class="sub-hint">Enter IP to auto-detect Serial Number & Model</div>
+                <div class="sub-hint">Click a discovered printer above or enter IP</div>
               </div>
               <div class="fld">
                 <label>8-Char Access Code *</label>
@@ -1514,10 +1649,15 @@
 
       const modelSel = shadow.getElementById("modelSel");
       const previewImg = shadow.getElementById("previewImg");
+      const nameInp = shadow.getElementById("nameInp");
       const hostInp = shadow.getElementById("hostInp");
+      const codeInp = shadow.getElementById("codeInp");
       const serialInp = shadow.getElementById("serialInp");
       const snDetectHint = shadow.getElementById("snDetectHint");
       const detectSnBtn = shadow.getElementById("detectSnBtn");
+      const netScanSub = shadow.getElementById("netScanSub");
+      const netScanList = shadow.getElementById("netScanList");
+      const scanLanBtn = shadow.getElementById("scanLanBtn");
 
       const applyDiscoveredModelAndSerial = (serialStr, modelStr) => {
         if (serialStr) {
@@ -1529,6 +1669,122 @@
           previewImg.src = getPrinterImage(inferred);
         }
       };
+
+      const selectDiscoveredPrinter = (item, cardEl, focusCode = true) => {
+        shadow.querySelectorAll(".disc-card").forEach(c => c.classList.remove("selected"));
+        if (cardEl) cardEl.classList.add("selected");
+        if (item.host && item.host !== "—") {
+          hostInp.value = item.host;
+        }
+        applyDiscoveredModelAndSerial(item.serial, item.model);
+        const modNorm = normalizeModel(item.model || inferModelFromSerial(item.serial));
+        if (item.name && (!nameInp.value || nameInp.getAttribute("data-autofilled") === "1")) {
+          nameInp.value = item.name;
+          nameInp.setAttribute("data-autofilled", "1");
+        }
+        snDetectHint.style.color = "#10b981";
+        snDetectHint.textContent = "✓ Loaded Bambu " + modNorm + " (" + (item.host || "LAN") + " • SN: " + item.serial + ")";
+        if (focusCode && codeInp) {
+          codeInp.focus();
+        }
+      };
+
+      nameInp.oninput = () => {
+        nameInp.setAttribute("data-autofilled", "0");
+      };
+
+      const renderDiscoveredPrinters = (items, metaText) => {
+        netScanSub.textContent = metaText || ("Found " + items.length + " Bambu Lab printer(s) on network");
+        if (!items || items.length === 0) {
+          netScanList.innerHTML = `<div style="font-size:12px;color:#94a3b8;padding:6px 4px;">No Bambu Lab printers responded on Port 8883 TLS yet. Ensure printer is powered ON or enter IP manually below.</div>`;
+          return;
+        }
+        netScanList.innerHTML = items.map((item, idx) => {
+          const modNorm = normalizeModel(item.model || inferModelFromSerial(item.serial));
+          const isNew = !item.configured;
+          const ipChanged = Boolean(item.ip_changed);
+          const isOnline = item.online !== false;
+          let badgeHtml = "";
+          if (isNew) {
+            badgeHtml = `<span class="disc-badge" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.5);color:#34d399;">✨ NEW ON LAN</span>`;
+          } else if (ipChanged) {
+            badgeHtml = `<span class="disc-badge" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.5);color:#fbbf24;">⚠️ NEW IP (${item.host})</span>`;
+          } else if (isOnline) {
+            badgeHtml = `<span class="disc-badge" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;">✅ PAIRED • ONLINE</span>`;
+          } else {
+            badgeHtml = `<span class="disc-badge" style="background:rgba(148,163,184,0.14);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;">💤 PAIRED • OFFLINE</span>`;
+          }
+          return `
+            <div class="disc-card ${isNew ? 'is-new' : ''}" data-disc-idx="${idx}">
+              <img class="disc-img" src="${getPrinterImage(modNorm)}" alt="${modNorm}" />
+              <div class="disc-info">
+                <div class="disc-top">
+                  <span class="disc-name">${item.name || ('Bambu Lab ' + modNorm)}</span>
+                  ${badgeHtml}
+                </div>
+                <div class="disc-meta">🌐 ${item.host || 'No IP'} • SN: ${item.serial} • Model: ${modNorm}</div>
+              </div>
+              <span class="disc-cta">${isNew ? '➕ Pair ➔' : 'Select ➔'}</span>
+            </div>
+          `;
+        }).join("");
+
+        shadow.querySelectorAll(".disc-card").forEach(cardEl => {
+          cardEl.onclick = () => {
+            const idx = parseInt(cardEl.getAttribute("data-disc-idx"), 10);
+            if (items[idx]) {
+              selectDiscoveredPrinter(items[idx], cardEl, true);
+            }
+          };
+        });
+
+        // Auto-select first unconfigured (new) printer if hostInp is empty
+        const firstNewIdx = items.findIndex(x => !x.configured && x.host);
+        if (firstNewIdx >= 0 && !hostInp.value) {
+          const cardEl = shadow.querySelector(`.disc-card[data-disc-idx="${firstNewIdx}"]`);
+          selectDiscoveredPrinter(items[firstNewIdx], cardEl, false);
+        }
+      };
+
+      const scanLanForPrinters = async () => {
+        scanLanBtn.disabled = true;
+        scanLanBtn.textContent = "⏳ Scanning...";
+        netScanSub.textContent = "Scanning local /24 subnet on TCP Port 8883 TLS (~1.5s)...";
+        try {
+          let data = null;
+          try {
+            data = await hass.callApi("GET", "bambu_lab/scan_network");
+          } catch (e1) {
+            data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+          }
+          scanLanBtn.disabled = false;
+          scanLanBtn.textContent = "🔄 Scan LAN";
+          if (data && Array.isArray(data.printers)) {
+            const newCount = data.printers.filter(p => !p.configured).length;
+            const onlineCount = data.printers.filter(p => p.online !== false).length;
+            const subStr = (data.subnets && data.subnets.length ? data.subnets.map(s => s + ".x").join(", ") + " • " : "")
+              + data.printers.length + " printer(s) found (" + onlineCount + " online" + (newCount > 0 ? ", " + newCount + " new!" : "") + ") — click any card to auto-fill";
+            renderDiscoveredPrinters(data.printers, subStr);
+            return;
+          }
+        } catch (err) {
+          scanLanBtn.disabled = false;
+          scanLanBtn.textContent = "🔄 Scan LAN";
+        }
+        // Fallback to local HA states if backend scan endpoint isn't installed yet
+        const fallbackList = existingPrinters.map(p => ({
+          serial: p.serial,
+          model: p.modelNorm,
+          host: p.ipAddress !== "—" ? p.ipAddress : "",
+          name: p.name,
+          configured: true,
+          online: p.online
+        }));
+        renderDiscoveredPrinters(fallbackList, "Found " + fallbackList.length + " printer(s) — click any card to auto-fill");
+      };
+
+      scanLanBtn.onclick = scanLanForPrinters;
+      scanLanForPrinters();
 
       modelSel.onchange = () => { previewImg.src = getPrinterImage(modelSel.value); };
 
@@ -1770,7 +2026,10 @@
 
             <div class="grid-2">
               <div class="fld">
-                <label>Local IP Address (Host)</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                  <label style="margin:0;">Local IP Address (Host)</label>
+                  <button type="button" id="findIpLanBtn" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:800;cursor:pointer;">📡 Find IP on LAN</button>
+                </div>
                 <input id="hostInp" type="text" value="${payload.ipAddress !== '—' ? payload.ipAddress : ''}" placeholder="Loading saved IP..." />
               </div>
               <div class="fld">
@@ -1826,6 +2085,7 @@
       const editAmsPreviewImg = shadow.getElementById("editAmsPreviewImg");
       const copySnBtn = shadow.getElementById("copySnBtn");
       const editSerialInp = shadow.getElementById("editSerialInp");
+      const findIpLanBtn = shadow.getElementById("findIpLanBtn");
 
       if (copySnBtn && editSerialInp) {
         copySnBtn.onclick = async () => {
@@ -1834,6 +2094,37 @@
             copySnBtn.textContent = "✓ Copied";
             setTimeout(() => { copySnBtn.textContent = "📋 Copy"; }, 1400);
           } catch (e) {}
+        };
+      }
+
+      if (findIpLanBtn) {
+        findIpLanBtn.onclick = async () => {
+          const alertBox = shadow.getElementById("alertBox");
+          findIpLanBtn.disabled = true;
+          findIpLanBtn.textContent = "⏳ Scanning LAN...";
+          try {
+            let data = null;
+            try {
+              data = await hass.callApi("GET", "bambu_lab/scan_network");
+            } catch (e1) {
+              data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+            }
+            findIpLanBtn.disabled = false;
+            findIpLanBtn.textContent = "📡 Find IP on LAN";
+            const targetSn = String(editSerialInp.value || payload.serial || "").toUpperCase();
+            const found = (data?.printers || []).find(p => String(p.serial || "").toUpperCase() === targetSn);
+            if (found && found.host) {
+              shadow.getElementById("hostInp").value = found.host;
+              alertBox.className = "alert ok";
+              alertBox.textContent = "✓ Found " + payload.name + " (" + targetSn + ") at " + found.host + " on Port 8883 TLS!";
+            } else {
+              alertBox.className = "alert err";
+              alertBox.textContent = "Could not find SN " + targetSn + " online on Port 8883 TLS. Ensure printer is powered ON.";
+            }
+          } catch (err) {
+            findIpLanBtn.disabled = false;
+            findIpLanBtn.textContent = "📡 Find IP on LAN";
+          }
         };
       }
 

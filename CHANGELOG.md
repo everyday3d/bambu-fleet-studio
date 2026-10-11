@@ -5,6 +5,15 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-11
+
+### Added
+- **Built-In LAN Printer Auto-Discovery Scanner (`#9`)**: Added an automatic `/24` local network scanner (`/api/bambu_lab/scan_network` & `/api/bambu_lab/discover_serial?scan=1`) and interactive **`📡 Auto-Discovered Bambu Printers on Network`** deck inside the **`➕ Add Printer`** modal:
+  - Concurrently sweeps the local subnet on TCP Port `8883` TLS in ~1.2 seconds, validates the `BBL CA` X.509 peer certificate, extracts the 15-character Serial Number (`CN`), infers the hardware model from the serial prefix (`22E` → `P2S`, `039` → `A1`, `030` → `A1 Mini`, `01P` → `P1S`, `01S` → `P1P`, `00M` → `X1C`, `03W` → `X1E`, `094` → `H2D`), and merges with Home Assistant's device registry.
+  - Renders clickable discovery cards with model studio render, IPv4 address, 15-character Serial Number, and status pills (`✨ NEW ON LAN`, `⚠️ NEW IP`, `✅ PAIRED • ONLINE`, `💤 PAIRED • OFFLINE`).
+  - Clicking any discovered printer populates **Model, IPv4 Address, 15-Character Serial Number, and Display Name** in 1 click and focuses the **8-Char Access Code** field (and automatically pre-selects the first unconfigured printer found on the LAN).
+- **1-Click DHCP IP Relocator in Edit Device Modal (`#9`)**: Added a **`📡 Find IP on LAN`** button next to the **Local IP Address (Host)** field in the **Edit Device** modal to automatically locate a printer's new IPv4 address on Port `8883` TLS by its 15-character Serial Number if DHCP reassigns its IP.
+
 ## [1.1.1] - 2026-10-11
 
 ### Added
