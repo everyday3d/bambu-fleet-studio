@@ -5,6 +5,15 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-10-11
+
+### Added
+- **Automatic 15-Character Serial Number Discovery (`#8`)**: Added live LAN TLS certificate & device registry serial number auto-population in both the **Add Printer** modal (with automatic IP-to-Serial lookup, `🔍 Auto-Detect` button, and optional serial entry) and the **Edit Device** modal (with a 1-click `📋 Copy` button). Also added automatic serial-prefix model inference (`22E` → `P2S`, `039` → `A1`, `030` → `A1 Mini`, `01P` → `P1S`, `01S` → `P1P`, `00M` → `X1C`, `03W` → `X1E`, `094` → `H2D`).
+- **Multi-AMS Spool Deck Support (`#8`)**: Printers with multiple daisy-chained AMS units (e.g., dual `AMS 2 Pro` units `#1` and `#2` on `P2S`, `X1C`, or `H2` series, including area-prefixed entities) now render every attached AMS deck (`A1`–`A4`, `B1`–`B4`, etc.) on the printer card and in the **Cross-Fleet Filament Finder**.
+
+### Fixed
+- **P2S / H2 / X1 Live Camera RTSP Stream & "Enable LAN Only Liveview" Diagnostics (`#8`)**: Upgraded RTSP camera handling to support native Home Assistant `<ha-camera-stream>` WebRTC/HLS playback alongside MJPEG stream switching, added `pick_image` preview fallback when the camera entity is offline/disabled, added a 1-click **Reconnect Camera** trigger, and added an interactive **"Enable LAN Only Liveview on Printer"** touchscreen guide (`Settings ⚙️ → LAN Only → Toggle ON "LAN Only Liveview"`) when a P2S reports `rtsp_url: "disable"`.
+
 ## [1.1.0] - 2026-10-11
 
 ### Added

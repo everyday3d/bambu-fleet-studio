@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.1.0";
+  const CARD_VERSION = "1.1.1";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -249,12 +249,50 @@
     return alerts;
   }
 
+  const SERIAL_PREFIX_TO_MODEL = {
+    "00M": "X1C",
+    "00W": "X1C",
+    "03W": "X1E",
+    "01S": "P1P",
+    "01P": "P1S",
+    "22E": "P2S",
+    "030": "A1MINI",
+    "039": "A1",
+    "094": "H2D"
+  };
+
+  function inferModelFromSerial(serial) {
+    const s = String(serial || "").trim().toUpperCase();
+    if (s.length >= 3 && SERIAL_PREFIX_TO_MODEL[s.slice(0, 3)]) {
+      return SERIAL_PREFIX_TO_MODEL[s.slice(0, 3)];
+    }
+    return "";
+  }
+
+  function extractDeviceSerial(dev, hass) {
+    if (dev.serial_number && String(dev.serial_number).trim()) {
+      return String(dev.serial_number).trim().toUpperCase();
+    }
+    if (Array.isArray(dev.identifiers)) {
+      for (const pair of dev.identifiers) {
+        if (Array.isArray(pair) && pair.length >= 2 && String(pair[1]).trim().length >= 10) {
+          return String(pair[1]).trim().toUpperCase();
+        }
+      }
+    }
+    const nm = String(dev.name || "");
+    const m = nm.match(/([0-9A-Z]{15})/i);
+    if (m) return m[1].toUpperCase();
+    return "";
+  }
+
   function resolveAllPrinters(hass, configPlugOverrides) {
     if (!hass || !hass.devices || !hass.states) return [];
     const allDevices = Object.values(hass.devices);
     const savedPlugs = { ...loadPlugBindings(), ...(configPlugOverrides || {}) };
     const modelOverrides = loadModelOverrides();
     const amsOverrides = loadAmsOverrides();
+    const allStateKeys = Object.keys(hass.states);
 
     const printerDevices = allDevices.filter(d => {
       const mfg = String(d.manufacturer || "").toLowerCase();
@@ -264,10 +302,16 @@
 
     const result = printerDevices.map(dev => {
       const entryId = (Array.isArray(dev.config_entries) && dev.config_entries[0]) || dev.primary_config_entry || "";
-      const serial = String(dev.serial_number || "").toUpperCase();
-      const serialLow = serial.toLowerCase();
-      const rawModelNorm = normalizeModel(dev.model);
+      let serial = extractDeviceSerial(dev, hass);
+      const rawModelNorm = normalizeModel(dev.model || inferModelFromSerial(serial));
       const modelLow = rawModelNorm.toLowerCase();
+      if (!serial) {
+        const snSensorKey = allStateKeys.find(k => k.startsWith("sensor." + modelLow + "_") && k.endsWith("_serial_number"));
+        if (snSensorKey && hass.states[snSensorKey]?.state && hass.states[snSensorKey].state !== "unavailable") {
+          serial = String(hass.states[snSensorKey].state).trim().toUpperCase();
+        }
+      }
+      const serialLow = serial.toLowerCase();
       const prefix = modelLow + "_" + serialLow;
 
       const overrideMod = modelOverrides[prefix] || modelOverrides[serial] || "";
@@ -282,7 +326,7 @@
       const amsDevs = childDevs.filter(c => {
         const cm = String(c.model || "").toUpperCase();
         return AMS_MODELS.some(am => cm.includes(am)) || String(c.name || "").toUpperCase().includes("AMS");
-      });
+      }).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
       const st = (domain, suffix) => hass.states[domain + "." + prefix + "_" + suffix];
       const stVal = (domain, suffix, fallback = "—") => {
@@ -326,11 +370,27 @@
 
       const cameraEntityId = "camera." + prefix + "_camera";
       const cameraStateObj = hass.states[cameraEntityId];
-      const cameraPic = cameraStateObj?.attributes?.entity_picture || "";
+      const camAvailable = Boolean(
+        cameraStateObj &&
+        cameraStateObj.state !== "unavailable" &&
+        cameraStateObj.state !== "unknown"
+      );
+      const isRtspCam = Boolean((cameraStateObj?.attributes?.supported_features || 0) & 2);
+      const cameraPic = camAvailable ? (cameraStateObj?.attributes?.entity_picture || "") : "";
+      const cameraSwitchEntityId = hass.states["switch." + prefix + "_camera"]
+        ? ("switch." + prefix + "_camera")
+        : (hass.states["switch." + prefix + "_enable_camera"] ? ("switch." + prefix + "_enable_camera") : "");
+      const cameraSwitchOn = cameraSwitchEntityId ? (hass.states[cameraSwitchEntityId]?.state === "on") : true;
 
       const coverEntityId = "image." + prefix + "_cover_image";
       const coverStateObj = hass.states[coverEntityId];
-      const coverPic = coverStateObj?.attributes?.entity_picture || "";
+      const coverAvailable = Boolean(coverStateObj && coverStateObj.state !== "unavailable" && coverStateObj.state !== "unknown");
+      const coverPic = coverAvailable ? (coverStateObj?.attributes?.entity_picture || "") : "";
+
+      const pickEntityId = "image." + prefix + "_pick_image";
+      const pickStateObj = hass.states[pickEntityId];
+      const pickAvailable = Boolean(pickStateObj && pickStateObj.state !== "unavailable" && pickStateObj.state !== "unknown");
+      const pickPic = pickAvailable ? (pickStateObj?.attributes?.entity_picture || "") : "";
 
       // Smart Plug & Live Wattage Resolution (Feature 5)
       const plugCfg = savedPlugs[prefix] || savedPlugs[serial] || null;
@@ -358,61 +418,79 @@
         };
       }
 
-      // Conditional AMS: Populate AMS info when an AMS unit is physically attached or explicitly overridden
+      // Conditional Multi-AMS Support: Populate all attached AMS units (AMS 1, AMS 2, etc.)
       const amsOverride = amsOverrides[prefix] || amsOverrides[serial] || "AUTO";
       const hasAms = amsOverride === "NONE" ? false : (amsDevs.length > 0 || (amsOverride && amsOverride !== "AUTO"));
+      let amsUnits = [];
       let amsInfo = null;
 
       if (hasAms) {
-        const amsDev = amsDevs[0] || {};
-        const amsNorm = (amsOverride && amsOverride !== "AUTO")
-          ? amsOverride
-          : normalizeAmsModel(amsDev.model || amsDev.name, displayModelNorm);
-        const amsMeta = getAmsMeta(amsNorm);
-        const allStateKeys = Object.keys(hass.states);
-        const trays = [1, 2, 3, 4].map(slotNum => {
-          const trayKey = allStateKeys.find(k =>
-            k.startsWith("sensor." + prefix + "_ams_") &&
-            (k.endsWith("_tray_" + slotNum) || k.includes("_tray_" + slotNum + "_"))
-          );
-          const trayState = trayKey ? hass.states[trayKey] : null;
-          const rawColor = trayState?.attributes?.color || "#334155";
-          const hexColor = rawColor.length >= 7 ? rawColor.slice(0, 7) : "#334155";
-          const isEmpty = trayState?.attributes?.empty === true || trayState?.state === "Empty" || trayState?.state === "empty";
-          const materialName = (!trayState || trayState.state === "unavailable")
-            ? "Offline"
-            : (isEmpty ? "Empty" : trayState.state);
-          const filType = trayState?.attributes?.type || "";
-          const remain = trayState?.attributes?.remain;
-          const isActive = trayState?.attributes?.active === true;
+        const unitsSource = amsDevs.length > 0 ? amsDevs : [{}];
+        amsUnits = unitsSource.map((amsDev, idx) => {
+          const unitIdx = idx + 1;
+          const nameMatch = String(amsDev.name || "").match(/ams[_\s]*(\d+)/i);
+          const amsNum = nameMatch ? parseInt(nameMatch[1], 10) : unitIdx;
+          const bankLetter = ["A", "B", "C", "D"][unitIdx - 1] || "A";
+          const amsNorm = (amsOverride && amsOverride !== "AUTO")
+            ? amsOverride
+            : normalizeAmsModel(amsDev.model || amsDev.name, displayModelNorm);
+          const amsMeta = getAmsMeta(amsNorm);
+          const amsPattern = prefix + "_ams_" + amsNum + "_";
+          const fallbackPattern = prefix + "_ams_";
+
+          const findAmsSensor = (domain, suffixPred) => {
+            let found = allStateKeys.find(k => k.startsWith(domain + ".") && k.includes(amsPattern) && suffixPred(k));
+            if (!found && unitsSource.length === 1) {
+              found = allStateKeys.find(k => k.startsWith(domain + ".") && k.includes(fallbackPattern) && suffixPred(k));
+            }
+            return found;
+          };
+
+          const trays = [1, 2, 3, 4].map(slotNum => {
+            const trayKey = findAmsSensor("sensor", k => k.endsWith("_tray_" + slotNum) || k.includes("_tray_" + slotNum + "_"));
+            const trayState = trayKey ? hass.states[trayKey] : null;
+            const rawColor = trayState?.attributes?.color || "#334155";
+            const hexColor = rawColor.length >= 7 ? rawColor.slice(0, 7) : "#334155";
+            const isEmpty = trayState?.attributes?.empty === true || trayState?.state === "Empty" || trayState?.state === "empty";
+            const materialName = (!trayState || trayState.state === "unavailable")
+              ? "Offline"
+              : (isEmpty ? "Empty" : trayState.state);
+            const filType = trayState?.attributes?.type || "";
+            const remain = trayState?.attributes?.remain;
+            const isActive = trayState?.attributes?.active === true;
+            return {
+              slot: slotNum,
+              slotCode: bankLetter + slotNum,
+              entityId: trayKey || "",
+              name: materialName,
+              type: filType,
+              color: hexColor,
+              remain: (typeof remain === "number" && remain >= 0) ? remain : null,
+              active: isActive,
+              empty: isEmpty
+            };
+          });
+
+          const humKey = findAmsSensor("sensor", k => k.includes("humidity_index"));
+          const tempKey = findAmsSensor("sensor", k => k.includes("temperature"));
+          const dryKey = findAmsSensor("binary_sensor", k => k.includes("drying"));
+
           return {
-            slot: slotNum,
-            entityId: trayKey || "",
-            name: materialName,
-            type: filType,
-            color: hexColor,
-            remain: (typeof remain === "number" && remain >= 0) ? remain : null,
-            active: isActive,
-            empty: isEmpty
+            id: amsDev.id || ("ams_" + prefix + "_" + unitIdx),
+            unitNum: amsNum,
+            bankLetter,
+            model: unitsSource.length > 1 ? (amsMeta.label + " #" + amsNum) : amsMeta.label,
+            modelNorm: amsMeta.code,
+            subLabel: amsMeta.sub,
+            img: amsMeta.img,
+            humidityIndex: humKey && hass.states[humKey]?.state !== "unavailable" ? hass.states[humKey].state : "—",
+            temperature: tempKey && hass.states[tempKey]?.state !== "unavailable" ? hass.states[tempKey].state : (amsMeta.code === "AMSHT" ? "85" : "—"),
+            tempUnit: (tempKey && hass.states[tempKey]?.attributes?.unit_of_measurement) || "°C",
+            drying: dryKey ? hass.states[dryKey]?.state === "on" : (amsMeta.code === "AMSHT"),
+            trays
           };
         });
-
-        const humKey = allStateKeys.find(k => k.startsWith("sensor." + prefix + "_ams_") && k.includes("humidity_index"));
-        const tempKey = allStateKeys.find(k => k.startsWith("sensor." + prefix + "_ams_") && k.includes("temperature"));
-        const dryKey = allStateKeys.find(k => k.startsWith("binary_sensor." + prefix + "_ams_") && k.includes("drying"));
-
-        amsInfo = {
-          id: amsDev.id || ("ams_" + prefix),
-          model: amsMeta.label,
-          modelNorm: amsMeta.code,
-          subLabel: amsMeta.sub,
-          img: amsMeta.img,
-          humidityIndex: humKey && hass.states[humKey]?.state !== "unavailable" ? hass.states[humKey].state : "—",
-          temperature: tempKey && hass.states[tempKey]?.state !== "unavailable" ? hass.states[tempKey].state : (amsMeta.code === "AMSHT" ? "85" : "—"),
-          tempUnit: (tempKey && hass.states[tempKey]?.attributes?.unit_of_measurement) || "°C",
-          drying: dryKey ? hass.states[dryKey]?.state === "on" : (amsMeta.code === "AMSHT"),
-          trays
-        };
+        amsInfo = amsUnits[0] || null;
       }
 
       const extKey = "sensor." + prefix + "_externalspool_external_spool";
@@ -466,11 +544,19 @@
         lightEntityId,
         lightOn,
         cameraEntityId,
+        cameraStateObj,
+        camAvailable,
+        isRtspCam,
         cameraPic,
+        cameraSwitchEntityId,
+        cameraSwitchOn,
         coverEntityId,
         coverPic,
+        pickEntityId,
+        pickPic,
         hasAms,
         amsInfo,
+        amsUnits,
         extSpool
       };
     });
@@ -486,23 +572,29 @@
   function collectFleetSpools(allPrinters) {
     const spools = [];
     for (const p of allPrinters) {
-      if (p.hasAms && p.amsInfo && Array.isArray(p.amsInfo.trays)) {
-        for (const t of p.amsInfo.trays) {
-          const isUnavailable = t.name === "Offline" || t.empty;
-          spools.push({
-            printerName: p.name,
-            printerPrefix: p.prefix,
-            printerModel: p.model,
-            online: p.online,
-            location: p.amsInfo.model + " • Slot A" + t.slot,
-            slotBadge: "A" + t.slot,
-            name: t.name,
-            type: (t.type || (isUnavailable ? "—" : "PLA")).toUpperCase(),
-            color: t.color || "#334155",
-            remain: t.remain,
-            active: t.active,
-            empty: isUnavailable
-          });
+      const units = (p.hasAms && Array.isArray(p.amsUnits) && p.amsUnits.length > 0)
+        ? p.amsUnits
+        : (p.hasAms && p.amsInfo ? [p.amsInfo] : []);
+      if (units.length > 0) {
+        for (const unit of units) {
+          for (const t of (unit.trays || [])) {
+            const isUnavailable = t.name === "Offline" || t.empty;
+            const slotBadge = t.slotCode || ("A" + t.slot);
+            spools.push({
+              printerName: p.name,
+              printerPrefix: p.prefix,
+              printerModel: p.model,
+              online: p.online,
+              location: unit.model + " • Slot " + slotBadge,
+              slotBadge,
+              name: t.name,
+              type: (t.type || (isUnavailable ? "—" : "PLA")).toUpperCase(),
+              color: t.color || "#334155",
+              remain: t.remain,
+              active: t.active,
+              empty: isUnavailable
+            });
+          }
         }
       } else if (p.extSpool) {
         const isUnavailable = p.extSpool.empty || p.extSpool.name === "Empty";
@@ -977,24 +1069,145 @@
     `;
 
     if (mode === "camera") {
+      const mjpegUrl = payload.cameraPic ? payload.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
+      const fallbackImg = payload.pickPic || payload.coverPic || "";
+      const canUseHaStream = Boolean(payload.online && payload.camAvailable && payload.isRtspCam && customElements.get("ha-camera-stream") && payload.cameraStateObj);
+
       shadow.innerHTML = `
         <style>${modalCss}</style>
         <div class="overlay" id="bgOverlay">
           <div class="dialog wide">
             <div class="hdr">
-              <div class="hdr-title">📹 ${payload.name} — Live Camera Stream</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div class="hdr-title">📹 ${payload.name} — Live Camera</div>
+                ${payload.online && payload.camAvailable ? `
+                  <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);padding:3px 9px;border-radius:999px;">
+                    ● ${payload.isRtspCam ? "RTSPS / WEBRTC STREAM" : "LIVE STREAM"}
+                  </span>
+                ` : `
+                  <span style="font-size:10px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);padding:3px 9px;border-radius:999px;">
+                    ⚠️ ${payload.online ? "LAN LIVEVIEW DISABLED ON PRINTER" : "PRINTER OFFLINE"}
+                  </span>
+                `}
+              </div>
               <button class="x-btn" id="xBtn">✕</button>
             </div>
-            <div style="background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;">
-              ${payload.online && payload.cameraPic
-                ? `<img src="${payload.cameraPic.replace('/api/camera_proxy/', '/api/camera_proxy_stream/')}" style="width:100%;height:100%;object-fit:contain;" />`
-                : `<div style="color:#64748b;font-size:15px;">Camera Offline — Power on ${payload.name} to view live stream</div>`
+
+            <div id="camStreamMount" style="background:#05070b;border:1px solid rgba(255,255,255,0.1);border-radius:14px;overflow:hidden;aspect-ratio:16/9;position:relative;display:flex;align-items:center;justify-content:center;">
+              ${payload.online && payload.camAvailable
+                ? `<img id="camMjpegImg" src="${mjpegUrl}" style="width:100%;height:100%;object-fit:contain;" />`
+                : payload.online
+                  ? `
+                    ${fallbackImg ? `<img src="${fallbackImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0.22;filter:blur(2px);" />` : ""}
+                    <div style="position:relative;z-index:2;max-width:520px;margin:16px;padding:18px 20px;border-radius:14px;background:rgba(15,18,25,0.92);border:1px solid rgba(245,158,11,0.45);display:flex;flex-direction:column;gap:10px;text-align:left;">
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:24px;">📹</span>
+                        <div>
+                          <div style="font-size:15px;font-weight:800;color:#fde68a;">Enable "LAN Only Liveview" on ${payload.name} (${payload.model})</div>
+                          <div style="font-size:11px;color:#94a3b8;">Home Assistant is connected (${payload.ipAddress}), but the printer's local RTSP stream is currently disabled (<code>rtsp_url: disable</code>).</div>
+                        </div>
+                      </div>
+                      <div style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 12px;font-size:12px;color:#e0f2fe;line-height:1.5;">
+                        <strong>How to enable on your ${payload.model} touchscreen:</strong><br/>
+                        1. On the printer screen, open <strong>Settings (⚙️) ➔ LAN Only</strong>.<br/>
+                        2. Inside <strong>LAN Only</strong>, you will see two toggles: <strong>"LAN Only"</strong> and <strong>"LAN Only Liveview"</strong>.<br/>
+                        3. Turn <strong>ON</strong> the second toggle: <strong>"LAN Only Liveview"</strong> <em>(you can leave the first "LAN Only" toggle OFF to keep Bambu Cloud & Bambu Handy active)</em>.<br/>
+                        4. Click <strong>🔄 Reconnect Camera</strong> below.
+                      </div>
+                    </div>
+                  `
+                  : `<div style="color:#64748b;font-size:15px;">Camera Offline — Power on ${payload.name} to view live stream</div>`
               }
+            </div>
+
+            <div id="camAlertBox" class="alert"></div>
+
+            <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-ghost" id="camLightBtn">💡 ${payload.lightOn ? "Turn Chamber Light OFF" : "Turn Chamber Light ON"}</button>
+                ${canUseHaStream ? `<button class="btn btn-ghost" id="camModeBtn">🎞️ Switch to MJPEG Stream</button>` : ""}
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-cyan" id="camReconnectBtn">🔄 Reconnect Camera</button>
+                <button class="btn btn-ghost" id="camCloseBtn">Close</button>
+              </div>
             </div>
           </div>
         </div>
       `;
+
+      const mount = shadow.getElementById("camStreamMount");
+      let usingWebRtc = false;
+      const mountHaStream = () => {
+        if (!mount || !canUseHaStream) return;
+        mount.innerHTML = "";
+        const streamEl = document.createElement("ha-camera-stream");
+        streamEl.hass = hass;
+        streamEl.stateObj = payload.cameraStateObj;
+        streamEl.controls = true;
+        streamEl.muted = true;
+        streamEl.allowExoPlayer = true;
+        streamEl.style.cssText = "width:100%;height:100%;display:block;";
+        mount.appendChild(streamEl);
+        usingWebRtc = true;
+      };
+
+      if (canUseHaStream) {
+        mountHaStream();
+      }
+
+      const camModeBtn = shadow.getElementById("camModeBtn");
+      if (camModeBtn) {
+        camModeBtn.onclick = () => {
+          if (usingWebRtc) {
+            mount.innerHTML = `<img id="camMjpegImg" src="${mjpegUrl}" style="width:100%;height:100%;object-fit:contain;" />`;
+            usingWebRtc = false;
+            camModeBtn.textContent = "⚡ Switch to WebRTC / RTSP Stream";
+          } else {
+            mountHaStream();
+            camModeBtn.textContent = "🎞️ Switch to MJPEG Stream";
+          }
+        };
+      }
+
+      const camLightBtn = shadow.getElementById("camLightBtn");
+      if (camLightBtn) {
+        camLightBtn.onclick = async () => {
+          await hass.callService("light", "toggle", { entity_id: payload.lightEntityId });
+        };
+      }
+
+      const camReconnectBtn = shadow.getElementById("camReconnectBtn");
+      if (camReconnectBtn) {
+        camReconnectBtn.onclick = async () => {
+          const alertBox = shadow.getElementById("camAlertBox");
+          camReconnectBtn.disabled = true;
+          camReconnectBtn.textContent = "Reconnecting...";
+          try {
+            if (payload.cameraSwitchEntityId && !payload.cameraSwitchOn) {
+              await hass.callService("switch", "turn_on", { entity_id: payload.cameraSwitchEntityId });
+            }
+            try {
+              await hass.callService("button", "press", { entity_id: "button." + payload.prefix + "_force_refresh_data" });
+            } catch (e) {}
+            if (payload.entryId) {
+              await hass.callApi("POST", "config/config_entries/entry/" + payload.entryId + "/reload");
+            }
+            alertBox.className = "alert ok";
+            alertBox.textContent = "✓ Camera integration reloaded! Re-open Live Camera in 3 seconds once RTSP stream connects.";
+            camReconnectBtn.textContent = "✓ Reloaded";
+            setTimeout(() => { close(); if (onComplete) onComplete(); }, 1800);
+          } catch (err) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Reconnect error: " + (err.message || JSON.stringify(err));
+            camReconnectBtn.disabled = false;
+            camReconnectBtn.textContent = "🔄 Reconnect Camera";
+          }
+        };
+      }
+
       shadow.getElementById("xBtn").onclick = close;
+      shadow.getElementById("camCloseBtn").onclick = close;
       shadow.getElementById("bgOverlay").onclick = (e) => { if (e.target.id === "bgOverlay") close(); };
       return;
     }
@@ -1227,7 +1440,9 @@
     }
 
     if (mode === "add") {
-      const initialModel = normalizeModel((payload && payload.defaultModel) || "P1S");
+      const initialModel = normalizeModel((payload && payload.defaultModel) || "P2S");
+      const existingPrinters = resolveAllPrinters(hass);
+
       shadow.innerHTML = `
         <style>${modalCss}</style>
         <div class="overlay">
@@ -1262,20 +1477,23 @@
               <div class="fld">
                 <label>Local IP Address *</label>
                 <input id="hostInp" type="text" placeholder="192.168.1.xxx" />
-                <div class="sub-hint">Settings → Wi-Fi / WLAN</div>
+                <div class="sub-hint">Enter IP to auto-detect Serial Number & Model</div>
               </div>
               <div class="fld">
                 <label>8-Char Access Code *</label>
                 <input id="codeInp" type="text" placeholder="e.g. 12345678" />
-                <div class="sub-hint">Settings → LAN Only Mode / WLAN</div>
+                <div class="sub-hint">Settings → LAN Only / WLAN</div>
               </div>
             </div>
 
             <div class="grid-2">
               <div class="fld">
-                <label>15-Char Serial Number *</label>
-                <input id="serialInp" type="text" placeholder="01P00A000000000" />
-                <div class="sub-hint">A1: 039.. | Mini: 030.. | P1/P2: 01P.. | X1/X2/H2/R1: 00M..</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                  <label style="margin:0;">15-Char Serial Number (Auto-Fill)</label>
+                  <button type="button" id="detectSnBtn" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:800;cursor:pointer;">🔍 Auto-Detect</button>
+                </div>
+                <input id="serialInp" type="text" placeholder="Auto-detects from IP on Port 8883..." />
+                <div id="snDetectHint" class="sub-hint">Auto-populated via printer TLS certificate on Port 8883</div>
               </div>
               <div class="fld">
                 <label>Current Print / Laser Hours</label>
@@ -1296,7 +1514,86 @@
 
       const modelSel = shadow.getElementById("modelSel");
       const previewImg = shadow.getElementById("previewImg");
+      const hostInp = shadow.getElementById("hostInp");
+      const serialInp = shadow.getElementById("serialInp");
+      const snDetectHint = shadow.getElementById("snDetectHint");
+      const detectSnBtn = shadow.getElementById("detectSnBtn");
+
+      const applyDiscoveredModelAndSerial = (serialStr, modelStr) => {
+        if (serialStr) {
+          serialInp.value = String(serialStr).trim().toUpperCase();
+        }
+        const inferred = normalizeModel(modelStr || inferModelFromSerial(serialStr));
+        if (inferred && MODEL_OPTIONS_LIST.some(o => o.value === inferred)) {
+          modelSel.value = inferred;
+          previewImg.src = getPrinterImage(inferred);
+        }
+      };
+
       modelSel.onchange = () => { previewImg.src = getPrinterImage(modelSel.value); };
+
+      serialInp.oninput = () => {
+        const sVal = serialInp.value.trim().toUpperCase();
+        const inf = inferModelFromSerial(sVal);
+        if (inf && MODEL_OPTIONS_LIST.some(o => o.value === inf)) {
+          modelSel.value = inf;
+          previewImg.src = getPrinterImage(inf);
+        }
+      };
+
+      let ipDebounceTimer = null;
+      const probeSerialForHost = async (ipRaw) => {
+        const ip = String(ipRaw || "").trim();
+        if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return null;
+
+        // 1. Check already-loaded HA printer states first
+        const localMatch = existingPrinters.find(p => p.ipAddress === ip && p.serial);
+        if (localMatch) {
+          applyDiscoveredModelAndSerial(localMatch.serial, localMatch.modelNorm);
+          snDetectHint.style.color = "#10b981";
+          snDetectHint.textContent = "✓ Auto-populated SN " + localMatch.serial + " (" + localMatch.modelNorm + ")";
+          return localMatch;
+        }
+
+        // 2. Probe live printer TLS certificate on Port 8883 via Home Assistant backend
+        snDetectHint.style.color = "#38bdf8";
+        snDetectHint.textContent = "⏳ Probing " + ip + ":8883 TLS certificate for Serial Number...";
+        detectSnBtn.textContent = "⏳ Probing...";
+        try {
+          const res = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(ip));
+          detectSnBtn.textContent = "🔍 Auto-Detect";
+          if (res && res.serial) {
+            applyDiscoveredModelAndSerial(res.serial, res.model);
+            snDetectHint.style.color = "#10b981";
+            snDetectHint.textContent = "✓ Auto-detected SN " + res.serial + (res.model ? (" • Bambu " + res.model) : "") + " from printer!";
+            return res;
+          }
+        } catch (err) {
+          detectSnBtn.textContent = "🔍 Auto-Detect";
+          snDetectHint.style.color = "#94a3b8";
+          snDetectHint.textContent = "Could not reach " + ip + ":8883 yet — SN will auto-resolve on Connect.";
+        }
+        return null;
+      };
+
+      hostInp.oninput = () => {
+        if (ipDebounceTimer) clearTimeout(ipDebounceTimer);
+        const ip = hostInp.value.trim();
+        if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+          ipDebounceTimer = setTimeout(() => { probeSerialForHost(ip); }, 350);
+        }
+      };
+
+      detectSnBtn.onclick = async () => {
+        const ip = hostInp.value.trim();
+        if (!ip) {
+          snDetectHint.style.color = "#f59e0b";
+          snDetectHint.textContent = "Enter the printer's Local IP Address first to auto-detect its Serial Number.";
+          hostInp.focus();
+          return;
+        }
+        await probeSerialForHost(ip);
+      };
 
       shadow.getElementById("xBtn").onclick = close;
       shadow.getElementById("cancelBtn").onclick = close;
@@ -1307,18 +1604,17 @@
       };
 
       shadow.getElementById("submitAddBtn").onclick = async () => {
-        const hostVal = shadow.getElementById("hostInp").value.trim();
+        const hostVal = hostInp.value.trim();
         const codeVal = shadow.getElementById("codeInp").value.trim();
-        const serialVal = shadow.getElementById("serialInp").value.trim().toUpperCase();
+        let serialVal = serialInp.value.trim().toUpperCase();
         const nameVal = shadow.getElementById("nameInp").value.trim();
         const hoursVal = shadow.getElementById("hoursInp").value.trim() || "0";
-        const chosenModel = shadow.getElementById("modelSel").value;
         const alertBox = shadow.getElementById("alertBox");
         const btn = shadow.getElementById("submitAddBtn");
 
-        if (!hostVal || !codeVal || !serialVal) {
+        if (!hostVal || !codeVal) {
           alertBox.className = "alert err";
-          alertBox.textContent = "Enter Local IP Address, 8-Char Access Code, and 15-Char Serial Number.";
+          alertBox.textContent = "Enter Local IP Address and 8-Char Access Code.";
           return;
         }
 
@@ -1326,8 +1622,17 @@
         btn.textContent = "Connecting on Port 8883...";
         alertBox.className = "alert";
 
-        // Persist user's chosen model artwork override keyed by serial
-        saveModelOverride(serialVal, chosenModel);
+        if (!serialVal) {
+          const probed = await probeSerialForHost(hostVal);
+          if (probed && probed.serial) {
+            serialVal = String(probed.serial).trim().toUpperCase();
+          }
+        }
+
+        const chosenModel = shadow.getElementById("modelSel").value;
+        if (serialVal) {
+          saveModelOverride(serialVal, chosenModel);
+        }
 
         try {
           const f1 = await hass.callApi("POST", "config/config_entries/flow", {
@@ -1339,7 +1644,7 @@
           });
           const f3 = await hass.callApi("POST", "config/config_entries/flow/" + f2.flow_id, {
             host: hostVal,
-            serial: serialVal,
+            serial: serialVal || "AUTO",
             access_code: codeVal,
             print_cache_count: "100",
             timelapse_cache_count: "1",
@@ -1359,11 +1664,16 @@
             return;
           }
 
+          const finalSerial = (f3.title || serialVal || "").toUpperCase();
+          if (finalSerial) {
+            saveModelOverride(finalSerial, chosenModel);
+          }
+
           if (nameVal) {
             setTimeout(async () => {
               try {
                 const devs = await hass.callWS({ type: "config/device_registry/list" });
-                const found = devs.find(d => d.serial_number === serialVal);
+                const found = devs.find(d => String(d.serial_number || "").toUpperCase() === finalSerial);
                 if (found) {
                   await hass.callWS({
                     type: "config/device_registry/update",
@@ -1421,7 +1731,7 @@
               <img id="editAmsPreviewImg" src="${getPrinterImage(previewAmsCode)}" style="width:62px;height:62px;object-fit:contain;border-left:1px solid rgba(255,255,255,0.1);padding-left:10px;${curAmsOverride === 'NONE' ? 'display:none;' : ''}" title="AMS Unit Artwork" />
               <div style="flex:1;min-width:0;">
                 <div style="font-size:16px;font-weight:800;">${payload.name}</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${payload.serial} • ${payload.hasAms ? '✓ ' + payload.amsInfo.model + ' Attached' : 'External Spool / Direct Mode'}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${payload.serial} • ${payload.hasAms ? '✓ ' + (payload.amsUnits?.length > 1 ? payload.amsUnits.length + 'x ' + payload.amsInfo.modelNorm : payload.amsInfo.model) + ' Attached' : 'External Spool / Direct Mode'}</div>
                 <div class="grid-2" style="margin-top:8px;gap:8px;">
                   <div class="fld" style="margin:0;">
                     <label>Printer / Laser Model</label>
@@ -1444,9 +1754,18 @@
               </div>
             </div>
 
-            <div class="fld">
-              <label>Display Name</label>
-              <input id="nameInp" type="text" value="${payload.name || ''}" />
+            <div class="grid-2">
+              <div class="fld">
+                <label>Display Name</label>
+                <input id="nameInp" type="text" value="${payload.name || ''}" />
+              </div>
+              <div class="fld">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                  <label style="margin:0;">15-Char Serial Number (Auto-Populated)</label>
+                  <button type="button" id="copySnBtn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#cbd5e1;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;cursor:pointer;">📋 Copy</button>
+                </div>
+                <input id="editSerialInp" type="text" value="${payload.serial || ''}" readonly style="opacity:0.9;font-family:monospace;letter-spacing:0.04em;" />
+              </div>
             </div>
 
             <div class="grid-2">
@@ -1505,6 +1824,18 @@
       const editAmsSel = shadow.getElementById("editAmsSel");
       const editPreviewImg = shadow.getElementById("editPreviewImg");
       const editAmsPreviewImg = shadow.getElementById("editAmsPreviewImg");
+      const copySnBtn = shadow.getElementById("copySnBtn");
+      const editSerialInp = shadow.getElementById("editSerialInp");
+
+      if (copySnBtn && editSerialInp) {
+        copySnBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(editSerialInp.value);
+            copySnBtn.textContent = "✓ Copied";
+            setTimeout(() => { copySnBtn.textContent = "📋 Copy"; }, 1400);
+          } catch (e) {}
+        };
+      }
 
       const updateAmsPreview = () => {
         const val = editAmsSel.value;
@@ -1543,6 +1874,12 @@
               if (f.name === "usage_hours" && f.default !== undefined) shadow.getElementById("hoursInp").value = f.default;
               if (f.name === "print_cache_count" && f.default !== undefined) shadow.getElementById("cacheInp").value = f.default;
             }
+          }
+          if (!editSerialInp.value && shadow.getElementById("hostInp").value) {
+            try {
+              const disc = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(shadow.getElementById("hostInp").value));
+              if (disc && disc.serial) editSerialInp.value = disc.serial;
+            } catch (e) {}
           }
           shadow.getElementById("hostInp").placeholder = "192.168.1.xxx";
           shadow.getElementById("codeInp").placeholder = "8-character Access Code";
@@ -1665,8 +2002,9 @@
 
     let stageRightHtml = "";
     if (mode === "cover") {
-      stageRightHtml = p.coverPic && p.online
-        ? `<img class="stage-media-img" src="${p.coverPic}" alt="3MF Cover" />`
+      const previewImg = p.coverPic || p.pickPic;
+      stageRightHtml = previewImg && p.online
+        ? `<img class="stage-media-img" src="${previewImg}" alt="3MF Cover" />`
         : `<div class="stage-offline-box"><span>🖼️</span><div>No Active 3MF Preview</div></div>`;
     } else if (mode === "controls") {
       stageRightHtml = `
@@ -1680,69 +2018,88 @@
         </div>
       `;
     } else {
-      const streamUrl = p.cameraPic ? p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
-      stageRightHtml = (p.online && streamUrl)
-        ? `
-          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to expand camera">
+      const streamUrl = (p.camAvailable && p.cameraPic) ? p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
+      const fallbackPreview = p.pickPic || p.coverPic || "";
+      if (p.online && streamUrl) {
+        stageRightHtml = `
+          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to open live camera player">
             <img class="stage-media-img" src="${streamUrl}" alt="Live Cam" />
             <span class="live-tag">● LIVE</span>
             <span class="expand-tag">⛶</span>
           </div>
-        `
-        : `
+        `;
+      } else if (p.online && !p.camAvailable) {
+        stageRightHtml = `
+          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click for P2S / LAN Only Liveview Setup & Reconnect" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center;">
+            ${fallbackPreview ? `<img class="stage-media-img" src="${fallbackPreview}" alt="Preview" style="position:absolute;inset:0;opacity:0.22;filter:blur(1px);" />` : ''}
+            <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <span style="font-size:9px;font-weight:800;color:#fde68a;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.45);padding:2px 7px;border-radius:999px;">⚠️ LIVEVIEW OFF ON PRINTER</span>
+              <div style="font-size:11px;font-weight:800;color:#f8fafc;line-height:1.25;">Settings ➔ LAN Only ➔<br/>"LAN Only Liveview" ON</div>
+              <span style="font-size:10px;font-weight:700;color:#38bdf8;margin-top:2px;">Click to Setup / Reconnect ↗</span>
+            </div>
+          </div>
+        `;
+      } else {
+        stageRightHtml = `
           <div class="stage-offline-box">
             <span style="font-size:24px;opacity:0.5;">📹</span>
             <div style="font-weight:700;font-size:12px;color:#94a3b8;">Camera Offline</div>
             <div style="font-size:11px;color:#64748b;">IP: ${p.ipAddress}</div>
           </div>
         `;
+      }
     }
 
-    // Strictly render AMS deck ONLY when printer has an attached AMS unit
+    // Strictly render AMS deck(s) ONLY when printer has an attached AMS unit (supports multi-AMS daisy-chain!)
     let filamentHtml = "";
-    if (p.hasAms && p.amsInfo) {
-      const ams = p.amsInfo;
-      const amsImg = ams.img || getPrinterImage(ams.modelNorm || "AMS");
-      filamentHtml = `
-        <div class="ams-deck">
-          <div class="ams-hdr">
-            <div class="ams-title">
-              <img class="ams-unit-thumb" src="${amsImg}" alt="${ams.model}" />
-              <div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <span class="ams-dot"></span>
-                  <strong>Bambu ${ams.model}</strong>
-                </div>
-                <div class="ams-sub">${ams.subLabel || '4-Slot System'}</div>
-              </div>
-            </div>
-            <div class="ams-Readouts">
-              <span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
-              <span class="ams-chip">💧 Idx ${ams.humidityIndex}</span>
-              ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}
-            </div>
-          </div>
-          <div class="ams-slots-grid">
-            ${ams.trays.map(t => `
-              <div class="spool-card ${t.active ? 'active-spool' : ''}">
-                <div class="spool-top">
-                  <span class="slot-num">A${t.slot}</span>
-                  <span class="spool-type">${t.type || 'PLA'}</span>
-                </div>
-                <div class="spool-swatch-row">
-                  <span class="spool-ring" style="background:${t.color};"></span>
-                  <div class="spool-name" title="${t.name}">${t.name}</div>
-                </div>
-                ${t.remain !== null ? `
-                  <div class="spool-Mini-bar">
-                    <div class="spool-Mini-fill" style="width:${t.remain}%;background:${t.color};"></div>
+    const unitsToRender = (p.hasAms && Array.isArray(p.amsUnits) && p.amsUnits.length > 0)
+      ? p.amsUnits
+      : (p.hasAms && p.amsInfo ? [p.amsInfo] : []);
+
+    if (unitsToRender.length > 0) {
+      filamentHtml = unitsToRender.map(ams => {
+        const amsImg = ams.img || getPrinterImage(ams.modelNorm || "AMS");
+        return `
+          <div class="ams-deck">
+            <div class="ams-hdr">
+              <div class="ams-title">
+                <img class="ams-unit-thumb" src="${amsImg}" alt="${ams.model}" />
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="ams-dot"></span>
+                    <strong>Bambu ${ams.model}</strong>
                   </div>
-                ` : ''}
+                  <div class="ams-sub">${ams.subLabel || '4-Slot System'}</div>
+                </div>
               </div>
-            `).join("")}
+              <div class="ams-Readouts">
+                <span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
+                <span class="ams-chip">💧 Idx ${ams.humidityIndex}</span>
+                ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}
+              </div>
+            </div>
+            <div class="ams-slots-grid">
+              ${ams.trays.map(t => `
+                <div class="spool-card ${t.active ? 'active-spool' : ''}">
+                  <div class="spool-top">
+                    <span class="slot-num">${t.slotCode || ('A' + t.slot)}</span>
+                    <span class="spool-type">${t.type || 'PLA'}</span>
+                  </div>
+                  <div class="spool-swatch-row">
+                    <span class="spool-ring" style="background:${t.color};"></span>
+                    <div class="spool-name" title="${t.name}">${t.name}</div>
+                  </div>
+                  ${t.remain !== null ? `
+                    <div class="spool-Mini-bar">
+                      <div class="spool-Mini-fill" style="width:${t.remain}%;background:${t.color};"></div>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join("")}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }).join("");
     } else {
       filamentHtml = `
         <div class="ext-spool-deck">
@@ -1942,11 +2299,11 @@
         defaultModel: "P2S",
         modelImg: getPrinterImage("P2S"),
         step1Path: "Screen ➔ Settings (⚙️) ➔ WLAN",
-        step1Detail: "Read IPv4 Address on WLAN screen",
-        step2Path: "Screen ➔ Settings (⚙️) ➔ WLAN",
-        step2Detail: "Copy 8-Char Access Code below IP",
-        step3Path: "Settings (⚙️) ➔ Device (or QR Sticker)",
-        step3Detail: "P1S / P2S starts with 01P... • P1P starts with 01S..."
+        step1Detail: "Read IPv4 Address (Serial Number auto-populates from IP!)",
+        step2Path: "Settings (⚙️) ➔ LAN Only",
+        step2Detail: "Copy 8-Char Access Code & toggle ON 'LAN Only Liveview' (P2S)",
+        step3Path: "Auto-Detected over Port 8883 TLS",
+        step3Detail: "P2S starts with 22E... • P1S starts with 01P... • P1P starts with 01S..."
       },
       x1c: {
         title: "Bambu X1C, X1E & X2D",
@@ -3394,9 +3751,9 @@
       this._hass = hass;
       const printers = resolveAllPrinters(hass, this._config.smart_plugs);
       const sig = JSON.stringify(printers.map(p => [
-        p.name, p.model, p.modelNorm, p.online, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
-        p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug, p.amsInfo?.modelNorm,
-        p.amsInfo?.trays?.map(t => t.name + t.color + t.remain)
+        p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
+        p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
+        (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidity + ":" + u.temp + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
       ]));
       if (sig !== this._lastSig) {
         this._lastSig = sig;
@@ -3423,7 +3780,7 @@
       }
 
       const onlineCount = allPrinters.filter(p => p.online).length;
-      const amsCount = allPrinters.filter(p => p.hasAms).length;
+      const amsCount = allPrinters.reduce((acc, p) => acc + (p.amsUnits && p.amsUnits.length > 0 ? p.amsUnits.length : (p.hasAms ? 1 : 0)), 0);
       const alertCount = allPrinters.reduce((acc, p) => acc + (p.alerts ? p.alerts.length : 0), 0);
       const totalHrs = allPrinters.reduce((acc, p) => {
         const v = parseFloat(p.totalUsage);
