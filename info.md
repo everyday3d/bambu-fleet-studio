@@ -14,6 +14,10 @@
 
 - **🖼️ Model-Accurate Printer Photography**: Embedded studio renders for **Bambu A1**, **Bambu P1S / X1C**, and **Bambu A1 Mini**.
 - **🎨 Smart Conditional AMS Deck**: Automatically inspects Home Assistant devices and `tray_1..tray_4` entities so **only printers physically equipped with an AMS render the 4-slot AMS deck**. Non-AMS printers display a sleek **Direct External Spool** badge.
+- **🎨 Cross-Fleet Filament Finder**: Search and filter every loaded AMS slot and External Spool across your entire fleet by material (`PLA`, `PETG`, `ASA`, `TPU`) or color with 1-click jump to the printer card.
+- **🚨 Conditional HMS Error & Print Pause Banner**: Hidden (`0px`) when healthy; automatically expands with active HMS error descriptions and a 1-click **Bambu Wiki ↗** button when attention is needed.
+- **⚡ Safety-Locked Smart Plug & Live Wattage (`W`)**: Optional per-printer smart plug binding (`switch.*` & `sensor.*_power`) with thermal safety lock (`🔒`) while printing or while `nozzleTemp > 60°C`.
+- **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Deploy native Home Assistant automations for print-complete camera snapshots, HMS error push alerts, and 5-minute chamber light auto-off in 1 click.
 - **📹 Live Camera Stream + Lightbox**: Side-by-side printer model visual and live camera stream with 1-click full-screen modal.
 - **➕ Built-In Add / Edit / Delete Printer Manager**: Add new printers (LAN Mode or Bambu Cloud), reload integration entries, or remove printers directly from the dashboard.
 - **📖 4-Card Visual Setup Walkthrough**: Scannable 4-step onboarding cards—no walls of text.

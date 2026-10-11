@@ -23,6 +23,10 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 
 - **🖼️ Model-Accurate Printer Photography**: Built-in, embedded high-resolution studio renders for **Bambu Lab A1**, **Bambu Lab P1S / X1C**, and **Bambu Lab A1 Mini** automatically matched to each printer's hardware model.
 - **🎨 Smart Conditional AMS Detection**: Automatically inspects Home Assistant's Device Registry and `tray_1`–`tray_4` entities. **Only printers physically equipped with an AMS, AMS Lite, or AMS 2 Pro render the 4-slot AMS Spool Deck**—non-AMS printers cleanly display a compact **Direct External Spool** badge with zero wasted space.
+- **🎨 Cross-Fleet Filament Finder ("Which Printer Has My Spool?")**: Collapsible spool inventory drawer in the Command Bar aggregating every loaded AMS slot (`A1`–`A4`) and External Spool across the entire fleet with material filter pills (`All`, `PLA`, `PETG`, `ASA`, `TPU`, etc.), instant search, and click-to-highlight printer navigation.
+- **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when `hms_errors`, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
+- **⚡ Safety-Locked Smart Plug Power Toggle & Live Wattage (`W`)**: Bind any Home Assistant `switch.*` and `sensor.*_power` entity per printer in the **Edit Printer** modal. Displays live power draw (`W`) and a mains toggle button that **automatically locks (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep extruder jams.
+- **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Auto-discovers your Home Assistant `notify.*` devices and installs 3 ready-made automations in 1 click (*Print Complete Push + Live Camera Snapshot*, *HMS Error & Filament Runout Alert*, and *Auto-Off Chamber Light after 5m*).
 - **📹 Live Camera Viewport + Instant Stream Lightbox**: Side-by-side model artwork and live camera feed with 1-click full-screen stream modal.
 - **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers (LAN Mode or Bambu Cloud), inspect device IDs & serial numbers, reload `bambu_lab` config entries, or remove printers directly from the dashboard UI.
 - **📖 4-Card Visual Onboarding Walkthrough**: Interactive 4-step card grid guiding operators through LAN Mode IP/Access Code discovery, 15-character Serial Number lookup, and 1-click Home Assistant pairing—without a wall of text.
@@ -36,7 +40,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 ![Bambu Lab Fleet Studio Overview](docs/screenshots/01_fleet_studio_overview.png)
 
 **What You See in the Fleet Studio Overview:**
-- **Top Command Header**: Real-time fleet KPI pills (**Total Printers**, **Online**, **Active Prints**, **AMS Units**) paired with instant action triggers (`+ Add Printer`, `Walkthrough`, `Manage`).
+- **Top Command Header**: Real-time fleet KPI pills (**Total Printers**, **Online**, **Active Prints**, **AMS Units**, **Loaded Spools**) paired with instant action triggers (`🎨 Filament Finder`, `🔔 Alerts & Automations`, `+ Add Printer`, `Walkthrough`, `Manage`).
 - **Hero Visual Split**: Each printer card pairs its model-accurate studio photograph on the left with a live `camera.*` stream viewport on the right.
 - **Print Job & Layer Telemetry Bar**: Displays active `.3mf` / `.gcode` job name, completion percentage, glowing progress bar, current/total layer counter (`Layer 194 / 285`), and live remaining ETA.
 - **4-Tile Hardware Telemetry Grid**: Scannable cards for **Nozzle Temp** (actual vs. target), **Bed Temp** (actual vs. target), **Speed Profile & Chamber Temp**, and **Cooling Fans & Wi-Fi RSSI**.
@@ -67,6 +71,17 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 
 **Zero Walls of Text:**
 - Clicking **Walkthrough** in the Command Bar (or navigating to the `Setup Guide` view tab) reveals a 4-card visual onboarding grid covering **Step 01 (LAN Mode & Access Code)**, **Step 02 (15-Char Serial Number)**, **Step 03 (Fleet Studio Modal Pairing)**, and **Step 04 (Auto-Discovery & Smart AMS)**.
+
+---
+
+### 5. Advanced Fleet Intelligence — Filament Finder, HMS Diagnostics, Smart Plugs & Automations
+![Advanced Fleet Intelligence Spotlight](docs/screenshots/05_filament_hms_smartplug_automations.png)
+
+**Built-In Power Features for Multi-Printer Workshops:**
+- **🎨 Cross-Fleet Filament Finder**: Click `🎨 Filament Finder (N)` in the Command Bar to search across every loaded AMS slot and External Spool in your shop by material (`PLA`, `PETG`, `ASA`, `TPU`) or color name. Clicking any spool card smoothly scrolls to and highlights that printer card.
+- **🚨 Conditional HMS Error & Print Pause Banner**: Takes up `0px` when your printer is healthy, and automatically expands into a high-visibility diagnostic banner whenever `binary_sensor.<prefix>_hms_errors` or `binary_sensor.<prefix>_print_error` triggers—complete with a direct **Bambu Wiki ↗** button.
+- **⚡ Safety-Locked Smart Plug & Live Wattage (`W`)**: Optional per-printer smart plug binding (`switch.*` + `sensor.*_power`) configurable in the **Edit Printer** modal. Displays live power consumption in the card header and **blocks accidental power-off (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep filament jams.
+- **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Deploy native Home Assistant automations in 1 click (or copy the generated YAML) for **Print Complete Push + Camera Snapshot**, **HMS Error & Filament Runout Alert**, and **Auto-Off Chamber Light (5m Delay)**.
 
 ---
 
@@ -188,7 +203,8 @@ bambu-fleet-studio/
 │       ├── 01_fleet_studio_overview.png
 │       ├── 02_conditional_ams_spotlight.png
 │       ├── 03_add_edit_printer_manager.png
-│       └── 04_walkthrough_step_cards.png
+│       ├── 04_walkthrough_step_cards.png
+│       └── 05_filament_hms_smartplug_automations.png
 └── examples/
     └── bambu-fleet-dashboard.yaml    # Ready-to-import Lovelace dashboard configuration
 ```
