@@ -6,6 +6,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
 
+> [!NOTE]
+> **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm ready to release it. Expect some bugs—please use the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy it as much as I do.
+
 > **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and zero-dependency Web Component suite (`bambu-fleet-cards.js`) purpose-built for managing multi-printer **Bambu Lab** 3D printing fleets (`A1`, `A1 Mini`, `P1P`, `P1S`, `X1C`, `X1E`).
 
 ---

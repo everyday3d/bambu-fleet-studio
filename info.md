@@ -1,5 +1,7 @@
 # 🖨️ Bambu Lab Fleet Studio
 
+> **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm ready to release it. Expect some bugs—please use the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy it as much as I do.
+
 **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and custom card suite for **Bambu Lab** 3D printers (`A1`, `A1 Mini`, `P1P`, `P1S`, `X1C`, `X1E`).
 
 ![Bambu Lab Fleet Studio Overview](https://raw.githubusercontent.com/everyday3d/bambu-fleet-studio/main/docs/screenshots/01_fleet_studio_overview.png)
