@@ -1,6 +1,10 @@
 # 🖨️ Bambu Lab Fleet Studio
 
-> **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm ready to release it. Expect some bugs—please use the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy it as much as I do.
+> **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm finally ready to release it to the community.
+>
+> Having every Bambu Lab printer in my shop on a single, clean Home Assistant screen has been a total game-changer—glancing at live camera streams, checking nozzle/bed temps, tracking layer progress & ETAs, and immediately seeing which filament spools are loaded in each AMS without bouncing between apps is ridiculously handy. It even detects which printers actually have an AMS attached (keeping non-AMS cards clean) and lets you add or manage printers right from the dashboard.
+>
+> Expect some bugs—please use the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy it as much as I do.
 
 **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and custom card suite for **Bambu Lab** 3D printers (`A1`, `A1 Mini`, `P1P`, `P1S`, `X1C`, `X1E`).
 
