@@ -21,6 +21,7 @@
 - **📹 Live Camera Stream + Lightbox**: Side-by-side printer model visual and live camera stream with 1-click full-screen modal.
 - **➕ Built-In Add / Edit / Delete Printer Manager**: Add new printers (LAN Mode or Bambu Cloud), reload integration entries, or remove printers directly from the dashboard.
 - **📖 4-Card Visual Setup Walkthrough**: Scannable 4-step onboarding cards—no walls of text.
+- **📱 Mobile & HA Companion App Ready**: Responsive CSS `@container` queries, 2×2 mobile AMS spool grids, thumb-friendly 2×2 action buttons, and `dvh` bottom-sheet modals.
 
 ## 🚀 Quick Start YAML
 

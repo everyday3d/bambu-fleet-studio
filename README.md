@@ -30,6 +30,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 - **📹 Live Camera Viewport + Instant Stream Lightbox**: Side-by-side model artwork and live camera feed with 1-click full-screen stream modal.
 - **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers (LAN Mode or Bambu Cloud), inspect device IDs & serial numbers, reload `bambu_lab` config entries, or remove printers directly from the dashboard UI.
 - **📖 4-Card Visual Onboarding Walkthrough**: Interactive 4-step card grid guiding operators through LAN Mode IP/Access Code discovery, 15-character Serial Number lookup, and 1-click Home Assistant pairing—without a wall of text.
+- **📱 Mobile & Home Assistant Companion App Optimized**: Built with modern CSS `@container` size queries, dynamic viewport (`dvh`) bottom-sheet modals, 2×2 touch-friendly Command Bar & AMS Spool grids on narrow viewports, swipeable filter pills, and 16px mobile inputs (preventing unwanted iOS Safari auto-zoom).
 - **🔒 100% Self-Contained & Privacy-First**: Zero external CDN dependencies, zero hardcoded tokens or IP addresses, and native integration with Home Assistant's [`hass-bambulab`](https://github.com/greghesp/ha-bambulab) device registry.
 
 ---
