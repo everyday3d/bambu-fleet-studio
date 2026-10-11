@@ -13,7 +13,7 @@
 >
 > Since this is a fresh release, **expect some bugs!** If you run into anything quirky or have an idea that would make your print room easier to run, please drop a ticket in the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy using it in your workshop as much as I do.
 
-> **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and zero-dependency Web Component suite (`bambu-fleet-cards.js`) purpose-built for managing multi-printer **Bambu Lab** 3D printing fleets (`A1`, `A1 Mini`, `P1P`, `P1S`, `X1C`, `X1E`).
+> **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and zero-dependency Web Component suite (`bambu-fleet-cards.js`) purpose-built for managing multi-printer **Bambu Lab** 3D printing & laser fleets (`A1`, `A1 Mini`, `A2L`, `P1P`, `P1S`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2D Pro`, `H2S`, and the **`R1` 55W CO2 Laser Cutter & Engraver**).
 
 ---
 
@@ -21,15 +21,15 @@
 
 Default Home Assistant entity lists clutter your screen with dozens of ungrouped sensors and render empty AMS filament slots even on printers that do not have an AMS attached. **Bambu Lab Fleet Studio** replaces walls of text and scattered entities with a sleek, dark-glass industrial command center:
 
-- **🖼️ Model-Accurate Printer Photography**: Built-in, embedded high-resolution studio renders for **Bambu Lab A1**, **Bambu Lab P1S / X1C**, and **Bambu Lab A1 Mini** automatically matched to each printer's hardware model.
-- **🎨 Smart Conditional AMS Detection**: Automatically inspects Home Assistant's Device Registry and `tray_1`–`tray_4` entities. **Only printers physically equipped with an AMS, AMS Lite, or AMS 2 Pro render the 4-slot AMS Spool Deck**—non-AMS printers cleanly display a compact **Direct External Spool** badge with zero wasted space.
+- **🖼️ Complete 14-Model Printer & R1 Laser Photography**: Built-in, embedded high-resolution studio renders for every Bambu Lab series—**`A1`**, **`A1 Mini`**, **`A2L`**, **`P1S`**, **`P1P`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, and the **`R1` (55W CO2 Laser Cutter & Engraver)**—automatically matched to each device's model (with a per-device **Hardware Model & Artwork** selector in the Edit modal).
+- **🎨 Smart Conditional AMS Detection**: Automatically inspects Home Assistant's Device Registry and `tray_1`–`tray_4` entities. **Only printers physically equipped with an AMS, AMS Lite, AMS 2 Pro, or AMS HT render the 4-slot AMS Spool Deck**—non-AMS printers cleanly display a compact **Direct External Spool** badge with zero wasted space.
 - **🎨 Cross-Fleet Filament Finder ("Which Printer Has My Spool?")**: Collapsible spool inventory drawer in the Command Bar aggregating every loaded AMS slot (`A1`–`A4`) and External Spool across the entire fleet with material filter pills (`All`, `PLA`, `PETG`, `ASA`, `TPU`, etc.), instant search, and click-to-highlight printer navigation.
 - **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when `hms_errors`, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
 - **⚡ Safety-Locked Smart Plug Power Toggle & Live Wattage (`W`)**: Bind any Home Assistant `switch.*` and `sensor.*_power` entity per printer in the **Edit Printer** modal. Displays live power draw (`W`) and a mains toggle button that **automatically locks (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep extruder jams.
 - **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Auto-discovers your Home Assistant `notify.*` devices and installs 3 ready-made automations in 1 click (*Print Complete Push + Live Camera Snapshot*, *HMS Error & Filament Runout Alert*, and *Auto-Off Chamber Light after 5m*).
 - **📹 Live Camera Viewport + Instant Stream Lightbox**: Side-by-side model artwork and live camera feed with 1-click full-screen stream modal.
-- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers (LAN Mode or Bambu Cloud), inspect device IDs & serial numbers, reload `bambu_lab` config entries, or remove printers directly from the dashboard UI.
-- **📖 4-Card Visual Onboarding Walkthrough**: Interactive 4-step card grid guiding operators through LAN Mode IP/Access Code discovery, 15-character Serial Number lookup, and 1-click Home Assistant pairing—without a wall of text.
+- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers (LAN Mode or Bambu Cloud), customize hardware model artwork, reload `bambu_lab` config entries, or remove devices directly from the dashboard UI.
+- **📖 4-Card Visual Onboarding Walkthrough & Clickable Hardware Lineup**: Interactive 4-step card grid with 5 series tabs (`A1 / Mini / A2L`, `P1S / P1P / P2S`, `X1C / X1E / X2D`, `H2C / H2D / H2S`, `🔥 R1 CO2 Laser`) plus a clickable 13-tile **Supported Hardware Lineup** gallery.
 - **📱 Mobile & Home Assistant Companion App Optimized**: Built with modern CSS `@container` size queries, dynamic viewport (`dvh`) bottom-sheet modals, 2×2 touch-friendly Command Bar & AMS Spool grids on narrow viewports, swipeable filter pills, and 16px mobile inputs (preventing unwanted iOS Safari auto-zoom).
 - **🔒 100% Self-Contained & Privacy-First**: Zero external CDN dependencies, zero hardcoded tokens or IP addresses, and native integration with Home Assistant's [`hass-bambulab`](https://github.com/greghesp/ha-bambulab) device registry.
 
@@ -182,9 +182,9 @@ cards:
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `prefix` | `string` | **Required** | Entity object ID prefix created by `ha-bambulab` (e.g. `a1_03900a100000001` or `p1s_01p00b200000002`). |
-| `name` | `string` | Auto-detected | Display name shown in the card header (e.g. `Bambu A1`, `Bambu P1S`). |
-| `printer_model` | `string` | `auto` | Hardware model artwork selector: `auto`, `A1`, `P1S` (also covers `P1P`/`X1C`), or `A1MINI`. |
+| `prefix` | `string` | Optional | Entity object ID prefix created by `ha-bambulab` (e.g. `a1_03900a100000001` or `p1s_01p00b200000002`). |
+| `name` | `string` | Auto-detected | Display name shown in the card header (e.g. `Bambu A1`, `Bambu P2S`, `Bambu R1 Laser`). |
+| `printer_model` | `string` | `auto` | Hardware model filter / artwork selector: `A1`, `A1MINI`, `A2L`, `P1S`, `P1P`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2DPRO`, `H2S`, or `R1`. |
 | `ams_mode` | `string` | `auto` | AMS display behavior: `auto` (shows AMS deck **only** if AMS hardware is detected), `show` (force show), or `hide` (force hide). |
 
 ---
