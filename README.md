@@ -2,7 +2,6 @@
 
 [![Release v1.0.0](https://img.shields.io/badge/Release-v1.0.0%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom%20Plugin-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/integration)
-![BoxerDawg 3D Ecosystem](https://img.shields.io/badge/Ecosystem-BoxerDawg%203D-38bdf8?style=flat-square)
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
 
@@ -13,7 +12,7 @@
 >
 > Since this is a fresh release, **expect some bugs!** If you run into anything quirky or have an idea that would make your print room easier to run, please drop a ticket in the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I will get it fixed! I hope you enjoy using it in your workshop as much as I do.
 
-> **Part of the BoxerDawg 3D Ecosystem** — A professional, card-based Home Assistant Lovelace dashboard and zero-dependency Web Component suite (`bambu-fleet-cards.js`) purpose-built for managing multi-printer **Bambu Lab** 3D printing & laser fleets (`A1`, `A1 Mini`, `A2L`, `P1P`, `P1S`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2D Pro`, `H2S`, and the **`R1` 55W CO2 Laser Cutter & Engraver**).
+> A professional, card-based Home Assistant Lovelace dashboard and zero-dependency Web Component suite (`bambu-fleet-cards.js`) purpose-built for managing multi-printer **Bambu Lab** 3D printing, laser & AMS fleets (**`A1`**, **`A1 Mini`**, **`A2L`**, **`P1P`**, **`P1S`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, the **`R1` 55W CO2 Laser Cutter & Engraver**, plus **`AMS`**, **`AMS Lite`**, **`AMS 2 Pro`**, and **`AMS HT`**).
 
 ---
 
@@ -22,14 +21,15 @@
 Default Home Assistant entity lists clutter your screen with dozens of ungrouped sensors and render empty AMS filament slots even on printers that do not have an AMS attached. **Bambu Lab Fleet Studio** replaces walls of text and scattered entities with a sleek, dark-glass industrial command center:
 
 - **🖼️ Complete 14-Model Printer & R1 Laser Photography**: Built-in, embedded high-resolution studio renders for every Bambu Lab series—**`A1`**, **`A1 Mini`**, **`A2L`**, **`P1S`**, **`P1P`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, and the **`R1` (55W CO2 Laser Cutter & Engraver)**—automatically matched to each device's model (with a per-device **Hardware Model & Artwork** selector in the Edit modal).
+- **🎨 Embedded Studio Artwork for AMS Lite, AMS HT, AMS 2 Pro & AMS**: Includes dedicated high-resolution studio renders for **`AMS Lite`** (4-spool open rotary feeder), **`AMS HT`** (85°C High-Temperature active engineering dryer), **`AMS 2 Pro`** (4-slot active drying unit), and standard **`AMS`**, displayed directly inside each printer's **AMS & Filament System** header, the **Edit Device** modal, and the **Supported Hardware Lineup** gallery.
 - **🎨 Smart Conditional AMS Detection**: Automatically inspects Home Assistant's Device Registry and `tray_1`–`tray_4` entities. **Only printers physically equipped with an AMS, AMS Lite, AMS 2 Pro, or AMS HT render the 4-slot AMS Spool Deck**—non-AMS printers cleanly display a compact **Direct External Spool** badge with zero wasted space.
 - **🎨 Cross-Fleet Filament Finder ("Which Printer Has My Spool?")**: Collapsible spool inventory drawer in the Command Bar aggregating every loaded AMS slot (`A1`–`A4`) and External Spool across the entire fleet with material filter pills (`All`, `PLA`, `PETG`, `ASA`, `TPU`, etc.), instant search, and click-to-highlight printer navigation.
 - **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when `hms_errors`, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
 - **⚡ Safety-Locked Smart Plug Power Toggle & Live Wattage (`W`)**: Bind any Home Assistant `switch.*` and `sensor.*_power` entity per printer in the **Edit Printer** modal. Displays live power draw (`W`) and a mains toggle button that **automatically locks (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep extruder jams.
 - **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Auto-discovers your Home Assistant `notify.*` devices and installs 3 ready-made automations in 1 click (*Print Complete Push + Live Camera Snapshot*, *HMS Error & Filament Runout Alert*, and *Auto-Off Chamber Light after 5m*).
 - **📹 Live Camera Viewport + Instant Stream Lightbox**: Side-by-side model artwork and live camera feed with 1-click full-screen stream modal.
-- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers (LAN Mode or Bambu Cloud), customize hardware model artwork, reload `bambu_lab` config entries, or remove devices directly from the dashboard UI.
-- **📖 4-Card Visual Onboarding Walkthrough & Clickable Hardware Lineup**: Interactive 4-step card grid with 5 series tabs (`A1 / Mini / A2L`, `P1S / P1P / P2S`, `X1C / X1E / X2D`, `H2C / H2D / H2S`, `🔥 R1 CO2 Laser`) plus a clickable 13-tile **Supported Hardware Lineup** gallery.
+- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers (LAN Mode or Bambu Cloud), customize printer & AMS hardware artwork, reload `bambu_lab` config entries, or remove devices directly from the dashboard UI.
+- **📖 4-Card Visual Onboarding Walkthrough & Clickable Hardware Lineup**: Interactive 4-step card grid with 6 series tabs (`A1 / Mini / A2L`, `P1S / P1P / P2S`, `X1C / X1E / X2D`, `H2C / H2D / H2S`, `🔥 R1 CO2 Laser`, `🎨 AMS Lite / AMS HT`) plus a clickable 17-tile **Supported Hardware Lineup** gallery.
 - **📱 Mobile & Home Assistant Companion App Optimized**: Built with modern CSS `@container` size queries, dynamic viewport (`dvh`) bottom-sheet modals, 2×2 touch-friendly Command Bar & AMS Spool grids on narrow viewports, swipeable filter pills, and 16px mobile inputs (preventing unwanted iOS Safari auto-zoom).
 - **🔒 100% Self-Contained & Privacy-First**: Zero external CDN dependencies, zero hardcoded tokens or IP addresses, and native integration with Home Assistant's [`hass-bambulab`](https://github.com/greghesp/ha-bambulab) device registry.
 
@@ -212,9 +212,7 @@ bambu-fleet-studio/
 
 ---
 
-## 🐛 Issue Tracking & BoxerDawg 3D Ecosystem
-
-This project is developed and maintained as part of the **BoxerDawg 3D Ecosystem**:
+## 🐛 Issue Tracking & Community Support
 
 - **📋 Bug Reports & Feature Requests**: Tracked exclusively via **[Bambu Lab Fleet Studio GitHub Issues](https://github.com/everyday3d/bambu-fleet-studio/issues)**.
 
@@ -222,4 +220,4 @@ This project is developed and maintained as part of the **BoxerDawg 3D Ecosystem
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE). Copyright © 2026 BoxerDawg 3D (`everyday3d`).
+Released under the [MIT License](LICENSE). Copyright © 2026 `everyday3d`.
