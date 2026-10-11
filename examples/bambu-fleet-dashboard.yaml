@@ -1,0 +1,50 @@
+# Bambu Lab Fleet Studio — Example Lovelace Dashboard YAML
+# Auto-discovers all Bambu Lab printers configured via ha-bambulab.
+# Zero hardcoded serial numbers or entity IDs required.
+
+title: Bambu Lab Fleet
+views:
+  - type: panel
+    title: Fleet Studio
+    path: fleet-overview
+    icon: mdi:printer-3d
+    cards:
+      - type: custom:bambu-fleet-studio
+        title: Bambu Lab Fleet Studio
+        show_walkthrough: true
+
+  - type: panel
+    title: Bambu A1
+    path: bambu-a1
+    icon: mdi:printer-3d-nozzle
+    cards:
+      - type: custom:bambu-fleet-studio
+        printer_model: A1
+        show_walkthrough: false
+
+  - type: panel
+    title: Bambu P1S
+    path: bambu-p1s
+    icon: mdi:cube-outline
+    cards:
+      - type: custom:bambu-fleet-studio
+        printer_model: P1S
+        show_walkthrough: false
+
+  - type: panel
+    title: Bambu A1 Mini
+    path: bambu-a1-mini
+    icon: mdi:printer-3d
+    cards:
+      - type: custom:bambu-fleet-studio
+        printer_model: A1MINI
+        show_walkthrough: false
+
+  - type: panel
+    title: Add Printer Guide
+    path: add-printer-guide
+    icon: mdi:plus-circle-outline
+    cards:
+      - type: custom:bambu-fleet-studio
+        mode: walkthrough_only
+        show_walkthrough: true
