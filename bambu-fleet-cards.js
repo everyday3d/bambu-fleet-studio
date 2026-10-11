@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.2.1";
+  const CARD_VERSION = "1.2.2";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -345,10 +345,15 @@
       const nozzleTarget = stVal("sensor", "nozzle_target_temperature", "0");
       const bedTemp = stVal("sensor", "bed_temperature", "—");
       const bedTarget = stVal("sensor", "bed_target_temperature", "0");
+      const chamberTempRaw = stVal("sensor", "chamber_temperature", "—");
+      const chamberTemp = (chamberTempRaw !== "—" && !isNaN(parseFloat(chamberTempRaw)) && parseFloat(chamberTempRaw) > 0)
+        ? String(Math.round(parseFloat(chamberTempRaw)))
+        : "—";
 
       const currentLayer = stVal("sensor", "current_layer", "0");
       const totalLayers = stVal("sensor", "total_layer_count", "0");
       const remainingMins = stVal("sensor", "remaining_time", "0");
+      const endTimeRaw = stVal("sensor", "end_time", "—");
       const totalUsage = stVal("sensor", "total_usage", "—");
       const taskName = stVal("sensor", "task_name", "No active print job");
       const printWeight = stVal("sensor", "print_weight", "—");
@@ -361,6 +366,33 @@
       const speedProfile = stVal("sensor", "speed_profile", "standard");
       const coolingFan = stVal("sensor", "cooling_fan_speed", "0");
       const heatbreakFan = stVal("sensor", "heatbreak_fan_speed", "0");
+      const auxFan = stVal("sensor", "aux_fan_speed", "—");
+      const chamberFan = stVal("sensor", "chamber_fan_speed", "—");
+      const airductMode = stVal("sensor", "airduct_mode", "");
+      const doorStateObj = st("binary_sensor", "door");
+      const hasDoorSensor = Boolean(doorStateObj && doorStateObj.state !== "unavailable" && doorStateObj.state !== "unknown");
+      const doorOpen = doorStateObj?.state === "on";
+
+      // Format ETA Countdown + Exact Finish Clock Time (e.g., "1h 12m • 7:42 PM")
+      let etaDisplay = "Idle / Done";
+      const remMinsNum = parseFloat(remainingMins);
+      const isJobActive = printStatus === "running" || printStatus === "pause" || printStatus === "prepare";
+      if (!isNaN(remMinsNum) && remMinsNum > 0 && isJobActive) {
+        const hrs = Math.floor(remMinsNum / 60);
+        const mins = Math.round(remMinsNum % 60);
+        const durText = hrs > 0 ? (hrs + "h " + mins + "m") : (mins + "m");
+        let finishDate = null;
+        if (endTimeRaw && endTimeRaw !== "—") {
+          const parsed = new Date(endTimeRaw);
+          if (!isNaN(parsed.getTime())) finishDate = parsed;
+        }
+        if (!finishDate) {
+          finishDate = new Date(Date.now() + remMinsNum * 60000);
+        }
+        const clockText = finishDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        etaDisplay = durText + " • " + clockText;
+      }
+
       const hmsError = st("binary_sensor", "hms_errors")?.state === "on";
       const printError = st("binary_sensor", "print_error")?.state === "on";
       const alerts = extractHmsAlerts(hass, prefix, online, printStatus, currentStage);
@@ -472,8 +504,19 @@
           });
 
           const humKey = findAmsSensor("sensor", k => k.includes("humidity_index"));
-          const tempKey = findAmsSensor("sensor", k => k.includes("temperature"));
+          const humPctKey = findAmsSensor("sensor", k => (k.endsWith("_humidity") || /_humidity(_\d+)?$/.test(k)) && !k.includes("humidity_index"));
+          const tempKey = findAmsSensor("sensor", k => k.includes("temperature") && !k.includes("drying_temperature"));
           const dryKey = findAmsSensor("binary_sensor", k => k.includes("drying"));
+
+          const humidityIndex = humKey && hass.states[humKey]?.state !== "unavailable" && hass.states[humKey]?.state !== "unknown"
+            ? hass.states[humKey].state
+            : "—";
+          const humPctVal = humPctKey && hass.states[humPctKey]?.state !== "unavailable" && hass.states[humPctKey]?.state !== "unknown"
+            ? parseFloat(hass.states[humPctKey].state)
+            : NaN;
+          const humidityPct = (!isNaN(humPctVal) && humPctVal > 0) ? Math.round(humPctVal) : null;
+          const isVeryWet = humidityPct !== null ? humidityPct >= 55 : false;
+          const isWet = humidityPct !== null ? humidityPct >= 45 : false;
 
           return {
             id: amsDev.id || ("ams_" + prefix + "_" + unitIdx),
@@ -483,7 +526,10 @@
             modelNorm: amsMeta.code,
             subLabel: amsMeta.sub,
             img: amsMeta.img,
-            humidityIndex: humKey && hass.states[humKey]?.state !== "unavailable" ? hass.states[humKey].state : "—",
+            humidityIndex,
+            humidityPct,
+            isWet,
+            isVeryWet,
             temperature: tempKey && hass.states[tempKey]?.state !== "unavailable" ? hass.states[tempKey].state : (amsMeta.code === "AMSHT" ? "85" : "—"),
             tempUnit: (tempKey && hass.states[tempKey]?.attributes?.unit_of_measurement) || "°C",
             drying: dryKey ? hass.states[dryKey]?.state === "on" : (amsMeta.code === "AMSHT"),
@@ -522,9 +568,11 @@
         nozzleTarget,
         bedTemp,
         bedTarget,
+        chamberTemp,
         currentLayer,
         totalLayers,
         remainingMins,
+        etaDisplay,
         totalUsage,
         taskName,
         printWeight,
@@ -537,6 +585,11 @@
         speedProfile,
         coolingFan,
         heatbreakFan,
+        auxFan,
+        chamberFan,
+        airductMode,
+        hasDoorSensor,
+        doorOpen,
         hmsError,
         printError,
         alerts,
@@ -2412,6 +2465,14 @@
     if (unitsToRender.length > 0) {
       filamentHtml = unitsToRender.map(ams => {
         const amsImg = ams.img || getPrinterImage(ams.modelNorm || "AMS");
+        const humChipClass = ams.isVeryWet ? "ams-chip very-wet" : (ams.isWet ? "ams-chip wet" : "ams-chip");
+        const humIcon = ams.isWet ? "⚠️" : "💧";
+        const humText = ams.humidityPct !== null
+          ? (`${ams.humidityPct}% RH${ams.humidityIndex !== '—' ? ' • Idx ' + ams.humidityIndex : ''}`)
+          : (`Idx ${ams.humidityIndex}`);
+        const humTitle = ams.isWet
+          ? `Elevated AMS Humidity (${ams.humidityPct}% RH) — Consider running active dryer or replacing desiccant`
+          : `AMS Relative Humidity`;
         return `
           <div class="ams-deck">
             <div class="ams-hdr">
@@ -2427,7 +2488,7 @@
               </div>
               <div class="ams-Readouts">
                 <span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
-                <span class="ams-chip">💧 Idx ${ams.humidityIndex}</span>
+                <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
                 ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}
               </div>
             </div>
@@ -2468,6 +2529,15 @@
       `;
     }
 
+    const hasChamber = p.chamberTemp && p.chamberTemp !== "—";
+    const bedSubDetail = (p.bedType && p.bedType !== "—" && p.bedType !== "unknown")
+      ? p.bedType
+      : (p.hasDoorSensor ? (p.doorOpen ? "🚪 Door Open" : "🚪 Door Closed") : "Standard Plate");
+    const hasEnclFans = (p.auxFan && p.auxFan !== "—") || (p.chamberFan && p.chamberFan !== "—");
+    const coolingSubDetail = hasEnclFans
+      ? (`Aux ${p.auxFan !== '—' ? p.auxFan + '%' : '0%'} • Chamb ${p.chamberFan !== '—' ? p.chamberFan + '%' : '0%'} • ${p.speedProfile}`)
+      : (`Mode: ${p.speedProfile}`);
+
     return `
       <div class="p-card ${p.online ? 'is-online' : 'is-offline'} ${isHighlighted ? 'is-highlighted' : ''}" id="printer-card-${p.prefix}" data-prefix="${p.prefix}">
         <div class="p-hdr">
@@ -2477,6 +2547,7 @@
                 <span class="p-dot" style="background:${stateColor};"></span>
                 ${stateBadgeText}
               </span>
+              ${p.doorOpen ? `<span class="watt-pill" title="Printer Enclosure Door is Open">🚪 Door Open</span>` : ''}
               ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${p.smartPlug.powerVal}${p.smartPlug.powerUnit}</span>` : ''}
             </div>
             <div class="p-title-wrap">
@@ -2523,7 +2594,7 @@
           </div>
           <div class="job-meta-pills">
             <span>📚 Layer ${p.currentLayer} / ${p.totalLayers}</span>
-            <span>⏱️ ${p.remainingMins !== '0' && p.remainingMins !== '0.0' ? p.remainingMins + 'm left' : 'Idle / Done'}</span>
+            <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${p.etaDisplay || 'Idle / Done'}</span>
             <span>⚖️ ${p.printWeight !== '—' ? p.printWeight + 'g' : '—'}</span>
           </div>
         </div>
@@ -2535,14 +2606,14 @@
             <div class="t-sub">Target ${p.nozzleTarget}° • ${p.nozzleSize}mm</div>
           </div>
           <div class="t-tile">
-            <div class="t-lbl">🛏️ Build Plate</div>
-            <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°' : '—'}</div>
-            <div class="t-sub">Target ${p.bedTarget}° • ${p.bedType}</div>
+            <div class="t-lbl">${hasChamber ? '🛏️ Bed & Chamber' : '🛏️ Build Plate'}</div>
+            <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°</span>` : ''}</div>
+            <div class="t-sub">Target ${p.bedTarget}° • ${bedSubDetail}</div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">🌀 Cooling & Speed</div>
             <div class="t-val">${p.coolingFan !== '—' ? p.coolingFan + '%' : '—'}</div>
-            <div class="t-sub">Mode: ${p.speedProfile}</div>
+            <div class="t-sub" title="${coolingSubDetail}">${coolingSubDetail}</div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">⏳ Fleet Hours</div>
@@ -3357,6 +3428,16 @@
     .ams-chip.drying {
       background: rgba(245, 158, 11, 0.22);
       color: #fde68a;
+    }
+    .ams-chip.wet {
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fde68a;
+    }
+    .ams-chip.very-wet {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
     }
     .ams-slots-grid {
       display: grid;
@@ -4221,8 +4302,9 @@
       const printers = resolveAllPrinters(hass, this._config.smart_plugs);
       const sig = JSON.stringify(printers.map(p => [
         p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
+        p.chamberTemp, p.auxFan, p.chamberFan, p.doorOpen, p.remainingMins,
         p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
-        (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidity + ":" + u.temp + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
+        (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidityIndex + ":" + u.humidityPct + ":" + u.temperature + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
       ]));
       if (sig !== this._lastSig) {
         this._lastSig = sig;

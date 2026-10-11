@@ -5,6 +5,13 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-10-11
+
+### Added
+- **Inline Chamber Temperature, Aux/Chamber Fans & Door Sensor Telemetry (`#11`)**: On enclosed printers (`P2S`, `P1S`, `X1C`, `X1E`, `X2D`, `H2`, `R1`), the existing Build Plate tile now shows `🛏️ Bed & Chamber` with live chamber temperature (`• 🏠 24°`) and door state (`🚪 Door Closed` / `🚪 Door Open`), the Cooling & Speed tile sub-line shows live `Aux %` and `Chamb %` fan speeds alongside the speed profile, and an inline `🚪 Door Open` pill appears in the card header only when the enclosure door is open.
+- **Actual AMS Relative Humidity (`% RH`) & Wet-Filament Highlight (`#11`)**: Reads `sensor.*_ams_<N>_humidity` (`% RH`) alongside `humidity_index` inside the existing AMS header badge (e.g. `💧 47% RH • Idx 5`), automatically highlighting the pill in amber (`>= 45% RH`) or red (`>= 55% RH`) with `⚠️` when desiccant or active drying is needed.
+- **Exact Finish Clock Time in Existing ETA Badge (`#11`)**: Displays the target completion clock time alongside the remaining countdown inside the existing `⏱️` job progress pill (e.g., `1h 12m • 7:42 PM`) when a print is active.
+
 ## [1.2.1] - 2026-10-11
 
 ### Fixed
