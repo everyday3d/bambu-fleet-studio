@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.2.3";
+  const CARD_VERSION = "1.2.4";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";

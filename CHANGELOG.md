@@ -5,7 +5,7 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.4] - 2026-10-11
 
 ### Added
 - **Clickable `AMS 2 Pro` / `AMS HT` Active Filament Dryer Control Modal (`#13`)**: Clicking the existing AMS temperature/humidity header badge (`🌡️ 23°C • 💧 47% RH • 🔥 Dry`) on any `AMS 2 Pro` (`<= 65°C`) or `AMS HT` (`<= 85°C`) opens a dedicated **Active Filament Dryer Control** modal that invokes `bambu_lab.start_filament_drying` and `bambu_lab.stop_filament_drying`:
