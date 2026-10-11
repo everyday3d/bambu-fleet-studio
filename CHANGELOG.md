@@ -5,6 +5,13 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-10-11
+
+### Fixed
+- **P2S / X1 / H2 RTSPS Camera Live Feed Fix (`#10`)**: Resolved an issue where RTSPS cameras (`P2S`, `X1C`, `X1E`, `H2D`, `R1`) displayed a black 320×240 placeholder image with a red exclamation mark (`!`) even after enabling `LAN Only Liveview`. Root cause: Home Assistant Core's `/api/camera_proxy_stream/` endpoint invokes `camera._async_camera_image()` directly, bypassing `use_stream_for_stills = True` and returning `BambuLabRtspCamera.camera_image()`'s hardcoded 320×240 red-exclamation fallback instead of decoding the RTSPS stream. RTSPS cameras now use double-buffered offscreen preloading against `/api/camera_proxy/camera.<id>` (which calls `camera.async_camera_image()` → `stream.async_get_image()` and delivers full 1920×1080 HD live frames) in both the card viewport and fullscreen lightbox modal.
+- **Zero-Scroll Card Action & Chamber Light Toggle (`#10`)**: Fixed a bug where clicking any button on a printer card (such as toggling the Chamber Light `💡` ON/OFF or switching viewport tabs) caused the dashboard page to scroll back to the top and momentarily blinked live camera streams. Added scroll-container & viewport-card-offset anchoring (`_captureScrollContext` / `_restoreScrollContext`), live camera `<img>` DOM node preservation across `_render()` updates, `type="button"` + `btn.blur()` focus management, and instant optimistic UI toggling on the Chamber Light buttons.
+- **Notification Automation Blueprint Compatibility (`#10`)**: Fixed `buildAutomationBlueprint` so non-`mobile_app` notification services (`notify.notify` / `notify.persistent_notification`) omit mobile-only `data.image` fields that caused Home Assistant validation errors.
+
 ## [1.2.0] - 2026-10-11
 
 ### Added

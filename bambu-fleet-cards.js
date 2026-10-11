@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.2.0";
+  const CARD_VERSION = "1.2.1";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -624,6 +624,7 @@
     const svc = notifyService || "notify.persistent_notification";
     const [svcDomain, svcName] = svc.includes(".") ? svc.split(".", 2) : ["notify", svc];
     const isPersistent = svcName === "persistent_notification";
+    const isMobileApp = svcName.startsWith("mobile_app");
 
     if (blueprintId === "print_complete") {
       const id = "bambu_fleet_print_complete_" + pref;
@@ -652,14 +653,19 @@
               }
             : {
                 service: svcDomain + "." + svcName,
-                data: {
-                  title: "✅ " + pName + " — Print Complete!",
-                  message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g",
-                  data: {
-                    entity_id: "camera." + pref + "_camera",
-                    image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}"
-                  }
-                }
+                data: isMobileApp
+                  ? {
+                      title: "✅ " + pName + " — Print Complete!",
+                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g",
+                      data: {
+                        entity_id: "camera." + pref + "_camera",
+                        image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}"
+                      }
+                    }
+                  : {
+                      title: "✅ " + pName + " — Print Complete!",
+                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g"
+                    }
               }
         ]
       };
@@ -698,16 +704,21 @@
               }
             : {
                 service: svcDomain + "." + svcName,
-                data: {
-                  title: "🚨 " + pName + " — HMS / Print Error!",
-                  message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}",
-                  data: {
-                    entity_id: "camera." + pref + "_camera",
-                    image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}",
-                    importance: "high",
-                    priority: "high"
-                  }
-                }
+                data: isMobileApp
+                  ? {
+                      title: "🚨 " + pName + " — HMS / Print Error!",
+                      message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}",
+                      data: {
+                        entity_id: "camera." + pref + "_camera",
+                        image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}",
+                        importance: "high",
+                        priority: "high"
+                      }
+                    }
+                  : {
+                      title: "🚨 " + pName + " — HMS / Print Error!",
+                      message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}"
+                    }
               }
         ]
       };
@@ -770,8 +781,13 @@
     document.body.appendChild(host);
 
     let activeOptionsFlowId = null;
+    let activeCamPollTimer = null;
 
     const close = async () => {
+      if (activeCamPollTimer) {
+        clearInterval(activeCamPollTimer);
+        activeCamPollTimer = null;
+      }
       if (activeOptionsFlowId) {
         try {
           await hass.callApi("DELETE", "config/config_entries/options/flow/" + activeOptionsFlowId);
@@ -1192,6 +1208,11 @@
 
     if (mode === "camera") {
       const mjpegUrl = payload.cameraPic ? payload.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
+      const initialCamSrc = payload.cameraPic
+        ? (payload.isRtspCam
+            ? (payload.cameraPic + (payload.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
+            : mjpegUrl)
+        : "";
       const fallbackImg = payload.pickPic || payload.coverPic || "";
       const canUseHaStream = Boolean(payload.online && payload.camAvailable && payload.isRtspCam && customElements.get("ha-camera-stream") && payload.cameraStateObj);
 
@@ -1204,7 +1225,7 @@
                 <div class="hdr-title">📹 ${payload.name} — Live Camera</div>
                 ${payload.online && payload.camAvailable ? `
                   <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);padding:3px 9px;border-radius:999px;">
-                    ● ${payload.isRtspCam ? "RTSPS / WEBRTC STREAM" : "LIVE STREAM"}
+                    ● ${payload.isRtspCam ? "1080P RTSPS LIVE FEED" : "LIVE STREAM"}
                   </span>
                 ` : `
                   <span style="font-size:10px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);padding:3px 9px;border-radius:999px;">
@@ -1212,12 +1233,12 @@
                   </span>
                 `}
               </div>
-              <button class="x-btn" id="xBtn">✕</button>
+              <button type="button" class="x-btn" id="xBtn">✕</button>
             </div>
 
             <div id="camStreamMount" style="background:#05070b;border:1px solid rgba(255,255,255,0.1);border-radius:14px;overflow:hidden;aspect-ratio:16/9;position:relative;display:flex;align-items:center;justify-content:center;">
               ${payload.online && payload.camAvailable
-                ? `<img id="camMjpegImg" src="${mjpegUrl}" style="width:100%;height:100%;object-fit:contain;" />`
+                ? `<img id="camMjpegImg" src="${initialCamSrc}" style="width:100%;height:100%;object-fit:contain;" />`
                 : payload.online
                   ? `
                     ${fallbackImg ? `<img src="${fallbackImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0.22;filter:blur(2px);" />` : ""}
@@ -1246,12 +1267,12 @@
 
             <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;">
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-ghost" id="camLightBtn">💡 ${payload.lightOn ? "Turn Chamber Light OFF" : "Turn Chamber Light ON"}</button>
-                ${canUseHaStream ? `<button class="btn btn-ghost" id="camModeBtn">🎞️ Switch to MJPEG Stream</button>` : ""}
+                <button type="button" class="btn btn-ghost" id="camLightBtn">💡 ${payload.lightOn ? "Turn Chamber Light OFF" : "Turn Chamber Light ON"}</button>
+                ${canUseHaStream ? `<button type="button" class="btn btn-ghost" id="camModeBtn">⚡ Switch to WebRTC / HLS Player</button>` : ""}
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-cyan" id="camReconnectBtn">🔄 Reconnect Camera</button>
-                <button class="btn btn-ghost" id="camCloseBtn">Close</button>
+                <button type="button" class="btn btn-cyan" id="camReconnectBtn">🔄 Reconnect Camera</button>
+                <button type="button" class="btn btn-ghost" id="camCloseBtn">Close</button>
               </div>
             </div>
           </div>
@@ -1260,8 +1281,40 @@
 
       const mount = shadow.getElementById("camStreamMount");
       let usingWebRtc = false;
+      let modalPollingBusy = false;
+
+      const startModalFramePolling = () => {
+        if (activeCamPollTimer) {
+          clearInterval(activeCamPollTimer);
+          activeCamPollTimer = null;
+        }
+        if (!payload.online || !payload.camAvailable || !payload.isRtspCam || !payload.cameraPic) return;
+        activeCamPollTimer = setInterval(() => {
+          if (usingWebRtc || modalPollingBusy) return;
+          const imgEl = shadow.getElementById("camMjpegImg");
+          if (!imgEl) return;
+          modalPollingBusy = true;
+          const pre = new Image();
+          pre.onload = () => {
+            modalPollingBusy = false;
+            if (pre.naturalWidth > 320 && imgEl.isConnected) {
+              imgEl.src = pre.src;
+            }
+          };
+          pre.onerror = () => {
+            modalPollingBusy = false;
+          };
+          const sep = payload.cameraPic.includes("?") ? "&" : "?";
+          pre.src = payload.cameraPic + sep + "_ts=" + Date.now();
+        }, 1100);
+      };
+
       const mountHaStream = () => {
         if (!mount || !canUseHaStream) return;
+        if (activeCamPollTimer) {
+          clearInterval(activeCamPollTimer);
+          activeCamPollTimer = null;
+        }
         mount.innerHTML = "";
         const streamEl = document.createElement("ha-camera-stream");
         streamEl.hass = hass;
@@ -1274,27 +1327,32 @@
         usingWebRtc = true;
       };
 
-      if (canUseHaStream) {
-        mountHaStream();
-      }
+      startModalFramePolling();
 
       const camModeBtn = shadow.getElementById("camModeBtn");
       if (camModeBtn) {
         camModeBtn.onclick = () => {
           if (usingWebRtc) {
-            mount.innerHTML = `<img id="camMjpegImg" src="${mjpegUrl}" style="width:100%;height:100%;object-fit:contain;" />`;
+            const liveSrc = payload.isRtspCam
+              ? (payload.cameraPic + (payload.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
+              : mjpegUrl;
+            mount.innerHTML = `<img id="camMjpegImg" src="${liveSrc}" style="width:100%;height:100%;object-fit:contain;" />`;
             usingWebRtc = false;
-            camModeBtn.textContent = "⚡ Switch to WebRTC / RTSP Stream";
+            camModeBtn.textContent = "⚡ Switch to WebRTC / HLS Player";
+            startModalFramePolling();
           } else {
             mountHaStream();
-            camModeBtn.textContent = "🎞️ Switch to MJPEG Stream";
+            camModeBtn.textContent = "🎞️ Switch to 1080p Live Frame Stream";
           }
         };
       }
 
+      let curLightState = Boolean(payload.lightOn);
       const camLightBtn = shadow.getElementById("camLightBtn");
       if (camLightBtn) {
         camLightBtn.onclick = async () => {
+          curLightState = !curLightState;
+          camLightBtn.textContent = "💡 " + (curLightState ? "Turn Chamber Light OFF" : "Turn Chamber Light ON");
           await hass.callService("light", "toggle", { entity_id: payload.lightEntityId });
         };
       }
@@ -2300,21 +2358,25 @@
     } else if (mode === "controls") {
       stageRightHtml = `
         <div class="quick-ctrl-grid">
-          <button class="q-btn" data-ctrl="light" data-prefix="${p.prefix}">${p.lightOn ? '💡 Light ON' : '💡 Light OFF'}</button>
-          <button class="q-btn" data-ctrl="refresh" data-prefix="${p.prefix}">🔄 Force Sync</button>
-          <button class="q-btn" data-ctrl="pause" data-prefix="${p.prefix}">⏸️ Pause</button>
-          <button class="q-btn" data-ctrl="resume" data-prefix="${p.prefix}">▶️ Resume</button>
-          <button class="q-btn warn" data-ctrl="stop" data-prefix="${p.prefix}">⏹️ Stop Job</button>
-          <button class="q-btn" data-ctrl="speed" data-prefix="${p.prefix}">⚡ ${p.speedProfile}</button>
+          <button type="button" class="q-btn" data-ctrl="light" data-prefix="${p.prefix}">${p.lightOn ? '💡 Light ON' : '💡 Light OFF'}</button>
+          <button type="button" class="q-btn" data-ctrl="refresh" data-prefix="${p.prefix}">🔄 Force Sync</button>
+          <button type="button" class="q-btn" data-ctrl="pause" data-prefix="${p.prefix}">⏸️ Pause</button>
+          <button type="button" class="q-btn" data-ctrl="resume" data-prefix="${p.prefix}">▶️ Resume</button>
+          <button type="button" class="q-btn warn" data-ctrl="stop" data-prefix="${p.prefix}">⏹️ Stop Job</button>
+          <button type="button" class="q-btn" data-ctrl="speed" data-prefix="${p.prefix}">⚡ ${p.speedProfile}</button>
         </div>
       `;
     } else {
-      const streamUrl = (p.camAvailable && p.cameraPic) ? p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
+      const camFeedUrl = (p.camAvailable && p.cameraPic)
+        ? (p.isRtspCam
+            ? (p.cameraPic + (p.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
+            : p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/"))
+        : "";
       const fallbackPreview = p.pickPic || p.coverPic || "";
-      if (p.online && streamUrl) {
+      if (p.online && camFeedUrl) {
         stageRightHtml = `
           <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to open live camera player">
-            <img class="stage-media-img" src="${streamUrl}" alt="Live Cam" />
+            <img class="stage-media-img" data-cam-key="${p.prefix}" ${p.isRtspCam ? `data-rtsp-proxy="${p.cameraPic}"` : ''} src="${camFeedUrl}" alt="Live Cam" />
             <span class="live-tag">● LIVE</span>
             <span class="expand-tag">⛶</span>
           </div>
@@ -2423,11 +2485,11 @@
             </div>
           </div>
           <div class="p-hdr-actions">
-            ${p.smartPlug && p.smartPlug.switchEntity ? `<button class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 Safety Lock: ' + p.lockReason) : ('Toggle Smart Plug (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? '🔒' : '🔌'}</button>` : ''}
-            <button class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="Toggle Chamber Light">💡</button>
-            <button class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="Reload Connection">🔄</button>
-            <button class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="Edit Printer & Smart Plug">✏️</button>
-            <button class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="Delete Printer">🗑️</button>
+            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 Safety Lock: ' + p.lockReason) : ('Toggle Smart Plug (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? '🔒' : '🔌'}</button>` : ''}
+            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="Toggle Chamber Light">💡</button>
+            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="Reload Connection">🔄</button>
+            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="Edit Printer & Smart Plug">✏️</button>
+            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="Delete Printer">🗑️</button>
           </div>
         </div>
 
@@ -2441,9 +2503,9 @@
 
           <div class="stage-viewport">
             <div class="viewport-tabs">
-              <button class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}">📹 Cam</button>
-              <button class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}">🖼️ 3MF</button>
-              <button class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}">🎛️ Ctrl</button>
+              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}">📹 Cam</button>
+              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}">🖼️ 3MF</button>
+              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}">🎛️ Ctrl</button>
             </div>
             <div class="viewport-body">
               ${stageRightHtml}
@@ -4028,6 +4090,122 @@
       this._filamentSearch = "";
       this._highlightedPrefix = "";
       this._lastSig = "";
+      this._lastInteractedPrefix = "";
+      this._rtspFrameTimer = null;
+      this._rtspInFlight = {};
+    }
+
+    connectedCallback() {
+      this._startRtspFrameLoop();
+    }
+
+    disconnectedCallback() {
+      if (this._rtspFrameTimer) {
+        clearInterval(this._rtspFrameTimer);
+        this._rtspFrameTimer = null;
+      }
+    }
+
+    _startRtspFrameLoop() {
+      if (this._rtspFrameTimer) return;
+      this._rtspFrameTimer = setInterval(() => {
+        if (!this.shadowRoot || document.hidden) return;
+        this.shadowRoot.querySelectorAll("img.stage-media-img[data-rtsp-proxy]").forEach(img => {
+          const base = img.getAttribute("data-rtsp-proxy");
+          const key = img.getAttribute("data-cam-key") || base;
+          if (!base || this._rtspInFlight[key]) return;
+          this._rtspInFlight[key] = true;
+          const nextUrl = base + (base.includes("?") ? "&" : "?") + "_ts=" + Date.now();
+          const pre = new Image();
+          pre.onload = () => {
+            this._rtspInFlight[key] = false;
+            if (pre.naturalWidth > 320 && img.isConnected) {
+              img.src = nextUrl;
+            }
+          };
+          pre.onerror = () => {
+            this._rtspInFlight[key] = false;
+          };
+          pre.src = nextUrl;
+        });
+      }, 2200);
+    }
+
+    _captureScrollContext(anchorPrefix) {
+      const scrollTargets = [];
+      const seen = new Set();
+      const addTarget = (el) => {
+        if (!el || seen.has(el)) return;
+        seen.add(el);
+        if (typeof el.scrollTop === "number") {
+          scrollTargets.push({ el, top: el.scrollTop, left: el.scrollLeft || 0 });
+        }
+      };
+      addTarget(document.scrollingElement);
+      addTarget(document.documentElement);
+      addTarget(document.body);
+      let node = this;
+      while (node) {
+        addTarget(node);
+        if (node.parentNode) {
+          node = node.parentNode;
+        } else if (node.host) {
+          node = node.host;
+        } else {
+          break;
+        }
+      }
+      let anchorCardTop = null;
+      if (anchorPrefix && this.shadowRoot) {
+        const cardEl = this.shadowRoot.getElementById("printer-card-" + anchorPrefix);
+        if (cardEl) {
+          anchorCardTop = cardEl.getBoundingClientRect().top;
+        }
+      }
+      return {
+        winX: window.scrollX || window.pageXOffset || 0,
+        winY: window.scrollY || window.pageYOffset || 0,
+        scrollTargets,
+        anchorPrefix,
+        anchorCardTop
+      };
+    }
+
+    _restoreScrollContext(ctx) {
+      if (!ctx) return;
+      const apply = () => {
+        ctx.scrollTargets.forEach(t => {
+          try {
+            if (t.el.scrollTop !== t.top) t.el.scrollTop = t.top;
+            if (t.el.scrollLeft !== t.left) t.el.scrollLeft = t.left;
+          } catch (e) {}
+        });
+        if ((window.scrollY || window.pageYOffset || 0) !== ctx.winY) {
+          window.scrollTo(ctx.winX, ctx.winY);
+        }
+        if (ctx.anchorPrefix && ctx.anchorCardTop !== null && this.shadowRoot) {
+          const cardEl = this.shadowRoot.getElementById("printer-card-" + ctx.anchorPrefix);
+          if (cardEl) {
+            const currentTop = cardEl.getBoundingClientRect().top;
+            const delta = currentTop - ctx.anchorCardTop;
+            if (Math.abs(delta) > 2) {
+              window.scrollBy(0, delta);
+              ctx.scrollTargets.forEach(t => {
+                try {
+                  if (t.el !== document.scrollingElement && t.el !== document.documentElement && t.el !== document.body && t.el.scrollHeight > t.el.clientHeight) {
+                    t.el.scrollTop += delta;
+                  }
+                } catch (e) {}
+              });
+            }
+          }
+        }
+      };
+      apply();
+      requestAnimationFrame(() => {
+        apply();
+        this.style.minHeight = "";
+      });
     }
 
     setConfig(config) {
@@ -4054,6 +4232,24 @@
 
     _render() {
       if (!this.shadowRoot || !this._hass) return;
+      this._startRtspFrameLoop();
+
+      // Preserve live camera <img> DOM nodes so MJPEG streams and RTSPS frames never blink or reconnect on state updates
+      const preservedCamImgs = {};
+      this.shadowRoot.querySelectorAll("img.stage-media-img[data-cam-key]").forEach(img => {
+        const k = img.getAttribute("data-cam-key");
+        if (k && img.complete && img.naturalWidth > 0) {
+          preservedCamImgs[k] = img;
+        }
+      });
+
+      // Lock host height & capture scroll context so re-rendering shadowRoot never scrolls the page to the top
+      const prevHeight = this.offsetHeight;
+      if (prevHeight > 100) {
+        this.style.minHeight = prevHeight + "px";
+      }
+      const scrollCtx = this._captureScrollContext(this._lastInteractedPrefix);
+
       const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs);
       const filterPrefix = this._config.printer_prefix || this._config.prefix || "";
       const filterModel = (this._config.printer_model || "").toUpperCase().replace(/\s+/g, "");
@@ -4114,10 +4310,10 @@
                 </div>
               </div>
               <div class="cmd-actions">
-                <button class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">🎨 Filament Finder</button>
-                <button class="cmd-btn" id="openAutomationsBtn">🔔 Alerts & Automations</button>
-                <button class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">📖 ${this._showWalkthrough ? 'Hide Guide' : 'Setup Guide'}</button>
-                <button class="cmd-btn primary" id="addPrinterMainBtn">➕ Add Printer</button>
+                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">🎨 Filament Finder</button>
+                <button type="button" class="cmd-btn" id="openAutomationsBtn">🔔 Alerts & Automations</button>
+                <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">📖 ${this._showWalkthrough ? 'Hide Guide' : 'Setup Guide'}</button>
+                <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">➕ Add Printer</button>
               </div>
             </div>
           ` : ''}
@@ -4138,7 +4334,7 @@
                     <div style="font-size:13px;color:#94a3b8;max-width:460px;line-height:1.5;">
                       No active Home Assistant integration entry was found for <strong>${filterPrefix || expectedModelNorm}</strong>. Connect this device over Local LAN (Port 8883) or Bambu Cloud to view live telemetry.
                     </div>
-                    <button class="wt-cta-btn" id="emptyConnectBtn" data-model="${expectedModelNorm}" style="margin-top:6px;padding:11px 20px;font-size:13px;">
+                    <button type="button" class="wt-cta-btn" id="emptyConnectBtn" data-model="${expectedModelNorm}" style="margin-top:6px;padding:11px 20px;font-size:13px;">
                       ➕ Connect Bambu Lab ${expectedModelNorm}
                     </button>
                   </div>
@@ -4150,6 +4346,21 @@
           ${(this._showWalkthrough || onlyWalkthrough) && !onlySinglePrinter ? buildWalkthroughDeckHtml(this._walkthroughSeries) : ''}
         </div>
       `;
+
+      // Swap back preserved live camera <img> elements so streams don't restart or flicker
+      this.shadowRoot.querySelectorAll("img.stage-media-img[data-cam-key]").forEach(newImg => {
+        const k = newImg.getAttribute("data-cam-key");
+        const oldImg = preservedCamImgs[k];
+        if (oldImg && newImg.parentNode) {
+          const newRtsp = newImg.getAttribute("data-rtsp-proxy");
+          if (newRtsp) {
+            oldImg.setAttribute("data-rtsp-proxy", newRtsp);
+          }
+          newImg.parentNode.replaceChild(oldImg, newImg);
+        }
+      });
+
+      this._restoreScrollContext(scrollCtx);
 
       const addMain = this.shadowRoot.getElementById("addPrinterMainBtn");
       if (addMain) {
@@ -4191,7 +4402,7 @@
           this._render();
           const newInp = this.shadowRoot.getElementById("ffSearchInp");
           if (newInp) {
-            newInp.focus();
+            newInp.focus({ preventScroll: true });
             newInp.setSelectionRange(newInp.value.length, newInp.value.length);
           }
         };
@@ -4241,26 +4452,36 @@
       });
 
       this.shadowRoot.querySelectorAll(".v-tab").forEach(tab => {
-        tab.onclick = () => {
+        tab.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          tab.blur();
           const pref = tab.getAttribute("data-prefix");
           const vmode = tab.getAttribute("data-vmode");
+          this._lastInteractedPrefix = pref;
           this._viewModes[pref] = vmode;
           this._render();
         };
       });
 
       this.shadowRoot.querySelectorAll("[data-act='fullscreen-cam']").forEach(el => {
-        el.onclick = () => {
+        el.onclick = (e) => {
+          e.stopPropagation();
           const pref = el.getAttribute("data-prefix");
+          this._lastInteractedPrefix = pref;
           const p = allPrinters.find(x => x.prefix === pref);
           if (p) openStudioModal(this._hass, "camera", p);
         };
       });
 
       this.shadowRoot.querySelectorAll(".icon-btn").forEach(btn => {
-        btn.onclick = async () => {
+        btn.onclick = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          btn.blur();
           const act = btn.getAttribute("data-act");
           const pref = btn.getAttribute("data-prefix");
+          this._lastInteractedPrefix = pref;
           const p = allPrinters.find(x => x.prefix === pref);
           if (!p) return;
 
@@ -4274,6 +4495,16 @@
               this._hass.callService("switch", "toggle", { entity_id: p.smartPlug.switchEntity });
             }
           } else if (act === "light") {
+            btn.classList.toggle("lit-on");
+            const cardEl = this.shadowRoot.getElementById("printer-card-" + pref);
+            if (cardEl) {
+              const qLight = cardEl.querySelector(".q-btn[data-ctrl='light']");
+              if (qLight) {
+                const isLit = btn.classList.contains("lit-on");
+                qLight.classList.toggle("active-lit", isLit);
+                qLight.innerHTML = `💡 Light ${isLit ? 'ON' : 'OFF'}`;
+              }
+            }
             this._hass.callService("light", "toggle", { entity_id: p.lightEntityId });
           } else if (act === "reload") {
             btn.textContent = "⏳";
@@ -4281,7 +4512,7 @@
               await this._hass.callApi("POST", "config/config_entries/entry/" + p.entryId + "/reload");
               btn.textContent = "✓";
               setTimeout(() => { this._lastSig = ""; this._render(); }, 900);
-            } catch (e) {
+            } catch (err) {
               btn.textContent = "🔄";
             }
           } else if (act === "edit") {
@@ -4293,11 +4524,25 @@
       });
 
       this.shadowRoot.querySelectorAll(".q-btn").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          btn.blur();
           const ctrl = btn.getAttribute("data-ctrl");
           const pref = btn.getAttribute("data-prefix");
+          this._lastInteractedPrefix = pref;
+          const p = allPrinters.find(x => x.prefix === pref);
           if (ctrl === "light") {
-            this._hass.callService("light", "toggle", { entity_id: "light." + pref + "_chamber_light" });
+            const isLit = !btn.classList.contains("active-lit");
+            btn.classList.toggle("active-lit", isLit);
+            btn.innerHTML = `💡 Light ${isLit ? 'ON' : 'OFF'}`;
+            const cardEl = this.shadowRoot.getElementById("printer-card-" + pref);
+            if (cardEl) {
+              const iconLight = cardEl.querySelector(".icon-btn[data-act='light']");
+              if (iconLight) iconLight.classList.toggle("lit-on", isLit);
+            }
+            const lightId = (p && p.lightEntityId) ? p.lightEntityId : ("light." + pref + "_chamber_light");
+            this._hass.callService("light", "toggle", { entity_id: lightId });
           } else if (ctrl === "refresh") {
             this._hass.callService("button", "press", { entity_id: "button." + pref + "_force_refresh_data" });
           } else if (ctrl === "pause") {
