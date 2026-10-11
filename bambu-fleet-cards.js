@@ -518,6 +518,8 @@
           const humPctKey = findAmsSensor("sensor", k => (k.endsWith("_humidity") || /_humidity(_\d+)?$/.test(k)) && !k.includes("humidity_index"));
           const tempKey = findAmsSensor("sensor", k => k.includes("temperature") && !k.includes("drying_temperature"));
           const dryKey = findAmsSensor("binary_sensor", k => k.includes("drying"));
+          const dryRemKey = findAmsSensor("sensor", k => k.includes("remaining_drying_time"));
+          const dryTempKey = findAmsSensor("sensor", k => k.includes("drying_temperature"));
 
           const humidityIndex = humKey && hass.states[humKey]?.state !== "unavailable" && hass.states[humKey]?.state !== "unknown"
             ? hass.states[humKey].state
@@ -532,9 +534,23 @@
             ? toCelsiusStr(hass.states[tempKey], amsMeta.code === "AMSHT" ? "85" : "—", 1)
             : (amsMeta.code === "AMSHT" ? "85" : "—");
           const isOpenAir = amsMeta.code === "AMSLITE" || ((amsTempC === "0" || amsTempC === "0.0" || amsTempC === "—") && humidityPct === null);
+          const isDrying = dryKey ? hass.states[dryKey]?.state === "on" : false;
+          const dryRemRaw = dryRemKey && hass.states[dryRemKey]?.state !== "unavailable" && hass.states[dryRemKey]?.state !== "unknown"
+            ? parseFloat(hass.states[dryRemKey].state)
+            : NaN;
+          let dryingRemainingText = "";
+          if (!isNaN(dryRemRaw) && dryRemRaw > 0) {
+            const dHrs = Math.floor(dryRemRaw);
+            const dMins = Math.round((dryRemRaw - dHrs) * 60);
+            dryingRemainingText = dHrs > 0 ? (dHrs + "h" + (dMins > 0 ? " " + dMins + "m" : "")) : (dMins + "m");
+          }
+          const targetDryingTemp = dryTempKey ? toCelsiusStr(hass.states[dryTempKey], "", 0) : "";
+          const canDry = Boolean(!isOpenAir && (dryKey || amsMeta.code === "AMS2PRO" || amsMeta.code === "AMSHT"));
+          const maxDryTemp = amsMeta.code === "AMSHT" ? 85 : 65;
 
           return {
             id: amsDev.id || ("ams_" + prefix + "_" + unitIdx),
+            deviceId: amsDev.id || "",
             unitNum: amsNum,
             bankLetter,
             model: unitsSource.length > 1 ? (amsMeta.label + " #" + amsNum) : amsMeta.label,
@@ -542,13 +558,17 @@
             subLabel: amsMeta.sub,
             img: amsMeta.img,
             isOpenAir,
+            canDry,
+            maxDryTemp,
+            dryingRemainingText,
+            targetDryingTemp,
             humidityIndex,
             humidityPct,
             isWet,
             isVeryWet,
             temperature: isOpenAir ? "—" : amsTempC,
             tempUnit: "°C",
-            drying: dryKey ? hass.states[dryKey]?.state === "on" : (amsMeta.code === "AMSHT"),
+            drying: isDrying,
             trays
           };
         });
@@ -1273,6 +1293,92 @@
         border-radius: 8px;
         flex-shrink: 0;
       }
+      .dryer-preset-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .dryer-preset-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 9px 8px;
+        color: #f8fafc;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.15s ease;
+      }
+      .dryer-preset-btn:hover {
+        border-color: rgba(245, 158, 11, 0.55);
+        background: rgba(245, 158, 11, 0.1);
+      }
+      .dryer-preset-btn.active {
+        border-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.18);
+        box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35);
+      }
+      .dur-pill-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .dur-pill-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        padding: 7px 4px;
+        color: #cbd5e1;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.15s ease;
+      }
+      .dur-pill-btn:hover {
+        border-color: rgba(56, 189, 248, 0.55);
+        background: rgba(56, 189, 248, 0.1);
+        color: #f8fafc;
+      }
+      .dur-pill-btn.active {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.2);
+        color: #f8fafc;
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+      }
+      .rot-choice-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .rot-card {
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 11px 13px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .rot-card:hover {
+        border-color: rgba(56, 189, 248, 0.5);
+        background: rgba(56, 189, 248, 0.08);
+      }
+      .rot-card.active {
+        border-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.15);
+        box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4);
+      }
+      @media (max-width: 640px) {
+        .dryer-preset-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .rot-choice-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     `;
 
     if (mode === "camera") {
@@ -1636,6 +1742,266 @@
           }
         };
       });
+      return;
+    }
+
+    if (mode === "ams-dryer") {
+      const printer = payload.printer || {};
+      const ams = payload.ams || {};
+      const maxTemp = ams.maxDryTemp || 65;
+      const amsImg = ams.img || getPrinterImage(ams.modelNorm || "AMS2PRO");
+      const loadedTrays = (ams.trays || []).filter(t => !t.empty && t.name !== "Empty" && t.name !== "Offline");
+      const plaSlots = loadedTrays.filter(t => String(t.type || "").toUpperCase().includes("PLA")).map(t => t.slotCode || ("A" + t.slot));
+      const hasPlaLoaded = plaSlots.length > 0;
+      const defaultTemp = hasPlaLoaded ? 50 : 60;
+      const defaultDur = hasPlaLoaded ? 4 : 6;
+      const hiTempVal = maxTemp >= 80 ? 80 : maxTemp;
+      const hiTempLabel = maxTemp >= 80 ? "PA / PC / CF" : "ABS+ / High";
+
+      shadow.innerHTML = `
+        <style>${modalCss}</style>
+        <div class="overlay" id="bgOverlay">
+          <div class="dialog">
+            <div class="hdr">
+              <div class="hdr-title">🔥 Active Filament Dryer — Bambu ${ams.model}</div>
+              <button type="button" class="x-btn" id="xBtn">✕</button>
+            </div>
+
+            <div class="hero-strip">
+              <img src="${amsImg}" alt="${ams.model}" />
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <div style="font-size:16px;font-weight:800;color:#f8fafc;">${printer.name} • Bambu ${ams.model}</div>
+                  <span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;${ams.drying ? 'background:rgba(245,158,11,0.22);color:#fde68a;border:1px solid rgba(245,158,11,0.45);' : 'background:rgba(148,163,184,0.16);color:#cbd5e1;'}">
+                    ${ams.drying ? ('🔥 DRYING ACTIVE' + (ams.dryingRemainingText ? ' • ' + ams.dryingRemainingText + ' left' : '')) : '💤 DRYER IDLE'}
+                  </span>
+                </div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;">
+                  <span>🌡️ Current: <strong style="color:#f8fafc;">${ams.temperature}°C</strong></span>
+                  <span>💧 Humidity: <strong style="color:${ams.isVeryWet ? '#fca5a5' : (ams.isWet ? '#fde68a' : '#38bdf8')};">${ams.humidityPct !== null ? (ams.humidityPct + '% RH (Idx ' + ams.humidityIndex + ')') : ('Idx ' + ams.humidityIndex)}</strong></span>
+                  <span>🔥 Max Spec: <strong style="color:#f59e0b;">${maxTemp}°C</strong></span>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                  ${(ams.trays || []).map(t => `
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:2px 7px;border-radius:999px;color:#e2e8f0;">
+                      <span style="width:8px;height:8px;border-radius:50%;background:${t.color};display:inline-block;"></span>
+                      ${t.slotCode}: ${t.empty ? 'Empty' : (t.type || t.name)}
+                    </span>
+                  `).join("")}
+                </div>
+              </div>
+            </div>
+
+            <div class="fld">
+              <label>1. Quick Material Drying Presets</label>
+              <div class="dryer-preset-grid">
+                <button type="button" class="dryer-preset-btn ${defaultTemp === 50 ? 'active' : ''}" data-temp="50" data-dur="4">
+                  <div style="font-size:12px;font-weight:800;">PLA / Matte</div>
+                  <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-top:2px;">50°C • 4h</div>
+                </button>
+                <button type="button" class="dryer-preset-btn ${defaultTemp === 60 ? 'active' : ''}" data-temp="60" data-dur="6">
+                  <div style="font-size:12px;font-weight:800;">PETG / TPU</div>
+                  <div style="font-size:11px;color:#38bdf8;font-weight:700;margin-top:2px;">60°C • 6h</div>
+                </button>
+                <button type="button" class="dryer-preset-btn" data-temp="65" data-dur="6">
+                  <div style="font-size:12px;font-weight:800;">ABS / ASA</div>
+                  <div style="font-size:11px;color:#10b981;font-weight:700;margin-top:2px;">65°C • 6h</div>
+                </button>
+                <button type="button" class="dryer-preset-btn" data-temp="${hiTempVal}" data-dur="8">
+                  <div style="font-size:12px;font-weight:800;">${hiTempLabel}</div>
+                  <div style="font-size:11px;color:#f43f5e;font-weight:700;margin-top:2px;">${hiTempVal}°C • 8h</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="fld">
+              <label>2. Target Drying Temperature (45°C – ${maxTemp}°C)</label>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <input id="dryTempInp" type="number" min="45" max="${maxTemp}" step="1" value="${defaultTemp}" style="width:110px;font-weight:800;font-size:15px;text-align:center;" />
+                <div class="sub-hint" style="margin:0;">AMS 2 Pro max: <strong>65°C</strong> • AMS HT max: <strong>85°C</strong> (PLA ≤ 55°C, PETG 60°C, ABS 65°C)</div>
+              </div>
+            </div>
+
+            <div class="fld">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <label style="margin:0;">3. How Long to Dry? — Select Duration (1 – 24 Hours)</label>
+                <span id="dryEtaPreview" style="font-size:11px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);padding:2px 8px;border-radius:999px;"></span>
+              </div>
+              <div class="dur-pill-grid" style="margin-top:6px;">
+                ${[2, 4, 6, 8, 12, 24].map(h => `
+                  <button type="button" class="dur-pill-btn ${defaultDur === h ? 'active' : ''}" data-dur-pick="${h}">${h}h</button>
+                `).join("")}
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <input id="dryDurInp" type="number" min="1" max="24" step="1" value="${defaultDur}" style="width:110px;font-weight:800;font-size:15px;text-align:center;" />
+                <div class="sub-hint" style="margin:0;">Custom hours (` + "`1`" + `–` + "`24h`" + `) • Recommended: <strong>4h</strong> PLA, <strong>6h</strong> PETG/ABS, <strong>8h–12h</strong> Nylon/PC</div>
+              </div>
+            </div>
+
+            <div id="plaWarnBox" style="display:none;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.45);color:#fde68a;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700;line-height:1.4;">
+              ⚠️ Slot(s) <strong>${plaSlots.join(", ")}</strong> have <strong>PLA</strong> loaded! Temperatures above <strong>55°C</strong> can soften PLA under tension inside the AMS.
+            </div>
+
+            <div class="fld">
+              <label>4. Spool Rotation Mode — Do you want to rotate spools while drying?</label>
+              <div class="rot-choice-grid">
+                <div class="rot-card active" data-rot="false">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:13px;font-weight:800;color:#f8fafc;">🛑 Do NOT Rotate (Stationary)</span>
+                    <span class="rot-check" style="font-size:11px;font-weight:800;color:#f59e0b;">✓ SELECTED</span>
+                  </div>
+                  <div style="font-size:11px;color:#94a3b8;line-height:1.35;">
+                    Spools stay stationary while heating. Safe to leave filaments threaded in the AMS feeders.
+                  </div>
+                </div>
+                <div class="rot-card" data-rot="true">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:13px;font-weight:800;color:#f8fafc;">🔄 Rotate Spools While Drying</span>
+                    <span class="rot-check" style="font-size:11px;font-weight:800;color:#64748b;">CLICK TO SELECT</span>
+                  </div>
+                  <div style="font-size:11px;color:#94a3b8;line-height:1.35;">
+                    Periodically rotates spools for 360° uniform drying. Unthread filament ends from feeders first.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="alertBox" class="alert"></div>
+
+            <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;">
+              <button type="button" class="btn btn-red" id="stopDryBtn">⏹️ Stop Drying</button>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+                <button type="button" class="btn btn-amber" id="startDryBtn">🔥 Start Active Drying</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      shadow.getElementById("xBtn").onclick = close;
+      shadow.getElementById("cancelBtn").onclick = close;
+      shadow.getElementById("bgOverlay").onclick = (e) => { if (e.target.id === "bgOverlay") close(); };
+
+      const tempInp = shadow.getElementById("dryTempInp");
+      const durInp = shadow.getElementById("dryDurInp");
+      const dryEtaPreview = shadow.getElementById("dryEtaPreview");
+      const plaWarnBox = shadow.getElementById("plaWarnBox");
+      const alertBox = shadow.getElementById("alertBox");
+      let rotateTray = false;
+
+      const syncDurationUI = () => {
+        const hrs = Math.min(24, Math.max(1, parseInt(durInp.value, 10) || 4));
+        shadow.querySelectorAll(".dur-pill-btn").forEach(b => {
+          b.classList.toggle("active", parseInt(b.getAttribute("data-dur-pick"), 10) === hrs);
+        });
+        if (dryEtaPreview) {
+          const endDt = new Date(Date.now() + hrs * 3600000);
+          const endStr = endDt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+          dryEtaPreview.textContent = `⏱️ ${hrs}h • Finishes ~${endStr}`;
+        }
+      };
+
+      const updatePlaWarning = () => {
+        const tVal = parseInt(tempInp.value, 10) || 50;
+        if (hasPlaLoaded && tVal > 55) {
+          plaWarnBox.style.display = "block";
+        } else {
+          plaWarnBox.style.display = "none";
+        }
+      };
+      updatePlaWarning();
+      syncDurationUI();
+      tempInp.oninput = updatePlaWarning;
+      durInp.oninput = syncDurationUI;
+
+      shadow.querySelectorAll(".dur-pill-btn").forEach(btn => {
+        btn.onclick = () => {
+          durInp.value = btn.getAttribute("data-dur-pick");
+          syncDurationUI();
+        };
+      });
+
+      shadow.querySelectorAll(".dryer-preset-btn").forEach(btn => {
+        btn.onclick = () => {
+          shadow.querySelectorAll(".dryer-preset-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          tempInp.value = btn.getAttribute("data-temp");
+          durInp.value = btn.getAttribute("data-dur");
+          updatePlaWarning();
+          syncDurationUI();
+        };
+      });
+
+      shadow.querySelectorAll(".rot-card").forEach(card => {
+        card.onclick = () => {
+          rotateTray = card.getAttribute("data-rot") === "true";
+          shadow.querySelectorAll(".rot-card").forEach(c => {
+            const isSel = (c.getAttribute("data-rot") === "true") === rotateTray;
+            c.classList.toggle("active", isSel);
+            const chk = c.querySelector(".rot-check");
+            if (chk) {
+              chk.textContent = isSel ? "✓ SELECTED" : "CLICK TO SELECT";
+              chk.style.color = isSel ? "#f59e0b" : "#64748b";
+            }
+          });
+        };
+      });
+
+      shadow.getElementById("startDryBtn").onclick = async () => {
+        const startBtn = shadow.getElementById("startDryBtn");
+        const tempVal = Math.min(maxTemp, Math.max(45, parseInt(tempInp.value, 10) || 55));
+        const durVal = Math.min(24, Math.max(1, parseInt(durInp.value, 10) || 4));
+        if (!ams.deviceId) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "AMS Device ID not found in Home Assistant Device Registry.";
+          return;
+        }
+        startBtn.disabled = true;
+        startBtn.textContent = "Starting Dryer...";
+        try {
+          await hass.callService("bambu_lab", "start_filament_drying", {
+            device_id: ams.deviceId,
+            temp: tempVal,
+            duration: durVal,
+            rotate_tray: Boolean(rotateTray)
+          });
+          alertBox.className = "alert ok";
+          alertBox.textContent = `✓ Started drying on Bambu ${ams.model} at ${tempVal}°C for ${durVal}h (${rotateTray ? 'Spool Rotation ON' : 'Stationary — Rotation OFF'})!`;
+          startBtn.textContent = "✓ Drying Started";
+          setTimeout(() => { close(); if (onComplete) onComplete(); }, 1000);
+        } catch (err) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "Dryer error: " + (err.message || JSON.stringify(err));
+          startBtn.disabled = false;
+          startBtn.textContent = "🔥 Start Active Drying";
+        }
+      };
+
+      shadow.getElementById("stopDryBtn").onclick = async () => {
+        const stopBtn = shadow.getElementById("stopDryBtn");
+        if (!ams.deviceId) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "AMS Device ID not found in Home Assistant Device Registry.";
+          return;
+        }
+        stopBtn.disabled = true;
+        stopBtn.textContent = "Stopping...";
+        try {
+          await hass.callService("bambu_lab", "stop_filament_drying", {
+            device_id: ams.deviceId
+          });
+          alertBox.className = "alert ok";
+          alertBox.textContent = `✓ Stopped active filament drying on Bambu ${ams.model}.`;
+          stopBtn.textContent = "✓ Stopped";
+          setTimeout(() => { close(); if (onComplete) onComplete(); }, 900);
+        } catch (err) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "Stop dryer error: " + (err.message || JSON.stringify(err));
+          stopBtn.disabled = false;
+          stopBtn.textContent = "⏹️ Stop Drying";
+        }
+      };
       return;
     }
 
@@ -2502,12 +2868,15 @@
                   <div class="ams-sub">${ams.subLabel || '4-Slot System'}</div>
                 </div>
               </div>
-              <div class="ams-Readouts">
+              <div class="ams-Readouts ${ams.canDry ? 'can-dry' : ''}" ${ams.canDry ? `data-act="ams-dryer" data-prefix="${p.prefix}" data-ams-num="${ams.unitNum}" title="Click to Start / Stop Active Filament Drying (${ams.model})"` : ''}>
                 ${ams.isOpenAir
                   ? '<span class="ams-chip" title="AMS Lite Open-Air Rotary Feeder (No Enclosure Sensor)">🌬️ Open-Air Rotary</span>'
                   : `<span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
                      <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
-                     ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}`
+                     ${ams.drying
+                       ? `<span class="ams-chip drying">🔥 Drying${ams.dryingRemainingText ? ' • ' + ams.dryingRemainingText : ''}</span>`
+                       : (ams.canDry ? '<span class="ams-chip dry-trigger">🔥 Dry</span>' : '')
+                     }`
                 }
               </div>
             </div>
@@ -3436,6 +3805,17 @@
       flex-wrap: wrap;
       gap: 5px;
     }
+    .ams-Readouts.can-dry {
+      cursor: pointer;
+      padding: 3px 6px;
+      margin: -3px -6px;
+      border-radius: 999px;
+      transition: all 0.16s ease;
+    }
+    .ams-Readouts.can-dry:hover {
+      background: rgba(245, 158, 11, 0.14);
+      transform: translateY(-1px);
+    }
     .ams-chip {
       font-size: 10px;
       font-weight: 700;
@@ -3444,9 +3824,21 @@
       border-radius: 999px;
       color: #cbd5e1;
     }
+    .ams-chip.dry-trigger {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fcd34d;
+    }
+    .ams-Readouts.can-dry:hover .ams-chip.dry-trigger {
+      background: rgba(245, 158, 11, 0.28);
+      border-color: rgba(245, 158, 11, 0.7);
+      color: #fef3c7;
+    }
     .ams-chip.drying {
-      background: rgba(245, 158, 11, 0.22);
+      background: rgba(245, 158, 11, 0.25);
+      border: 1px solid rgba(245, 158, 11, 0.6);
       color: #fde68a;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
     }
     .ams-chip.wet {
       background: rgba(245, 158, 11, 0.18);
@@ -4323,7 +4715,7 @@
         p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
         p.chamberTemp, p.auxFan, p.chamberFan, p.doorOpen, p.remainingMins,
         p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
-        (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidityIndex + ":" + u.humidityPct + ":" + u.temperature + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
+        (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidityIndex + ":" + u.humidityPct + ":" + u.temperature + ":" + u.isDrying + ":" + u.dryingRemainingText + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
       ]));
       if (sig !== this._lastSig) {
         this._lastSig = sig;
@@ -4572,6 +4964,25 @@
           this._lastInteractedPrefix = pref;
           const p = allPrinters.find(x => x.prefix === pref);
           if (p) openStudioModal(this._hass, "camera", p);
+        };
+      });
+
+      this.shadowRoot.querySelectorAll("[data-act='ams-dryer']").forEach(el => {
+        el.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const pref = el.getAttribute("data-prefix");
+          const amsNum = el.getAttribute("data-ams-num");
+          this._lastInteractedPrefix = pref;
+          const p = allPrinters.find(x => x.prefix === pref);
+          if (!p) return;
+          const ams = (p.amsUnits || []).find(a => String(a.unitNum) === String(amsNum));
+          if (ams && ams.canDry) {
+            openStudioModal(this._hass, "ams-dryer", { printer: p, ams }, () => {
+              this._lastSig = "";
+              this._render();
+            });
+          }
         };
       });
 
