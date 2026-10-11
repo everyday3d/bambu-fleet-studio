@@ -560,6 +560,9 @@
             isOpenAir,
             canDry,
             maxDryTemp,
+            dryEntityId: dryKey || "",
+            dryRemEntityId: dryRemKey || "",
+            dryTempEntityId: dryTempKey || "",
             dryingRemainingText,
             targetDryingTemp,
             humidityIndex,
@@ -586,6 +589,11 @@
         empty: extEmpty
       };
 
+      const mqttEncryption = hass.states["binary_sensor." + prefix + "_mqtt_encryption"]?.state === "on";
+      const devLanMode = hass.states["binary_sensor." + prefix + "_developer_lan_mode"]?.state === "on";
+      const mqttMode = hass.states["sensor." + prefix + "_mqtt_connection_mode"]?.state || "";
+      const mqttControlBlocked = Boolean(mqttEncryption && !devLanMode && mqttMode === "local");
+
       return {
         deviceId: dev.id,
         entryId,
@@ -597,6 +605,10 @@
         serial,
         swVersion: dev.sw_version || "—",
         online,
+        mqttEncryption,
+        devLanMode,
+        mqttMode,
+        mqttControlBlocked,
         printStatus,
         currentStage,
         progress,
@@ -1792,6 +1804,18 @@
               </div>
             </div>
 
+            ${printer.mqttControlBlocked ? `
+              <div style="background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.5);border-radius:12px;padding:11px 13px;font-size:12px;color:#fecaca;line-height:1.45;">
+                <div style="font-weight:900;font-size:13px;color:#fca5a5;margin-bottom:4px;">🔒 Printer Firmware Blocks Local MQTT Control (Err 84033543)</div>
+                <div><strong>${printer.name}</strong> has <strong>MQTT Signature Verification</strong> enabled while connected in <strong>Local MQTT</strong> mode with <strong>Developer Mode OFF</strong>. Bambu firmware rejects unsigned local dryer commands.</div>
+                <div style="margin-top:6px;color:#fde68a;font-weight:700;">
+                  To enable remote AMS drying on ${printer.name}, do either:
+                  <div style="margin-top:3px;font-weight:600;color:#f8fafc;">1️⃣ On ${printer.name} touchscreen: <strong>Settings ⚙️ → LAN Only Mode → Developer Mode ON</strong></div>
+                  <div style="font-weight:600;color:#f8fafc;">2️⃣ Or in Home Assistant: reconfigure <strong>${printer.name}</strong> under <strong>Settings → Devices & Services → Bambu Lab</strong> to use <strong>Bambu Cloud</strong> mode.</div>
+                </div>
+              </div>
+            ` : ''}
+
             <div class="fld">
               <label>1. Quick Material Drying Presets</label>
               <div class="dryer-preset-grid">
@@ -1948,6 +1972,25 @@
         };
       });
 
+      const isLiveMqttBlocked = () => {
+        const pfx = printer.prefix || "";
+        if (!pfx || !hass?.states) return Boolean(printer.mqttControlBlocked);
+        const enc = hass.states["binary_sensor." + pfx + "_mqtt_encryption"]?.state === "on";
+        const devLan = hass.states["binary_sensor." + pfx + "_developer_lan_mode"]?.state === "on";
+        const modeVal = hass.states["sensor." + pfx + "_mqtt_connection_mode"]?.state || "";
+        return Boolean(enc && !devLan && modeVal === "local");
+      };
+
+      const isAmsConfirmedDrying = () => {
+        if (!hass?.states) return false;
+        if (ams.dryEntityId && hass.states[ams.dryEntityId]?.state === "on") return true;
+        if (ams.dryRemEntityId) {
+          const remVal = parseFloat(hass.states[ams.dryRemEntityId]?.state || "0");
+          if (!isNaN(remVal) && remVal > 0) return true;
+        }
+        return false;
+      };
+
       shadow.getElementById("startDryBtn").onclick = async () => {
         const startBtn = shadow.getElementById("startDryBtn");
         const tempVal = Math.min(maxTemp, Math.max(45, parseInt(tempInp.value, 10) || 55));
@@ -1957,8 +2000,13 @@
           alertBox.textContent = "AMS Device ID not found in Home Assistant Device Registry.";
           return;
         }
+        if (isLiveMqttBlocked()) {
+          alertBox.className = "alert err";
+          alertBox.textContent = `🔒 Blocked by ${printer.name} Firmware MQTT Encryption (err_code 84033543: mqtt message verify failed). Enable 'Developer Mode' on the ${printer.name} screen (Settings → LAN Only → Developer Mode) or switch ${printer.name} to Bambu Cloud mode in Home Assistant.`;
+          return;
+        }
         startBtn.disabled = true;
-        startBtn.textContent = "Starting Dryer...";
+        startBtn.textContent = "Starting & Verifying...";
         try {
           await hass.callService("bambu_lab", "start_filament_drying", {
             device_id: ams.deviceId,
@@ -1966,10 +2014,25 @@
             duration: durVal,
             rotate_tray: Boolean(rotateTray)
           });
-          alertBox.className = "alert ok";
-          alertBox.textContent = `✓ Started drying on Bambu ${ams.model} at ${tempVal}°C for ${durVal}h (${rotateTray ? 'Spool Rotation ON' : 'Stationary — Rotation OFF'})!`;
-          startBtn.textContent = "✓ Drying Started";
-          setTimeout(() => { close(); if (onComplete) onComplete(); }, 1000);
+          let verified = false;
+          for (let i = 0; i < 7; i++) {
+            await new Promise(r => setTimeout(r, 500));
+            if (isAmsConfirmedDrying()) {
+              verified = true;
+              break;
+            }
+          }
+          if (verified) {
+            alertBox.className = "alert ok";
+            alertBox.textContent = `✓ Confirmed drying active on Bambu ${ams.model} at ${tempVal}°C for ${durVal}h (${rotateTray ? 'Spool Rotation ON' : 'Stationary — Rotation OFF'})!`;
+            startBtn.textContent = "✓ Drying Active";
+            setTimeout(() => { close(); if (onComplete) onComplete(); }, 1000);
+          } else {
+            alertBox.className = "alert err";
+            alertBox.textContent = `⚠️ Command sent, but ${printer.name} (${ams.model}) did not enter Drying state. Ensure filament is unloaded from the extruder/feeder, AMS lid is closed, and Developer Mode or Cloud Mode is active.`;
+            startBtn.disabled = false;
+            startBtn.textContent = "🔥 Start Active Drying";
+          }
         } catch (err) {
           alertBox.className = "alert err";
           alertBox.textContent = "Dryer error: " + (err.message || JSON.stringify(err));
@@ -1983,6 +2046,11 @@
         if (!ams.deviceId) {
           alertBox.className = "alert err";
           alertBox.textContent = "AMS Device ID not found in Home Assistant Device Registry.";
+          return;
+        }
+        if (isLiveMqttBlocked()) {
+          alertBox.className = "alert err";
+          alertBox.textContent = `🔒 Blocked by ${printer.name} Firmware MQTT Encryption. Enable Developer Mode on ${printer.name} or switch to Bambu Cloud mode.`;
           return;
         }
         stopBtn.disabled = true;

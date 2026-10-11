@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Clickable `AMS 2 Pro` / `AMS HT` Active Filament Dryer Control Modal (`#13`)**: Clicking the existing AMS temperature/humidity header badge (`🌡️ 23°C • 💧 47% RH • 🔥 Dry`) on any `AMS 2 Pro` (`<= 65°C`) or `AMS HT` (`<= 85°C`) opens a dedicated **Active Filament Dryer Control** modal that invokes `bambu_lab.start_filament_drying` and `bambu_lab.stop_filament_drying`:
   - **Material Drying Presets**: 1-click preset cards for **`PLA / Matte (50°C • 4h)`**, **`PETG / TPU (60°C • 6h)`**, **`ABS / ASA (65°C • 6h)`**, and **`PA / PC / CF (80°C • 8h on AMS HT / 65°C • 8h on AMS 2 Pro)`**.
+  - **Dedicated Drying Duration Selector (`1h`–`24h`) & Live Finish Time Preview**: 6 quick-select duration pills (`2h`, `4h`, `6h`, `8h`, `12h`, `24h`) plus custom hours input (`1`–`24`) and a live finish-clock badge (`⏱️ 4h • Finishes ~11:30 PM`).
   - **Automatic PLA Softening Warning**: Automatically warns when `PLA` is loaded in any tray and the target drying temperature exceeds `55°C`.
   - **Explicit Spool Rotation Selector (`rotate_tray`)**: Prompts whether to run **`🛑 Do NOT Rotate (Stationary)`** (`rotate_tray: false`, filament stays loaded in feeder) or **`🔄 Rotate Spools While Drying`** (`rotate_tray: true`, periodically rotates spools for uniform heating).
+  - **Firmware MQTT Encryption Lock Diagnostics (`err_code 84033543`) & Post-Command State Verification**: Detects when a printer in Local MQTT mode has firmware MQTT signature verification (`mqtt_encryption: on`) enabled with `developer_lan_mode: off` (which causes Bambu firmware to reject unsigned local control commands with `err_code 84033543: mqtt message verify failed`), displays a clear unlock guide (**Settings ⚙️ → LAN Only Mode → Developer Mode ON** on the printer touchscreen or switching to **Bambu Cloud** mode in Home Assistant), and polls `binary_sensor.*_ams_*_drying` after calling `start_filament_drying` to confirm the AMS actually entered active drying before reporting success.
 
 ## [1.2.3] - 2026-10-11
 
