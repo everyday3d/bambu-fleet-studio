@@ -79,7 +79,8 @@ function runGraphQL(payloadObj) {
   }
 }
 
-function parseRoadmapFromReadme(readmeText) {
+function parseRoadmapFromReadme(rawReadmeText) {
+  const readmeText = rawReadmeText.replace(/\r\n/g, "\n");
   const upcomingMatch = readmeText.match(
     /### 🚧 Upcoming Local-LAN Roadmap[^\n]*\n([\s\S]*?)(?=\n> \*\*☁️ Note|\n### ✅ Completed)/
   );
@@ -91,7 +92,7 @@ function parseRoadmapFromReadme(readmeText) {
   const completedRaw = completedMatch ? completedMatch[1].trim() : "";
 
   const upcomingItems = [];
-  for (const line of upcomingRaw.split(/\r?\n/)) {
+  for (const line of upcomingRaw.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("- [ ]")) continue;
     // Match: - [ ] **1️⃣ Title** *(optional note)*: Description
@@ -107,7 +108,7 @@ function parseRoadmapFromReadme(readmeText) {
   }
 
   const completedLines = completedRaw
-    .split(/\r?\n/)
+    .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.startsWith("- [x]"));
 
@@ -169,19 +170,26 @@ function syncGitHubDiscussions(currentTag) {
   });
   console.log(`[discussions] Updated Discussion #30 body (${upcomingItems.length} options + ${completedLines.length} shipped milestones).`);
 
-  // 2. Sync Discussion #30 Voting Comments (1️⃣ .. N️⃣)
+  // 2. Sync Discussion #30 Voting Comments (1️⃣ .. N️⃣) + Check Discussion #29
   const existingRes = runGraphQL({
     query: `query {
       repository(owner: "everyday3d", name: "bambu-fleet-studio") {
-        discussion(number: 30) {
+        disc30: discussion(number: 30) {
           comments(first: 30) {
+            nodes { id body }
+          }
+        }
+        disc29: discussion(number: 29) {
+          id
+          viewerCanUpdate
+          comments(first: 20) {
             nodes { id body }
           }
         }
       }
     }`
   });
-  const existingComments = existingRes?.data?.repository?.discussion?.comments?.nodes || [];
+  const existingComments = existingRes?.data?.repository?.disc30?.comments?.nodes || [];
 
   for (const item of upcomingItems) {
     const marker = `Vote Option ${item.numInt}:`;
@@ -219,6 +227,7 @@ function syncGitHubDiscussions(currentTag) {
   }
 
   // 3. Build & Update Discussion #29 (Welcome & Roadmap Overview)
+  const disc29Node = existingRes?.data?.repository?.disc29;
   const disc29Body = [
     `## 👋 Welcome to the Bambu Lab Fleet Studio Community! (\`${currentTag}\`)`,
     "",
@@ -234,13 +243,6 @@ function syncGitHubDiscussions(currentTag) {
     "",
     "---",
     "",
-    "### 💬 What to Post in Discussions",
-    "1. **📸 Show & Tell (Your Fleet Setups!)**: Share screenshots of your Bambu Lab Fleet Studio dashboard, WLED status strips, or multi-printer farm layouts!",
-    "2. **💡 Feature Requests & Local-LAN Roadmap Ideas**: Have an idea for AMS management, Spoolman integration, AI vision inspection (`Ollama` / `Gemini` / `OpenAI` / `Claude`), WLED effects, or camera widgets? Drop it here or vote in **[Discussion #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)**!",
-    "3. **🛠️ Setup & LAN Mode Q&A**: Need help finding your printer's 8-character LAN Access Code, configuring Docker/VLAN subnets, or setting up Port `322` RTSPS / Port `6000` TLS cameras? Ask away!",
-    "",
-    "---",
-    "",
     "### 🚧 Upcoming Local-LAN Roadmap ([Vote in Discussion #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))",
     ...upcomingItems.map((item) => item.rawLine),
     "",
@@ -251,15 +253,43 @@ function syncGitHubDiscussions(currentTag) {
     "Drop a comment below to introduce yourself and let us know what printers are in your fleet! 🖨️🔥"
   ].join("\n");
 
-  runGraphQL({
-    query: `mutation($id: ID!, $body: String!) {
-      updateDiscussion(input: { discussionId: $id, body: $body }) {
-        discussion { id url }
-      }
-    }`,
-    variables: { id: DISC_29_ID, body: disc29Body }
-  });
-  console.log(`[discussions] Updated Discussion #29 (Welcome & Roadmap Overview -> ${currentTag}).`);
+  if (disc29Node?.viewerCanUpdate) {
+    runGraphQL({
+      query: `mutation($id: ID!, $body: String!) {
+        updateDiscussion(input: { discussionId: $id, body: $body }) {
+          discussion { id url }
+        }
+      }`,
+      variables: { id: disc29Node.id, body: disc29Body }
+    });
+    console.log(`[discussions] Updated Discussion #29 body (-> ${currentTag}).`);
+  } else if (disc29Node) {
+    const existing29Comments = disc29Node.comments?.nodes || [];
+    const roadmapComment = existing29Comments.find((c) =>
+      c.body.includes("Welcome to the Bambu Lab Fleet Studio Community!")
+    );
+    if (roadmapComment) {
+      runGraphQL({
+        query: `mutation($id: ID!, $body: String!) {
+          updateDiscussionComment(input: { commentId: $id, body: $body }) {
+            comment { id }
+          }
+        }`,
+        variables: { id: roadmapComment.id, body: disc29Body }
+      });
+      console.log(`[discussions] Updated Discussion #29 Roadmap Overview comment (-> ${currentTag}).`);
+    } else {
+      runGraphQL({
+        query: `mutation($discussionId: ID!, $body: String!) {
+          addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+            comment { id }
+          }
+        }`,
+        variables: { discussionId: disc29Node.id, body: disc29Body }
+      });
+      console.log(`[discussions] Added Discussion #29 Roadmap Overview comment (-> ${currentTag}).`);
+    }
+  }
 }
 
 if (!discussionsOnly) {
