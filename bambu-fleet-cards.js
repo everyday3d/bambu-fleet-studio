@@ -985,7 +985,23 @@
     ff_badge: "ffBadge",
     ff_title: "ffTitle",
     ff_search_placeholder: "ffSearchPlaceholder",
+    ff_search_ph: "ffSearchPlaceholder",
     ff_all: "ffAll",
+    ff_live_lan_badge: "ff_mqtt_prog_badge",
+    ff_ready_btn: "ff_ready_to_print_btn",
+    ff_show_empty: "ff_show_empty_btn",
+    ff_hide_empty: "ff_hide_empty_btn",
+    ff_color_blue: "ff_color_blue_cyan",
+    ff_color_red: "ff_color_red_pink",
+    ff_color_orange: "ff_color_orange_gold",
+    ff_color_black: "ff_color_black_gray",
+    ff_color_purple: "ff_color_purple_brown",
+    ff_status_offline: "ff_pill_offline",
+    ff_offline_status: "ff_pill_offline",
+    ff_status_printing: "ff_pill_printing",
+    ff_printing_status: "ff_pill_printing",
+    ff_status_ready: "ff_pill_ready",
+    ff_ready_status: "ff_pill_ready",
     wt_badge: "wtBadge",
     wt_title: "wtTitle",
     wt_gallery_hdr: "wtSupportedHdr",
@@ -1011,26 +1027,28 @@
     tip_edit: { en: "Edit Printer, AMS & Smart Plug", de: "Drucker, AMS & Smart-Plug bearbeiten", fr: "Modifier imprimante, AMS & prise", es: "Editar impresora, AMS y enchufe", it: "Modifica stampante, AMS e presa", nl: "Printer, AMS & stekker bewerken", pl: "Edytuj drukarkę, AMS i gniazdko", pt: "Editar impressora, AMS e tomada", ru: "Настроить принтер, AMS и умную розетку", zh: "编辑打印机、AMS 与智能插座", "zh-tw": "編輯列印機、AMS 與智慧插座", ja: "プリンター・AMS・プラグ編集" },
     tip_delete: { en: "Remove Printer", de: "Drucker entfernen", fr: "Supprimer l'imprimante", es: "Eliminar impresora", it: "Rimuovi stampante", nl: "Printer verwijderen", pl: "Usuń drukarkę", pt: "Remover impressora", ru: "Удалить принтер", zh: "移除打印机", "zh-tw": "移除列印機", ja: "プリンターを削除" },
     ff_click_highlight: { en: "Click to highlight", de: "Klicken zum Hervorheben von", fr: "Cliquer pour mettre en évidence", es: "Clic para resaltar", it: "Clicca per evidenziare", nl: "Klik om te markeren", pl: "Kliknij, aby podświetlić", pt: "Clique para destacar", ru: "Нажмите, чтобы выделить", zh: "点击高亮定位", "zh-tw": "點擊高亮定位", ja: "クリックしてハイライト" },
-    ff_mqtt_prog_badge: { en: "📡 LIVE LAN MQTT AMS PROGRAMMER", zh: "📡 局域网 MQTT AMS 实时料槽编程", "zh-tw": "📡 區域網路 MQTT AMS 即時料槽編程" },
-    ff_loaded_spools: { en: "Loaded Spools", zh: "已装料盘", "zh-tw": "已裝料盤" },
-    ff_ready_now: { en: "Ready Now", zh: "立即可打", "zh-tw": "立即可印" },
-    ff_humid_ams: { en: "Humid AMS", zh: "AMS 潮湿", "zh-tw": "AMS 潮濕" },
-    ff_ready_to_print_btn: { en: "🟢 Ready to Print Now", zh: "🟢 立即可打印", "zh-tw": "🟢 立即可列印" },
-    ff_show_empty_btn: { en: "👁️ Show Empty Slots", zh: "👁️ 显示空料槽", "zh-tw": "👁️ 顯示空料槽" },
-    ff_hide_empty_btn: { en: "🙈 Hide Empty Slots", zh: "🙈 隐藏空料槽", "zh-tw": "🙈 隱藏空料槽" },
-    ff_color_all: { en: "🎨 All Colors", zh: "🎨 全部颜色", "zh-tw": "🎨 全部顏色" },
-    ff_color_green: { en: "Green", zh: "绿色系", "zh-tw": "綠色系" },
-    ff_color_blue_cyan: { en: "Blue / Cyan", zh: "蓝/青色系", "zh-tw": "藍/青色系" },
-    ff_color_red_pink: { en: "Red / Pink", zh: "红/粉色系", "zh-tw": "紅/粉色系" },
-    ff_color_orange_gold: { en: "Orange / Gold", zh: "橙/金色系", "zh-tw": "橙/金色系" },
-    ff_color_black_gray: { en: "Black / Gray", zh: "黑/灰色系", "zh-tw": "黑/灰色系" },
-    ff_color_white: { en: "White", zh: "白色系", "zh-tw": "白色系" },
-    ff_color_purple_brown: { en: "Purple / Brown", zh: "紫/棕色系", "zh-tw": "紫/棕色系" },
-    ff_no_match: { en: "No spools match your current filter. Try clearing the search or clicking 🎨 All Colors.", zh: "没有匹配的耗材盘。请尝试清空搜索词或点击“🎨 全部颜色”。", "zh-tw": "沒有符合篩選條件的耗材盤。請嘗試清除搜尋或點擊「🎨 全部顏色」。" },
-    ff_pill_offline: { en: "💤 Offline", zh: "💤 离线", "zh-tw": "💤 離線" },
-    ff_pill_printing: { en: "🖨️ Printing", zh: "🖨️ 打印中", "zh-tw": "🖨️ 列印中" },
-    ff_pill_ready: { en: "🟢 Ready", zh: "🟢 就绪", "zh-tw": "🟢 就緒" },
-    ff_edit_btn: { en: "🎨 Edit", zh: "🎨 编辑", "zh-tw": "🎨 編輯" },
+    ff_mqtt_prog_badge: { en: "📡 LIVE LAN MQTT AMS PROGRAMMER", de: "📡 LIVE-LAN-MQTT AMS-PROGRAMMIERER", fr: "📡 PROGRAMMEUR AMS MQTT LAN EN DIRECT", es: "📡 PROGRAMADOR AMS MQTT LAN EN VIVO", it: "📡 PROGRAMMATORE AMS MQTT LAN LIVE", nl: "📡 LIVE LAN MQTT AMS-PROGRAMMEUR", pl: "📡 PROGRAMATOR AMS MQTT LAN NA ŻYWO", pt: "📡 PROGRAMADOR AMS MQTT LAN AO VIVO", ru: "📡 ПРОГРАММАТОР AMS ПО LAN MQTT", zh: "📡 局域网 MQTT AMS 实时料槽编程", "zh-tw": "📡 區域網路 MQTT AMS 即時料槽編程", ja: "📡 LAN MQTT AMS ライブプログラマー" },
+    ff_loaded_spools: { en: "Loaded Spools", de: "Geladene Spulen", fr: "Bobines Chargées", es: "Bobinas Cargadas", it: "Bobine Caricate", nl: "Geladen Spoelen", pl: "Załadowane Szpule", pt: "Bobinas Carregadas", ru: "Загружено катушек", zh: "已装料盘", "zh-tw": "已裝料盤", ja: "装填スプール" },
+    ff_ready_now: { en: "Ready Now", de: "Sofort Bereit", fr: "Prêt Maintenant", es: "Listo Ahora", it: "Pronto Ora", nl: "Nu Gereed", pl: "Gotowe Teraz", pt: "Pronto Agora", ru: "Готово сейчас", zh: "立即可打", "zh-tw": "立即可印", ja: "造形可能" },
+    ff_humid_ams: { en: "Humid AMS", de: "Feuchtes AMS", fr: "AMS Humide", es: "AMS Húmedo", it: "AMS Umido", nl: "Vochtig AMS", pl: "Wilgotny AMS", pt: "AMS Úmido", ru: "Влажный AMS", zh: "AMS 潮湿", "zh-tw": "AMS 潮濕", ja: "高湿度 AMS" },
+    ff_ready_to_print_btn: { en: "Ready to Print Now", de: "Sofort druckbereit", fr: "Prêt à imprimer", es: "Listo para imprimir", it: "Pronto per stampare", nl: "Klaar om te printen", pl: "Gotowe do druku", pt: "Pronto para imprimir", ru: "Готово к печати", zh: "立即可打印", "zh-tw": "立即可列印", ja: "今すぐ造形可能" },
+    ff_show_empty_btn: { en: "Show Empty Slots", de: "Leere Slots zeigen", fr: "Afficher emplacements vides", es: "Mostrar ranuras vacías", it: "Mostra slot vuoti", nl: "Lege slots tonen", pl: "Pokaż puste sloty", pt: "Mostrar slots vazios", ru: "Показать пустые слоты", zh: "显示空料槽", "zh-tw": "顯示空料槽", ja: "空スロットを表示" },
+    ff_hide_empty_btn: { en: "Hide Empty Slots", de: "Leere Slots ausblenden", fr: "Masquer emplacements vides", es: "Ocultar ranuras vacías", it: "Nascondi slot vuoti", nl: "Lege slots verbergen", pl: "Ukryj puste sloty", pt: "Ocultar slots vazios", ru: "Скрыть пустые слоты", zh: "隐藏空料槽", "zh-tw": "隱藏空料槽", ja: "空スロットを隠す" },
+    ff_color_all: { en: "🎨 All Colors", de: "🎨 Alle Farben", fr: "🎨 Toutes Couleurs", es: "🎨 Todos los Colores", it: "🎨 Tutti i Colori", nl: "🎨 Alle Kleuren", pl: "🎨 Wszystkie Kolory", pt: "🎨 Todas as Cores", ru: "🎨 Все цвета", zh: "🎨 全部颜色", "zh-tw": "🎨 全部顏色", ja: "🎨 全カラー" },
+    ff_color_green: { en: "Green", de: "Grün", fr: "Vert", es: "Verde", it: "Verde", nl: "Groen", pl: "Zielony", pt: "Verde", ru: "Зеленый", zh: "绿色系", "zh-tw": "綠色系", ja: "グリーン" },
+    ff_color_blue_cyan: { en: "Blue / Cyan", de: "Blau / Cyan", fr: "Bleu / Cyan", es: "Azul / Cian", it: "Blu / Ciano", nl: "Blauw / Cyaan", pl: "Niebieski / Cyjan", pt: "Azul / Ciano", ru: "Синий / Голубой", zh: "蓝/青色系", "zh-tw": "藍/青色系", ja: "ブルー / シアン" },
+    ff_color_red_pink: { en: "Red / Pink", de: "Rot / Rosa", fr: "Rouge / Rose", es: "Rojo / Rosa", it: "Rosso / Rosa", nl: "Rood / Roze", pl: "Czerwony / Różowy", pt: "Vermelho / Rosa", ru: "Красный / Розовый", zh: "红/粉色系", "zh-tw": "紅/粉色系", ja: "レッド / ピンク" },
+    ff_color_orange_gold: { en: "Orange / Gold", de: "Orange / Gold", fr: "Orange / Or", es: "Naranja / Oro", it: "Arancione / Oro", nl: "Oranje / Goud", pl: "Pomarańczowy / Złoty", pt: "Laranja / Ouro", ru: "Оранжевый / Золотой", zh: "橙/金色系", "zh-tw": "橙/金色系", ja: "オレンジ / ゴールド" },
+    ff_color_black_gray: { en: "Black / Gray", de: "Schwarz / Grau", fr: "Noir / Gris", es: "Negro / Gris", it: "Nero / Grigio", nl: "Zwart / Grijs", pl: "Czarny / Szary", pt: "Preto / Cinza", ru: "Черный / Серый", zh: "黑/灰色系", "zh-tw": "黑/灰色系", ja: "ブラック / グレー" },
+    ff_color_white: { en: "White", de: "Weiß", fr: "Blanc", es: "Blanco", it: "Bianco", nl: "Wit", pl: "Biały", pt: "Branco", ru: "Белый", zh: "白色系", "zh-tw": "白色系", ja: "ホワイト" },
+    ff_color_purple_brown: { en: "Purple / Brown", de: "Lila / Braun", fr: "Violet / Marron", es: "Morado / Marrón", it: "Viola / Marrone", nl: "Paars / Bruin", pl: "Fiolet / Brąz", pt: "Roxo / Marrom", ru: "Фиолетовый / Коричневый", zh: "紫/棕色系", "zh-tw": "紫/棕色系", ja: "パープル / ブラウン" },
+    ff_no_match: { en: "No spools match your current filter. Try clearing the search or clicking", de: "Keine Spulen entsprechen dem aktuellen Filter. Suche löschen oder klicken Sie auf", fr: "Aucune bobine ne correspond au filtre. Effacez la recherche ou cliquez sur", es: "Ninguna bobina coincide con el filtro. Borra la búsqueda o haz clic en", it: "Nessuna bobina corrisponde al filtro. Cancella la ricerca o clicca su", nl: "Geen spoelen gevonden voor dit filter. Wis de zoekopdracht of klik op", pl: "Brak szpul pasujących do filtra. Wyczyść wyszukiwanie lub kliknij", pt: "Nenhuma bobina corresponde ao filtro. Limpe a busca ou clique em", ru: "Нет катушек по выбранному фильтру. Очистите поиск или нажмите", zh: "没有匹配的耗材盘。请尝试清空搜索词或点击", "zh-tw": "沒有符合篩選條件的耗材盤。請嘗試清除搜尋或點擊", ja: "条件に一致するスプールがありません。検索をクリアするか次をクリック：" },
+    ff_pill_offline: { en: "💤 Offline", de: "💤 Offline", fr: "💤 Hors ligne", es: "💤 Desconectado", it: "💤 Offline", nl: "💤 Offline", pl: "💤 Offline", pt: "💤 Offline", ru: "💤 Офлайн", zh: "💤 离线", "zh-tw": "💤 離線", ja: "💤 オフライン" },
+    ff_pill_printing: { en: "🖨️ Printing", de: "🖨️ Druckt", fr: "🖨️ Impression", es: "🖨️ Imprimiendo", it: "🖨️ Stampa", nl: "🖨️ Printen", pl: "🖨️ Drukuje", pt: "🖨️ Imprimindo", ru: "🖨️ Печать", zh: "🖨️ 打印中", "zh-tw": "🖨️ 列印中", ja: "🖨️ 造形中" },
+    ff_pill_ready: { en: "🟢 Ready", de: "🟢 Bereit", fr: "🟢 Prêt", es: "🟢 Listo", it: "🟢 Pronto", nl: "🟢 Gereed", pl: "🟢 Gotowa", pt: "🟢 Pronto", ru: "🟢 Готова", zh: "🟢 就绪", "zh-tw": "🟢 就緒", ja: "🟢 準備完了" },
+    ff_edit_btn: { en: "🎨 Edit", de: "🎨 Bearb.", fr: "🎨 Éditer", es: "🎨 Editar", it: "🎨 Modifica", nl: "🎨 Bewerk", pl: "🎨 Edytuj", pt: "🎨 Editar", ru: "🎨 Изм.", zh: "🎨 编辑", "zh-tw": "🎨 編輯", ja: "🎨 編集" },
+    wt_pill_r1: { en: "🔥 R1 CO2 Laser", de: "🔥 R1 CO2-Laser", fr: "🔥 Laser CO2 R1", es: "🔥 Láser CO2 R1", it: "🔥 Laser CO2 R1", nl: "🔥 R1 CO2-Laser", pl: "🔥 Laser CO2 R1", pt: "🔥 Laser CO2 R1", ru: "🔥 Лазер R1 CO2", zh: "🔥 R1 CO2 激光", "zh-tw": "🔥 R1 CO2 雷射", ja: "🔥 R1 CO2 レーザー" },
+    wt_pill_ams: { en: "🎨 AMS Lite / AMS HT", de: "🎨 AMS Lite / AMS HT", fr: "🎨 AMS Lite / AMS HT", es: "🎨 AMS Lite / AMS HT", it: "🎨 AMS Lite / AMS HT", nl: "🎨 AMS Lite / AMS HT", pl: "🎨 AMS Lite / AMS HT", pt: "🎨 AMS Lite / AMS HT", ru: "🎨 AMS Lite / AMS HT", zh: "🎨 AMS Lite / AMS HT", "zh-tw": "🎨 AMS Lite / AMS HT", ja: "🎨 AMS Lite / AMS HT" },
     top_tab_fleet: { en: "Fleet Studio", zh: "机队总览", "zh-tw": "機隊總覽" },
     top_tab_filament: { en: "Filament Studio", zh: "耗材工坊", "zh-tw": "耗材工坊" },
     top_tab_add: { en: "Add Printer", zh: "添加打印机", "zh-tw": "新增列印機" },
@@ -1044,7 +1062,10 @@
     wt_s4_add_prefix: { en: "Add", de: "Verbinden:", fr: "Ajouter", es: "Añadir", it: "Aggiungi", nl: "Toevoegen:", pl: "Dodaj", pt: "Adicionar", ru: "Добавить", zh: "添加", "zh-tw": "新增", ja: "追加:" },
     wt_s4_ams_title: { en: "Pair Printer + AMS", de: "Drucker + AMS koppeln", fr: "Associer Imprimante + AMS", es: "Vincular Impresora + AMS", it: "Abbina Stampante + AMS", nl: "Koppel Printer + AMS", pl: "Sparuj Drukarkę + AMS", pt: "Parear Impressora + AMS", ru: "Привязать принтер + AMS", zh: "配对打印机与 AMS", "zh-tw": "配對列印機與 AMS", ja: "プリンター＋AMS接続" },
     wt_s4_desc: { en: "Launch the in-dashboard setup wizard right here.", de: "Starten Sie den Einrichtungsassistenten direkt hier.", fr: "Lancez l'assistant de configuration directement ici.", es: "Inicia el asistente de configuración directamente aquí.", it: "Avvia la configurazione guidata direttamente da qui.", nl: "Start de installatiewizard direct vanaf dit dashboard.", pl: "Uruchom kreatora konfiguracji bezpośrednio tutaj.", pt: "Inicie o assistente de configuração diretamente aqui.", ru: "Запустите мастер настройки прямо с этой панели.", zh: "直接在此处启动局域网打印机配对向导。", "zh-tw": "直接在此處啟動區域網路列印機配對精靈。", ja: "ここから直接セットアップウィザードを起動します。" },
-    empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", ru: "К этому слоту еще не привязан принтер. Подключитесь по локальной сети LAN (порт 8883) для получения телеметрии.", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", "zh-tw": "此槽位尚未配對列印機。請透過區域網路 (連接埠 8883) 連線以取得即時遙測資料。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" }
+    empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", ru: "К этому слоту еще не привязан принтер. Подключитесь по локальной сети LAN (порт 8883) для получения телеметрии.", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", "zh-tw": "此槽位尚未配對列印機。請透過區域網路 (連接埠 8883) 連線以取得即時遙測資料。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" },
+    tel_odometer: { en: "⏱️ Hours & Odometer", de: "⏱️ Stunden & Odometer", fr: "⏱️ Heures & Odomètre", es: "⏱️ Horas y Odómetro", it: "⏱️ Ore e Odometro", nl: "⏱️ Uren & Odometer", pl: "⏱️ Godziny i Licznik", pt: "⏱️ Horas e Odômetro", ru: "⏱️ Часы и Одометр", zh: "⏱️ 时长与计米器", "zh-tw": "⏱️ 時數與計米器", ja: "⏱️ 稼働時間＆オドメーター" },
+    odo_spools: { en: "Spools", de: "Spulen", fr: "Bobines", es: "Bobinas", it: "Bobine", nl: "Spoelen", pl: "Szpul", pt: "Bobinas", ru: "кат.", zh: "盘耗材", "zh-tw": "盤耗材", ja: "スプール" },
+    tip_odometer_meters: { en: "Lifetime Extruded Filament (Calibrate in ✏️ Edit Device)", de: "Extrudiertes Filament gesamt (Kalibrieren unter ✏️ Bearbeiten)", fr: "Filament extrudé total (Calibrer dans ✏️ Modifier)", es: "Filamento extruido total (Calibrar en ✏️ Editar)", it: "Filamento estruso totale (Calibra in ✏️ Modifica)", nl: "Totaal geëxtrudeerd filament (Kalibreer in ✏️ Bewerken)", pl: "Całkowity wytłoczony filament (Kalibruj w ✏️ Edytuj)", pt: "Filamento extrudado total (Calibrar em ✏️ Editar)", ru: "Всего экструдировано пластика (Калибровка в ✏️ Настроить)", zh: "累计挤出耗材长度（可在 ✏️ 编辑设备 中校准基线）", "zh-tw": "累計擠出耗材長度（可在 ✏️ 編輯裝置 中校準基線）", ja: "累計押出フィラメント長（✏️ 編集で初期値を校正可能）" }
   };
 
   function t(key, lang = "en") {
@@ -1053,8 +1074,9 @@
     if (dict[mapped]) return dict[mapped];
     if (lang === "zh-tw" && I18N_DICT.zh && I18N_DICT.zh[mapped]) return I18N_DICT.zh[mapped];
     if (I18N_DICT.en[mapped]) return I18N_DICT.en[mapped];
-    if (I18N_EXTRA[key]) {
-      return I18N_EXTRA[key][lang] || (lang === "zh-tw" ? I18N_EXTRA[key].zh : null) || I18N_EXTRA[key].en || key;
+    const extraEntry = I18N_EXTRA[key] || I18N_EXTRA[mapped];
+    if (extraEntry) {
+      return extraEntry[lang] || (lang === "zh-tw" ? extraEntry.zh : null) || extraEntry.en || key;
     }
     return key;
   }
@@ -1300,6 +1322,211 @@
     }
   }
 
+  const STORAGE_ODOMETER_KEY = "bambu_fleet_studio_odometer_v1";
+  const STORAGE_BED_PLATE_KEY = "bambu_fleet_studio_bed_plates_v1";
+
+  function loadOdometerOverrides() {
+    try {
+      const raw = localStorage.getItem(STORAGE_ODOMETER_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveOdometerOverride(key, metersVal, hoursVal) {
+    const map = loadOdometerOverrides();
+    if (!key) return map;
+    map[key] = {
+      extrudedMeters: Math.max(0, parseFloat(metersVal) || 0),
+      usageHours: Math.max(0, parseFloat(hoursVal) || 0),
+      updatedAt: Date.now()
+    };
+    try {
+      localStorage.setItem(STORAGE_ODOMETER_KEY, JSON.stringify(map));
+    } catch (e) {}
+    return map;
+  }
+
+  function loadBedPlateOverrides() {
+    try {
+      const raw = localStorage.getItem(STORAGE_BED_PLATE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveBedPlateOverride(key, bedType) {
+    const map = loadBedPlateOverrides();
+    if (!key) return map;
+    if (!bedType) {
+      delete map[key];
+    } else {
+      map[key] = String(bedType).trim();
+    }
+    try {
+      localStorage.setItem(STORAGE_BED_PLATE_KEY, JSON.stringify(map));
+    } catch (e) {}
+    return map;
+  }
+
+  function getBuildPlateOptionsForModel(modelNormRaw) {
+    const m = normalizeModel(modelNormRaw || "X1C");
+    if (m === "A1MINI") {
+      return {
+        bedSizeLabel: "180×180 mm (A1 Mini)",
+        defaultPlate: "Bambu Textured PEI (180×180)",
+        groups: [
+          {
+            groupLabel: "🟢 Bambu Lab Official Plates (180×180 mm)",
+            options: [
+              "Bambu Textured PEI (180×180)",
+              "Bambu Smooth PEI (180×180)",
+              "Bambu Dual-Texture PEI (180×180)",
+              "Bambu SuperTack Cool Plate (180×180)",
+              "Bambu 3D Effect Carbon Fiber (180×180)",
+              "Bambu 3D Effect Diamond / Starry (180×180)"
+            ]
+          },
+          {
+            groupLabel: "🧊 BIQU CryoGrip & Panda Plates (184×184 mm — A1 Mini)",
+            options: [
+              "BIQU CryoGrip Pro Glacier (184×184)",
+              "BIQU CryoGrip Pro Frostbite (184×184)",
+              "BIQU CryoGrip Cool Plate (184×184)",
+              "BIQU Panda BuildPlate Double PEI (184×184)",
+              "BIQU Panda PEO/PET Smooth (184×184)"
+            ]
+          }
+        ]
+      };
+    }
+    if (m === "H2C" || m === "H2D" || m === "H2DPRO" || m === "H2S" || m === "A2L") {
+      return {
+        bedSizeLabel: "350×320 mm (H2 / Large Format)",
+        defaultPlate: "Bambu Textured PEI (350×320)",
+        groups: [
+          {
+            groupLabel: "🟢 Bambu Lab Official Plates (350×320 mm)",
+            options: [
+              "Bambu Textured PEI (350×320)",
+              "Bambu Smooth PEI (350×320)",
+              "Bambu Dual-Texture PEI (350×320)",
+              "Bambu SuperTack Cool Plate (350×320)",
+              "Bambu High Temp / Engineering (350×320)",
+              "Bambu Vision Encoder Plate (350×320)",
+              "Bambu Laser Honeycomb Platform (350×320)"
+            ]
+          },
+          {
+            groupLabel: "🧊 BIQU CryoGrip & Panda Plates (350×320 mm — H2 Series)",
+            options: [
+              "BIQU CryoGrip Pro Glacier (350×320)",
+              "BIQU CryoGrip Pro Frostbite (350×320)",
+              "BIQU CryoGrip Cool Plate (350×320)",
+              "BIQU Panda BuildPlate Double PEI (350×320)"
+            ]
+          }
+        ]
+      };
+    }
+    if (m === "R1") {
+      return {
+        bedSizeLabel: "400×400 mm (R1 Laser)",
+        defaultPlate: "Honeycomb Laser Panel (400×400)",
+        groups: [
+          {
+            groupLabel: "⚡ Bambu R1 Laser Platforms (400×400 mm)",
+            options: [
+              "Honeycomb Laser Panel (400×400)",
+              "Slatted Knife Cutting Bed (400×400)",
+              "Rotary Chuck Attachment",
+              "Riser Base + Pass-Through Tray"
+            ]
+          }
+        ]
+      };
+    }
+    return {
+      bedSizeLabel: "256×256 mm (X1 / P1 / P2S / A1)",
+      defaultPlate: "Bambu Textured PEI (256×256)",
+      groups: [
+        {
+          groupLabel: "🟢 Bambu Lab Official Plates (256×256 mm)",
+          options: [
+            "Bambu Textured PEI (256×256)",
+            "Bambu Smooth PEI (256×256)",
+            "Bambu Dual-Texture PEI (256×256)",
+            "Bambu SuperTack Cool Plate (256×256)",
+            "Bambu Cool Plate / Engineering (256×256)",
+            "Bambu High Temp Plate (256×256)",
+            "Bambu 3D Effect Carbon Fiber (256×256)",
+            "Bambu 3D Effect Diamond / Starry (256×256)"
+          ]
+        },
+        {
+          groupLabel: "🧊 BIQU CryoGrip & Panda Plates (257×257 mm — X1/P1/A1)",
+          options: [
+            "BIQU CryoGrip Pro Glacier (257×257)",
+            "BIQU CryoGrip Pro Frostbite (257×257)",
+            "BIQU CryoGrip Cool Plate (257×257)",
+            "BIQU Panda BuildPlate Double PEI (257×257)",
+            "BIQU Panda PEO/PET Chameleon (257×257)",
+            "BIQU Panda Juupine G10 Garolite (257×257)"
+          ]
+        }
+      ]
+    };
+  }
+
+  function formatBuildPlateShort(bedTypeRaw, modelNorm) {
+    const raw = String(bedTypeRaw || "").trim();
+    if (!raw || raw === "—" || raw.toLowerCase() === "unknown") {
+      const cat = getBuildPlateOptionsForModel(modelNorm);
+      return { shortLabel: "Textured PEI", fullLabel: cat.defaultPlate, isBiqu: false };
+    }
+    const isBiqu = /biqu|cryogrip|glacier|frostbite|panda/i.test(raw);
+    const cleaned = raw.replace(/\s*\(\d+[×x]\d+[^)]*\)\s*$/i, "").replace(/^Bambu\s+/i, "").trim();
+    return {
+      shortLabel: cleaned || raw,
+      fullLabel: raw,
+      isBiqu
+    };
+  }
+
+  // Convert raw extruded meters into compact human-readable odometer metrics (m / km, g / kg, ~spools)
+  function formatOdometer(metersRaw, usageHoursRaw) {
+    let m = parseFloat(metersRaw);
+    if (isNaN(m) || m < 0) m = 0;
+    if (m === 0 && usageHoursRaw && usageHoursRaw !== "—") {
+      const hrs = parseFloat(usageHoursRaw);
+      if (!isNaN(hrs) && hrs > 0) {
+        m = Math.round(hrs * 4.5 * 10) / 10;
+      }
+    }
+    const grams = m * 3.0303;
+    const spools = m / 330.0;
+    let metersDisplay = "0m";
+    if (m >= 10000) {
+      metersDisplay = (m / 1000).toFixed(1) + " km";
+    } else if (m >= 1000) {
+      metersDisplay = (m / 1000).toFixed(2) + " km";
+    } else if (m > 0) {
+      metersDisplay = Math.round(m) + "m";
+    }
+    const kgDisplay = grams >= 1000 ? (grams / 1000).toFixed(2) + " kg" : Math.round(grams) + "g";
+    const spoolsDisplay = spools >= 10 ? spools.toFixed(1) : spools.toFixed(1);
+    return {
+      meters: m,
+      grams: Math.round(grams),
+      spools: Math.round(spools * 10) / 10,
+      metersDisplay,
+      kgDisplay,
+      spoolsDisplay
+    };
+  }
+
   function hydrateStandalonePrinter(sp, hass, savedPlugs, modelOverrides, amsOverrides, activeLang) {
     const serial = String(sp.serial || "").trim().toUpperCase();
     const rawModelNorm = normalizeModel(sp.modelNorm || sp.model || inferModelFromSerial(serial));
@@ -1422,13 +1649,26 @@
     const isRtspCam = Boolean(sp.isRtspCam);
     const cameraPic = sp.cameraPic || ("/api/bambu_fleet_studio/camera/" + serial);
 
-    // Enrich coverPic / totalUsage from HA states if available
+    // Enrich coverPic / totalUsage / odometer / bedType from HA states & local overrides
     const stCover = hass?.states?.["image." + prefix + "_cover_image"];
     const stPick = hass?.states?.["image." + prefix + "_pick_image"];
     const stUsage = hass?.states?.["sensor." + prefix + "_total_usage"];
-    const totalUsage = (stUsage && stUsage.state !== "unavailable" && stUsage.state !== "unknown")
+    const odoOverrides = loadOdometerOverrides();
+    const odoOv = odoOverrides[serial] || odoOverrides[prefix] || null;
+    const rawUsage = (stUsage && stUsage.state !== "unavailable" && stUsage.state !== "unknown")
       ? stUsage.state
-      : (sp.totalUsage || "—");
+      : (sp.totalUsage || (odoOv && odoOv.usageHours > 0 ? String(odoOv.usageHours) : "0.0"));
+    const totalUsage = rawUsage !== "—" ? rawUsage : "0.0";
+
+    const backendMeters = typeof sp.extrudedMeters === "number" ? sp.extrudedMeters : (parseFloat(sp.extrudedMeters) || 0);
+    const localMeters = odoOv && typeof odoOv.extrudedMeters === "number" ? odoOv.extrudedMeters : 0;
+    const extrudedMeters = Math.max(backendMeters, localMeters);
+    const odometer = formatOdometer(extrudedMeters, totalUsage);
+
+    const bedPlateOverrides = loadBedPlateOverrides();
+    const localBedPlate = bedPlateOverrides[serial] || bedPlateOverrides[prefix] || "";
+    const defaultPlateForModel = getBuildPlateOptionsForModel(displayModelNorm).defaultPlate;
+    const rawBedType = localBedPlate || (sp.bedType && sp.bedType !== "Textured Plate" ? sp.bedType : "") || sp.bedType || defaultPlateForModel;
 
     return {
       deviceId: sp.deviceId || "",
@@ -1454,10 +1694,12 @@
       remainingMins,
       etaDisplay,
       totalUsage,
+      extrudedMeters: odometer.meters,
+      odometer,
       taskName: rawTask,
       printWeight: String(sp.printWeight || "—"),
       printLength: String(sp.printLength || "—"),
-      bedType: String(sp.bedType || "Textured Plate"),
+      bedType: String(rawBedType),
       nozzleSize: String(sp.nozzleSize || "0.4"),
       nozzleType: String(sp.nozzleType || "hardened steel"),
       ipAddress: String(sp.ipAddress || "—"),
@@ -1593,11 +1835,18 @@
       const totalLayers = stVal("sensor", "total_layer_count", "0");
       const remainingMins = stVal("sensor", "remaining_time", "0");
       const endTimeRaw = stVal("sensor", "end_time", "—");
-      const totalUsage = stVal("sensor", "total_usage", "—");
+      const odoOverrides = loadOdometerOverrides();
+      const odoOv = odoOverrides[serial] || odoOverrides[prefix] || null;
+      const rawHaUsage = stVal("sensor", "total_usage", "—");
+      const totalUsage = rawHaUsage !== "—" ? rawHaUsage : (odoOv && odoOv.usageHours > 0 ? String(odoOv.usageHours) : "0.0");
+      const odometer = formatOdometer(odoOv ? odoOv.extrudedMeters : 0, totalUsage);
       const taskName = stVal("sensor", "task_name", t("job_no_active", activeLang));
       const printWeight = stVal("sensor", "print_weight", "—");
       const printLength = stVal("sensor", "print_length", "—");
-      const bedType = stVal("sensor", "print_bed_type", "—").replace(/_/g, " ");
+      const bedPlateOverrides = loadBedPlateOverrides();
+      const localBedPlate = bedPlateOverrides[serial] || bedPlateOverrides[prefix] || "";
+      const haBedType = stVal("sensor", "print_bed_type", "—").replace(/_/g, " ");
+      const bedType = localBedPlate || (haBedType !== "—" ? haBedType : getBuildPlateOptionsForModel(displayModelNorm).defaultPlate);
       const nozzleSize = stVal("sensor", "nozzle_size", "0.4");
       const nozzleType = stVal("sensor", "nozzle_type", "").replace(/_/g, " ");
       const ipAddress = stVal("sensor", "ip_address", "—");
@@ -1818,6 +2067,8 @@
         remainingMins,
         etaDisplay,
         totalUsage,
+        extrudedMeters: odometer.meters,
+        odometer,
         taskName,
         printWeight,
         printLength,
@@ -3880,6 +4131,34 @@
         ? curAmsOverride
         : (payload.amsInfo?.modelNorm || normalizeAmsModel("", curModelNorm));
 
+      const initialHours = payload.totalUsage && payload.totalUsage !== "—" ? parseFloat(payload.totalUsage) || 0 : 0;
+      const initialMeters = typeof payload.extrudedMeters === "number"
+        ? payload.extrudedMeters
+        : (payload.odometer?.meters || Math.round(initialHours * 4.5 * 10) / 10);
+      const initialOdo = formatOdometer(initialMeters, initialHours);
+      const initialBedPlate = payload.bedType && payload.bedType !== "—"
+        ? payload.bedType
+        : getBuildPlateOptionsForModel(curModelNorm).defaultPlate;
+
+      const renderBedPlateOptionsHtml = (modelCode, currentPlate) => {
+        const cat = getBuildPlateOptionsForModel(modelCode);
+        const allKnown = [];
+        cat.groups.forEach(g => g.options.forEach(o => allKnown.push(o)));
+        const selPlate = currentPlate && allKnown.includes(currentPlate) ? currentPlate : (currentPlate || cat.defaultPlate);
+        let html = "";
+        if (selPlate && !allKnown.includes(selPlate)) {
+          html += `<option value="${selPlate}" selected>✨ ${selPlate}</option>`;
+        }
+        for (const grp of cat.groups) {
+          html += `<optgroup label="${grp.groupLabel}">`;
+          for (const opt of grp.options) {
+            html += `<option value="${opt}" ${opt === selPlate ? "selected" : ""}>${opt}</option>`;
+          }
+          html += `</optgroup>`;
+        }
+        return html;
+      };
+
       shadow.innerHTML = `
         <style>${modalCss}</style>
         <div class="overlay">
@@ -3945,16 +4224,33 @@
               </div>
             </div>
 
+            <div class="sec-divider">🛏️ Build Plate & 🧵 Lifetime Extrusion Odometer</div>
+            <div class="fld" style="margin-bottom:10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                <label style="margin:0;">Active Build Plate / Bed Surface (Bambu Lab &amp; BIQU CryoGrip / Panda)</label>
+                <span id="bedSizeBadge" style="font-size:10px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);padding:1px 8px;border-radius:999px;">${getBuildPlateOptionsForModel(curModelNorm).bedSizeLabel}</span>
+              </div>
+              <select id="editBedPlateSel">
+                ${renderBedPlateOptionsHtml(curModelNorm, initialBedPlate)}
+              </select>
+            </div>
+
             <div class="grid-2">
               <div class="fld">
-                <label>Total Print / Laser Hours</label>
-                <input id="hoursInp" type="number" step="0.01" value="${payload.totalUsage !== '—' ? payload.totalUsage : '0'}" />
+                <label>⏱️ Total Print / Laser Hours (h)</label>
+                <input id="hoursInp" type="number" step="0.1" min="0" value="${initialHours}" />
+                <div class="sub-hint">Auto-increments while printing on LAN</div>
               </div>
               <div class="fld">
-                <label>Job Cache Count</label>
-                <input id="cacheInp" type="number" value="100" />
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                  <label style="margin:0;">🧵 Extruded Filament Odometer (m)</label>
+                  <button type="button" id="estMetersBtn" title="Estimate lifetime meters from print hours (~4.5m / ~13.6g per print hour)" style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);color:#34d399;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:800;cursor:pointer;">⚡ Est. from Hours</button>
+                </div>
+                <input id="metersInp" type="number" step="0.1" min="0" value="${initialMeters}" />
+                <div id="metersCalcHint" class="sub-hint" style="color:#10b981;font-weight:700;">📦 ~${initialOdo.spoolsDisplay} spools • ${initialOdo.kgDisplay} (${initialOdo.metersDisplay})</div>
               </div>
             </div>
+            <input id="cacheInp" type="hidden" value="100" />
 
             <div class="sec-divider">⚡ Smart Plug Power Toggle & Live Wattage (Optional • Safety-Locked)</div>
             <div class="grid-2">
@@ -4050,9 +4346,41 @@
         }
       };
 
+      const editBedPlateSel = shadow.getElementById("editBedPlateSel");
+      const bedSizeBadge = shadow.getElementById("bedSizeBadge");
+      const hoursInpEl = shadow.getElementById("hoursInp");
+      const metersInpEl = shadow.getElementById("metersInp");
+      const estMetersBtn = shadow.getElementById("estMetersBtn");
+      const metersCalcHint = shadow.getElementById("metersCalcHint");
+
+      const refreshOdoHint = () => {
+        const odo = formatOdometer(metersInpEl.value, 0);
+        if (metersCalcHint) {
+          metersCalcHint.textContent = `📦 ~${odo.spoolsDisplay} spools • ${odo.kgDisplay} (${odo.metersDisplay})`;
+        }
+      };
+
+      if (metersInpEl) {
+        metersInpEl.oninput = refreshOdoHint;
+      }
+      if (estMetersBtn && hoursInpEl && metersInpEl) {
+        estMetersBtn.onclick = () => {
+          const hrs = parseFloat(hoursInpEl.value) || 0;
+          const est = Math.round(hrs * 4.5 * 10) / 10;
+          metersInpEl.value = String(est);
+          refreshOdoHint();
+        };
+      }
+
       editModelSel.onchange = () => {
-        editPreviewImg.src = getPrinterImage(editModelSel.value);
+        const newMod = editModelSel.value;
+        editPreviewImg.src = getPrinterImage(newMod);
         updateAmsPreview();
+        if (editBedPlateSel) {
+          const cat = getBuildPlateOptionsForModel(newMod);
+          if (bedSizeBadge) bedSizeBadge.textContent = cat.bedSizeLabel;
+          editBedPlateSel.innerHTML = renderBedPlateOptionsHtml(newMod, editBedPlateSel.value);
+        }
       };
       editAmsSel.onchange = updateAmsPreview;
 
@@ -4069,7 +4397,16 @@
               const savedHost = match.host || (match.ipAddress !== "—" ? match.ipAddress : "");
               if (savedHost) shadow.getElementById("hostInp").value = savedHost;
               if (match.access_code) shadow.getElementById("codeInp").value = match.access_code;
-              if (match.usage_hours !== undefined) shadow.getElementById("hoursInp").value = match.usage_hours;
+              if (match.usage_hours !== undefined && parseFloat(match.usage_hours) > 0) {
+                shadow.getElementById("hoursInp").value = match.usage_hours;
+              }
+              if (match.extruded_meters !== undefined && parseFloat(match.extruded_meters) > 0 && metersInpEl) {
+                metersInpEl.value = match.extruded_meters;
+                refreshOdoHint();
+              }
+              if (match.bed_type && editBedPlateSel) {
+                editBedPlateSel.innerHTML = renderBedPlateOptionsHtml(editModelSel.value, match.bed_type);
+              }
             }
           } catch (e0) {}
 
@@ -4109,6 +4446,8 @@
         const hostVal = shadow.getElementById("hostInp").value.trim();
         const codeVal = shadow.getElementById("codeInp").value.trim();
         const hoursVal = shadow.getElementById("hoursInp").value.trim() || "0";
+        const metersVal = (metersInpEl ? metersInpEl.value.trim() : "") || String(Math.round((parseFloat(hoursVal) || 0) * 4.5 * 10) / 10);
+        const chosenBedPlate = editBedPlateSel ? editBedPlateSel.value : initialBedPlate;
         const cacheVal = shadow.getElementById("cacheInp").value.trim() || "100";
         const plugSw = shadow.getElementById("plugSwitchInp").value.trim();
         const plugPw = shadow.getElementById("plugPowerInp").value.trim();
@@ -4120,11 +4459,15 @@
         btn.disabled = true;
         btn.textContent = "Saving...";
 
-        // Save Model Artwork, AMS Override & Smart Plug binding locally immediately
+        // Save Model Artwork, AMS Override, Build Plate, Odometer & Smart Plug binding locally immediately
         saveModelOverride(payload.prefix, chosenModel);
         saveModelOverride(payload.serial, chosenModel);
         saveAmsOverride(payload.prefix, chosenAms);
         saveAmsOverride(payload.serial, chosenAms);
+        saveBedPlateOverride(payload.prefix, chosenBedPlate);
+        saveBedPlateOverride(payload.serial, chosenBedPlate);
+        saveOdometerOverride(payload.prefix, metersVal, hoursVal);
+        saveOdometerOverride(payload.serial, metersVal, hoursVal);
         savePlugBinding(payload.prefix, {
           switchEntity: plugSw,
           powerEntity: plugPw
@@ -4140,7 +4483,9 @@
               name: newName || payload.name,
               model: chosenModel,
               ams_override: chosenAms,
-              usage_hours: String(hoursVal)
+              usage_hours: String(hoursVal),
+              extruded_meters: String(metersVal),
+              bed_type: chosenBedPlate
             });
             fetchStandaloneFleet(hass, null, true);
           } catch (stErr) {}
@@ -4174,7 +4519,7 @@
           }
 
           alertBox.className = "alert ok";
-          alertBox.textContent = "Printer, AMS Artwork & Smart Plug settings saved!";
+          alertBox.textContent = "Printer, Build Plate, Odometer & Smart Plug settings saved!";
           setTimeout(() => { close(); if (onComplete) onComplete(); }, 600);
         } catch (err) {
           alertBox.className = "alert err";
@@ -4559,9 +4904,8 @@
     }
 
     const hasChamber = p.chamberTemp && p.chamberTemp !== "—";
-    const bedSubDetail = (p.bedType && p.bedType !== "—" && p.bedType !== "unknown")
-      ? p.bedType
-      : (p.hasDoorSensor ? (p.doorOpen ? t("door_open", activeLang) : t("door_closed", activeLang)) : t("tel_standard_plate", activeLang));
+    const plateMeta = formatBuildPlateShort(p.bedType, p.modelNorm);
+    const odo = p.odometer || formatOdometer(p.extrudedMeters || 0, p.totalUsage);
     const hasEnclFans = (p.auxFan && p.auxFan !== "—") || (p.chamberFan && p.chamberFan !== "—");
     const coolingSubDetail = hasEnclFans
       ? (`${t("tel_aux", activeLang)} ${p.auxFan !== '—' ? p.auxFan + '%' : '0%'} • ${t("tel_chamb", activeLang)} ${p.chamberFan !== '—' ? p.chamberFan + '%' : '0%'} • ${p.speedProfile}`)
@@ -4624,7 +4968,7 @@
           <div class="job-meta-pills">
             <span>📚 ${t("job_layer", activeLang)} ${p.currentLayer} / ${p.totalLayers}</span>
             <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${p.etaDisplay || t("job_idle_done", activeLang)}</span>
-            <span>⚖️ ${p.printWeight !== '—' ? p.printWeight + 'g' : '—'}</span>
+            <span>⚖️ ${p.printWeight !== '—' ? p.printWeight + 'g' : '—'}${p.printLength && p.printLength !== '—' && p.printLength !== '0' ? ' • 📏 ' + p.printLength + 'm' : ''}</span>
           </div>
         </div>
 
@@ -4634,20 +4978,20 @@
             <div class="t-val">${p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—'}</div>
             <div class="t-sub">${t("tel_target", activeLang)} ${p.nozzleTarget}°C • ${p.nozzleSize}mm</div>
           </div>
-          <div class="t-tile">
+          <div class="t-tile" data-act="edit" data-prefix="${p.prefix}" style="cursor:pointer;" title="${plateMeta.fullLabel} — Click to switch Build Plate (Bambu PEI / Smooth / SuperTack / BIQU CryoGrip Glacier &amp; Frostbite)">
             <div class="t-lbl">${hasChamber ? t("tel_bed_chamber", activeLang) : t("tel_build_plate", activeLang)}</div>
             <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°C' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°C</span>` : ''}</div>
-            <div class="t-sub">${t("tel_target", activeLang)} ${p.bedTarget}°C • ${bedSubDetail}</div>
+            <div class="t-sub">${t("tel_target", activeLang)} ${p.bedTarget}°C • <span style="color:${plateMeta.isBiqu ? '#38bdf8' : '#a7f3d0'};font-weight:700;">${plateMeta.isBiqu ? '🧊 ' : '🟢 '}${plateMeta.shortLabel}</span></div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">${t("tel_cooling_speed", activeLang)}</div>
             <div class="t-val">${p.coolingFan !== '—' ? p.coolingFan + '%' : '—'}</div>
             <div class="t-sub" title="${coolingSubDetail}">${coolingSubDetail}</div>
           </div>
-          <div class="t-tile">
-            <div class="t-lbl">${t("tel_fleet_hours", activeLang)}</div>
-            <div class="t-val">${p.totalUsage !== '—' ? p.totalUsage + 'h' : '—'}</div>
-            <div class="t-sub">IP: ${p.ipAddress}</div>
+          <div class="t-tile" data-act="edit" data-prefix="${p.prefix}" style="cursor:pointer;" title="${t('tip_odometer_meters', activeLang)} (${p.totalUsage}h • ${odo.metersDisplay} • ${odo.kgDisplay} • ~${odo.spoolsDisplay} ${t('odo_spools', activeLang)})">
+            <div class="t-lbl">${t("tel_odometer", activeLang)}</div>
+            <div class="t-val">${p.totalUsage !== '—' ? p.totalUsage + 'h' : '0.0h'} <span style="font-size:12.5px;color:#10b981;font-weight:800;">• 🧵 ${odo.metersDisplay}</span></div>
+            <div class="t-sub">📦 ~${odo.spoolsDisplay} ${t("odo_spools", activeLang)} (${odo.kgDisplay}) • ${p.ipAddress}</div>
           </div>
         </div>
 
@@ -6819,10 +7163,13 @@
       const amsCount = allPrinters.reduce((acc, p) => acc + (p.amsUnits && p.amsUnits.length > 0 ? p.amsUnits.length : (p.hasAms ? 1 : 0)), 0);
       const alertCount = allPrinters.reduce((acc, p) => acc + (p.alerts ? p.alerts.length : 0), 0);
       const loadedSpoolCount = allSpools.filter(s => !s.empty).length;
-      const totalHrs = allPrinters.reduce((acc, p) => {
+      const totalHrsNum = allPrinters.reduce((acc, p) => {
         const v = parseFloat(p.totalUsage);
         return acc + (isNaN(v) ? 0 : v);
-      }, 0).toFixed(1);
+      }, 0);
+      const totalHrs = totalHrsNum.toFixed(1);
+      const totalFleetMeters = allPrinters.reduce((acc, p) => acc + (p.odometer ? p.odometer.meters : 0), 0);
+      const fleetOdo = formatOdometer(totalFleetMeters, totalHrsNum);
 
       const kpiFilter = this._kpiFilter || "all";
       if (!filterPrefix && !filterModel && kpiFilter !== "all") {
@@ -6893,9 +7240,9 @@
                   <span class="kpi-val" style="color:#38bdf8;">${amsCount}</span>
                   <span class="kpi-lbl">${t("kpi_ams_units", lang)}</span>
                 </button>
-                <button type="button" class="kpi-pill ${kpiFilter === 'alerts' && alertCount > 0 ? 'active-filter' : ''}" data-kpi-filter="${alertCount > 0 ? 'alerts' : 'all'}" title="${alertCount > 0 ? 'Filter Printers with HMS Alerts' : 'Total Fleet Print Hours'}">
-                  <span class="kpi-val" style="color:${alertCount > 0 ? '#ef4444' : '#f59e0b'};">${alertCount > 0 ? (alertCount + ' 🚨') : (totalHrs + 'h')}</span>
-                  <span class="kpi-lbl">${alertCount > 0 ? t("kpi_hms_alerts", lang) : t("kpi_print_hours", lang)}</span>
+                <button type="button" class="kpi-pill ${kpiFilter === 'alerts' && alertCount > 0 ? 'active-filter' : ''}" data-kpi-filter="${alertCount > 0 ? 'alerts' : 'all'}" title="${alertCount > 0 ? 'Filter Printers with HMS Alerts' : ('Fleet Odometer: ' + totalHrs + 'h • ' + fleetOdo.primary + ' (' + fleetOdo.kg + ' kg / ~' + fleetOdo.spools + ' spools)')}">
+                  <span class="kpi-val" style="color:${alertCount > 0 ? '#ef4444' : '#f59e0b'};">${alertCount > 0 ? (alertCount + ' 🚨') : (totalHrs + 'h • ' + fleetOdo.primary)}</span>
+                  <span class="kpi-lbl">${alertCount > 0 ? t("kpi_hms_alerts", lang) : (t("kpi_print_hours", lang) + ' (~' + fleetOdo.spools + ' ' + t("odo_spools", lang) + ')')}</span>
                 </button>
               </div>
               <div class="cmd-actions">

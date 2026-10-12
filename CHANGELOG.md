@@ -5,6 +5,21 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Per-Printer Extrusion Odometer (`m` / `km` / `kg` / `Spools`) & Live Print Hours Tracker (`#24`)**:
+  - Upgraded the 4th telemetry tile on every printer card to **`⏱️ Hours & Odometer`**, displaying cumulative lifetime print/laser hours alongside extruded filament length (`m` or `km` when $\ge 1000\text{ m}$), extruded mass (`kg`), and equivalent 1 kg spools (`📦 ~X.X Spools (X.XXkg)` at $330\text{ m} \approx 1\text{ kg}$ of $1.75\text{ mm}$ filament), plus active job filament weight & length (`⚖️ <g>g • 📏 <m>m`) in the job progress bar and fleet-wide odometer totals in the top Command Bar KPI pill.
+  - Added real-time Local LAN MQTT odometer accumulation in `custom_components/bambu_fleet_studio/__init__.py` (`_apply_print_dict`), tracking elapsed `RUNNING` seconds (`usage_hours`), `.3mf` job filament length/weight × `mc_percent` progress deltas, and Bambu RFID `remain%` drops (`1% ≈ 3.3m` / `10g`), persisted to `.storage/bambu_fleet_studio.printers`.
+  - Added baseline odometer calibration in the **`✏️ Edit Device`** modal (`Total Print Hours (h)` + `Lifetime Extruded Filament (m)` with a 1-click **`⚡ Est. from Hours`** button at $\sim 4.5\text{ m/h}$ and live `spools / kg / km` preview) that updates in-memory and `.storage` state without dropping the active Port 8883 TLS MQTT connection.
+- **Model-Size-Aware Build Plate Selector — Official Bambu Lab + BIQU CryoGrip & Panda Plates (`#25`)**:
+  - Added `BUILD_PLATE_CATALOG` and `getBuildPlateOptionsForModel()` tailored to each printer's physical build volume (`180×180mm` for `A1 Mini`, `256×256mm` for `A1`/`P1P`/`P1S`/`P2S`/`X1C`/`X1E`, `350×320mm` for `H2D`/`H2C`/`H2S`/`X2D`, and `400×400mm` for `R1` Laser).
+  - Includes all **Official Bambu Lab Plates** (*Textured PEI Plate*, *Smooth PEI Plate*, *Dual-Texture PEI Plate*, *Cool Plate SuperTack*, *Cool Plate (PLA)*, *High Temperature Plate*, *Engineering Plate*, and *3D Effect Sheets*: Carbon Fiber, Diamond, Starry, Galaxy) plus **BIQU CryoGrip & Panda Plates** (*🧊 BIQU CryoGrip Pro Glacier*, *❄️ BIQU CryoGrip Pro Frostbite*, *🐼 BIQU Panda BuildPlate Double-Sided Textured PEI*, and *🍊 BIQU Panda Juicy Plate*).
+  - Clicking the **`🛏️ Build Plate / Bed & Chamber`** tile or opening **`✏️ Edit Device`** allows instant build plate selection with cyan `🧊 BIQU ...` / emerald `🟢 ...` plate badges on every printer card.
+
+### Fixed
+- **Cross-Fleet Filament Studio `i18n` Key Resolution (`ff_status_ready` / `ff_ready_status`, `ff_ready_btn`, `ff_live_lan_badge`, `ff_search_ph`) (`#26`)**: Mapped all 15 Filament Studio & Walkthrough `t()` alias keys (`ff_status_ready`, `ff_ready_status`, `ff_status_printing`, `ff_status_offline`, `ff_ready_btn`, `ff_show_empty`, `ff_hide_empty`, `ff_live_lan_badge`, `ff_search_ph`, `ff_color_blue`, `ff_color_red`, `ff_color_orange`, `ff_color_black`, `ff_color_purple`, `wt_pill_r1`, `wt_pill_ams`) across all 12 supported languages (`en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `ru`, `zh`, `zh-tw`, `ja`) and updated `t()` to resolve `I18N_KEY_ALIASES` against `I18N_EXTRA`, ensuring `🟢 Ready`, `🖨️ Printing`, and `💤 Offline` pills render properly when filtering by Ready spools.
+
 ## [1.2.3] - 2026-10-12
 
 ### Added

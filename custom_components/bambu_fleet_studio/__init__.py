@@ -406,14 +406,30 @@ def get_or_create_rtsps_bridge(host: str, access_code: str, port: int = 322, pat
 class BambuPrinterRuntime:
     """Standalone Local LAN MQTT (Port 8883) & Camera (Port 6000 / Port 322 RTSPS) runtime for a single Bambu printer."""
 
-    def __init__(self, hass: HomeAssistant, config: dict[str, Any]) -> None:
+    def __init__(self, hass: HomeAssistant, config: dict[str, Any], on_odometer_save: Optional[Any] = None) -> None:
         self.hass = hass
+        self._config_ref = config
+        self._on_odometer_save = on_odometer_save
         self.serial: str = str(config.get("serial") or "").strip().upper()
         self.host: str = str(config.get("host") or "").strip()
         self.access_code: str = str(config.get("access_code") or "").strip()
         self.model: str = normalize_model_code(str(config.get("model") or ""), self.serial)
         self.name: str = str(config.get("name") or f"Bambu {self.model}").strip()
-        self.usage_hours: str = str(config.get("usage_hours") or "0")
+        try:
+            self._usage_hours_val: float = max(0.0, float(config.get("usage_hours") or 0.0))
+        except Exception:
+            self._usage_hours_val = 0.0
+        self.usage_hours: str = self._fmt_num(self._usage_hours_val, 1)
+        try:
+            raw_m = max(0.0, float(config.get("extruded_meters") or 0.0))
+            self._extruded_meters: float = raw_m if raw_m > 0.0 else round(self._usage_hours_val * 4.5, 1)
+        except Exception:
+            self._extruded_meters = round(self._usage_hours_val * 4.5, 1)
+        try:
+            raw_g = float(config.get("extruded_grams") or 0.0)
+            self._extruded_grams: float = raw_g if raw_g > 0 else round(self._extruded_meters * 3.03, 1)
+        except Exception:
+            self._extruded_grams = round(self._extruded_meters * 3.03, 1)
         self.ams_override: str = str(config.get("ams_override") or "AUTO").strip().upper()
         self.smart_plug: dict[str, Any] = config.get("smart_plug") or {}
         self.prefix: str = f"{self.model.lower()}_{self.serial.lower()}"
@@ -426,6 +442,18 @@ class BambuPrinterRuntime:
         self._last_jpeg: Optional[bytes] = None
         self._last_jpeg_ts: float = 0.0
         self._seq_id: int = 1
+
+        # Odometer runtime tracking
+        self._last_running_ts: float = 0.0
+        self._last_odometer_save_ts: float = time.time()
+        self._odometer_dirty: bool = False
+        self._active_job_key: str = ""
+        self._last_job_progress: int = 0
+        self._job_length_m: float = 0.0
+        self._job_weight_g: float = 0.0
+        self._job_accumulated_m: float = 0.0
+        self._rfid_accumulated_m: float = 0.0
+        self._last_tray_remains: dict[str, int] = {}
 
         # Live telemetry state
         self.online: bool = False
@@ -445,7 +473,7 @@ class BambuPrinterRuntime:
         self.task_name: str = "No active print job"
         self.print_weight: str = "—"
         self.print_length: str = "—"
-        self.bed_type: str = "Textured Plate"
+        self.bed_type: str = str(config.get("bed_type") or "Bambu Textured PEI Plate").strip()
         self.nozzle_size: str = "0.4"
         self.nozzle_type: str = "hardened steel"
         self.wifi_signal: str = "—"
@@ -468,6 +496,58 @@ class BambuPrinterRuntime:
             "active": False,
             "empty": True,
         }
+
+    @staticmethod
+    def _fmt_num(val: float, decimals: int = 1) -> str:
+        rounded = round(float(val), decimals)
+        if rounded == int(rounded):
+            return str(int(rounded))
+        return str(rounded)
+
+    def _persist_odometer(self, now_ts: Optional[float] = None) -> None:
+        """Sync live odometer counters back into config dict and trigger async Store save."""
+        self.usage_hours = self._fmt_num(self._usage_hours_val, 1)
+        if isinstance(self._config_ref, dict):
+            self._config_ref["usage_hours"] = self.usage_hours
+            self._config_ref["extruded_meters"] = round(self._extruded_meters, 2)
+            self._config_ref["extruded_grams"] = round(self._extruded_grams, 1)
+        self._odometer_dirty = False
+        self._last_odometer_save_ts = now_ts if now_ts is not None else time.time()
+        if callable(self._on_odometer_save):
+            try:
+                self._on_odometer_save()
+            except Exception:
+                pass
+
+    def _tick_odometer(self, now_ts: float, force_save: bool = False) -> None:
+        """Accumulate active print hours and fallback speed-scaled filament meters while running."""
+        if self.online and self.print_status == "running":
+            if self._last_running_ts > 0.0:
+                dt = now_ts - self._last_running_ts
+                if 0.0 < dt <= 30.0:
+                    self._usage_hours_val += dt / 3600.0
+                    self.usage_hours = self._fmt_num(self._usage_hours_val, 1)
+                    if self._job_length_m <= 0.0:
+                        speed_rates = {
+                            "silent": 2.5,
+                            "standard": 4.2,
+                            "sport": 5.2,
+                            "ludicrous": 6.8,
+                        }
+                        rate_m_hr = speed_rates.get(str(self.speed_profile).lower(), 4.2)
+                        dm = (rate_m_hr / 3600.0) * dt
+                        self._extruded_meters += dm
+                        self._extruded_grams += dm * 3.03
+                        self._job_accumulated_m += dm
+                    self._odometer_dirty = True
+            self._last_running_ts = now_ts
+        else:
+            if self._last_running_ts > 0.0:
+                self._last_running_ts = 0.0
+                force_save = True
+
+        if self._odometer_dirty and (force_save or (now_ts - self._last_odometer_save_ts) >= 180.0):
+            self._persist_odometer(now_ts)
 
     def start(self) -> None:
         """Start background MQTT and Camera threads."""
@@ -747,6 +827,7 @@ class BambuPrinterRuntime:
                 while not self._stop_event.is_set() and not disconnected[0]:
                     time.sleep(1.5)
                     now_ts = time.time()
+                    self._tick_odometer(now_ts)
                     if self.online and (now_ts - last_pushall) > 60.0:
                         last_pushall = now_ts
                         self.send_action("pushall")
@@ -797,6 +878,7 @@ class BambuPrinterRuntime:
         if not isinstance(p, dict):
             return
 
+        prev_status = self.print_status
         if "gcode_state" in p:
             raw_st = str(p["gcode_state"] or "").strip().lower()
             if raw_st in ("running", "pause", "prepare", "finish", "failed", "idle"):
@@ -807,9 +889,59 @@ class BambuPrinterRuntime:
         if "stg_cur" in p:
             self.current_stage = str(p["stg_cur"])
 
+        if "subtask_name" in p and p["subtask_name"]:
+            self.task_name = str(p["subtask_name"])
+        elif "gcode_file" in p and p["gcode_file"]:
+            self.task_name = str(p["gcode_file"])
+
+        if self.task_name and self.task_name != self._active_job_key:
+            self._active_job_key = self.task_name
+            self._last_job_progress = 0
+            self._job_accumulated_m = 0.0
+            self._rfid_accumulated_m = 0.0
+            self._job_length_m = 0.0
+            self._job_weight_g = 0.0
+
+        for w_key in ("weight", "total_weight", "print_weight", "filament_weight"):
+            if w_key in p and p[w_key] is not None:
+                try:
+                    wv = float(p[w_key])
+                    if wv > 0:
+                        self._job_weight_g = wv
+                        self.print_weight = self._fmt_num(wv, 1)
+                        break
+                except Exception:
+                    pass
+
+        for l_key in ("length", "total_length", "print_length", "filament_length"):
+            if l_key in p and p[l_key] is not None:
+                try:
+                    lv = float(p[l_key])
+                    if lv > 0:
+                        self._job_length_m = (lv / 100.0) if lv > 2500 else lv
+                        self.print_length = self._fmt_num(self._job_length_m, 1)
+                        break
+                except Exception:
+                    pass
+
+        if self._job_weight_g > 0 and self._job_length_m <= 0:
+            self._job_length_m = round(self._job_weight_g * 0.33, 2)
+            self.print_length = self._fmt_num(self._job_length_m, 1)
+
         if "mc_percent" in p:
             try:
-                self.progress = min(100, max(0, int(float(p["mc_percent"]))))
+                new_prog = min(100, max(0, int(float(p["mc_percent"]))))
+                if self.print_status == "running" and self._job_length_m > 0 and new_prog > self._last_job_progress:
+                    delta_pct = new_prog - self._last_job_progress
+                    if 0 < delta_pct <= 25:
+                        dm = self._job_length_m * (delta_pct / 100.0)
+                        self._extruded_meters += dm
+                        self._extruded_grams += dm * 3.03
+                        self._job_accumulated_m += dm
+                        self._odometer_dirty = True
+                self.progress = new_prog
+                if self.print_status in ("running", "prepare", "pause"):
+                    self._last_job_progress = new_prog
             except Exception:
                 pass
 
@@ -857,11 +989,6 @@ class BambuPrinterRuntime:
             self.total_layers = str(p["total_layer_num"])
         if "mc_remaining_time" in p:
             self.remaining_mins = str(p["mc_remaining_time"])
-
-        if "subtask_name" in p and p["subtask_name"]:
-            self.task_name = str(p["subtask_name"])
-        elif "gcode_file" in p and p["gcode_file"]:
-            self.task_name = str(p["gcode_file"])
 
         if "wifi_signal" in p and p["wifi_signal"]:
             self.wifi_signal = str(p["wifi_signal"])
@@ -993,6 +1120,20 @@ class BambuPrinterRuntime:
                     except Exception:
                         remain = None
 
+                    if remain is not None:
+                        prev_rem = self._last_tray_remains.get(global_tray_id)
+                        self._last_tray_remains[global_tray_id] = remain
+                        if is_active and self.print_status == "running" and prev_rem is not None:
+                            drop = prev_rem - remain
+                            if 1 <= drop <= 5:
+                                self._rfid_accumulated_m += drop * 3.30
+                                if self._rfid_accumulated_m > self._job_accumulated_m:
+                                    diff_m = self._rfid_accumulated_m - self._job_accumulated_m
+                                    self._extruded_meters += diff_m
+                                    self._extruded_grams += diff_m * 3.03
+                                    self._job_accumulated_m += diff_m
+                                    self._odometer_dirty = True
+
                     trays_out.append({
                         "slot": slot_num,
                         "slotCode": f"{bank_letter}{slot_num}",
@@ -1020,6 +1161,11 @@ class BambuPrinterRuntime:
                     "trays": trays_out,
                 })
             self.ams_units = parsed_units
+
+        self._tick_odometer(
+            time.time(),
+            force_save=(prev_status == "running" and self.print_status in ("finish", "idle", "failed", "pause")),
+        )
 
     def _port6000_cam_loop(self) -> None:
         """Background TCP Port 6000 TLS binary JPEG stream reader for A1, A1 Mini, P1P, P1S."""
@@ -1146,6 +1292,9 @@ class BambuPrinterRuntime:
             "printWeight": self.print_weight,
             "printLength": self.print_length,
             "totalUsage": self.usage_hours,
+            "extrudedMeters": round(self._extruded_meters, 1),
+            "extrudedGrams": round(self._extruded_grams, 0),
+            "extrudedSpools": round(self._extruded_meters / 330.0, 2),
             "bedType": self.bed_type,
             "nozzleSize": self.nozzle_size,
             "nozzleType": self.nozzle_type,
@@ -1178,6 +1327,15 @@ class BambuFleetStudioManager:
         self.store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self.runtimes: dict[str, BambuPrinterRuntime] = {}
         self.configs: dict[str, dict[str, Any]] = {}
+
+    def _schedule_save_from_thread(self) -> None:
+        """Schedule an async store save from a background runtime thread."""
+        try:
+            self.hass.loop.call_soon_threadsafe(
+                lambda: self.hass.async_create_task(self.async_save())
+            )
+        except Exception:
+            pass
 
     async def async_initialize(self) -> None:
         """Load saved printers (and auto-import any existing printer credentials on first run)."""
@@ -1214,6 +1372,8 @@ class BambuFleetStudioManager:
                             "model": mod,
                             "name": name,
                             "usage_hours": usage_hours,
+                            "extruded_meters": 0.0,
+                            "extruded_grams": 0.0,
                             "ams_override": "AUTO",
                         }
                         imported = True
@@ -1245,7 +1405,7 @@ class BambuFleetStudioManager:
         sn = serial.strip().upper()
         if sn in self.runtimes:
             await self.hass.async_add_executor_job(self.runtimes[sn].stop)
-        rt = BambuPrinterRuntime(self.hass, cfg)
+        rt = BambuPrinterRuntime(self.hass, cfg, on_odometer_save=self._schedule_save_from_thread)
         self.runtimes[sn] = rt
         await self.hass.async_add_executor_job(rt.start)
         return rt
@@ -1264,25 +1424,81 @@ class BambuFleetStudioManager:
             raise ValueError("Could not determine 15-character Serial Number. Verify printer IP or enter Serial manually.")
 
         existing = self.configs.get(serial, {})
+        existing_rt = self.runtimes.get(serial)
         access_code = str(payload.get("access_code") or existing.get("access_code") or "").strip()
         model = normalize_model_code(str(payload.get("model") or existing.get("model") or ""), serial)
         name = str(payload.get("name") or existing.get("name") or f"Bambu {model}").strip()
-        usage_hours = str(payload.get("usage_hours") if "usage_hours" in payload else existing.get("usage_hours", "0")).strip()
+        usage_hours = str(
+            payload.get("usage_hours")
+            if "usage_hours" in payload
+            else (existing_rt.usage_hours if existing_rt else existing.get("usage_hours", "0"))
+        ).strip()
+        try:
+            extruded_meters = max(
+                0.0,
+                float(
+                    payload.get("extruded_meters")
+                    if "extruded_meters" in payload
+                    else (existing_rt._extruded_meters if existing_rt else existing.get("extruded_meters", 0.0))
+                ),
+            )
+        except Exception:
+            extruded_meters = 0.0
+        try:
+            extruded_grams = (
+                max(0.0, float(payload["extruded_grams"]))
+                if "extruded_grams" in payload
+                else round(extruded_meters * 3.03, 1)
+            )
+        except Exception:
+            extruded_grams = round(extruded_meters * 3.03, 1)
+
         ams_override = str(payload.get("ams_override") or existing.get("ams_override") or "AUTO").strip().upper()
+        bed_type = str(
+            payload.get("bed_type")
+            if "bed_type" in payload
+            else (existing_rt.bed_type if existing_rt else existing.get("bed_type", "Bambu Textured PEI Plate"))
+        ).strip() or "Bambu Textured PEI Plate"
         smart_plug = payload.get("smart_plug") if "smart_plug" in payload else existing.get("smart_plug", {})
+        resolved_host = host or existing.get("host", "")
 
         cfg = {
             "serial": serial,
-            "host": host or existing.get("host", ""),
+            "host": resolved_host,
             "access_code": access_code,
             "model": model,
             "name": name,
             "usage_hours": usage_hours,
+            "extruded_meters": round(extruded_meters, 2),
+            "extruded_grams": round(extruded_grams, 1),
+            "bed_type": bed_type,
             "ams_override": ams_override,
             "smart_plug": smart_plug,
         }
         self.configs[serial] = cfg
         await self.async_save()
+
+        # If runtime already exists and network credentials did not change, update in-place without dropping MQTT/camera
+        if (
+            existing_rt is not None
+            and existing_rt.host == resolved_host
+            and existing_rt.access_code == access_code
+            and existing_rt.model == model
+        ):
+            existing_rt._config_ref = cfg
+            existing_rt.name = name
+            existing_rt.ams_override = ams_override
+            existing_rt.bed_type = bed_type
+            existing_rt.smart_plug = smart_plug or {}
+            try:
+                existing_rt._usage_hours_val = max(0.0, float(usage_hours or 0.0))
+            except Exception:
+                pass
+            existing_rt.usage_hours = existing_rt._fmt_num(existing_rt._usage_hours_val, 1)
+            existing_rt._extruded_meters = extruded_meters
+            existing_rt._extruded_grams = extruded_grams
+            return existing_rt.to_status_dict()
+
         rt = await self.async_start_printer(serial, cfg)
         for _ in range(22):
             if rt.online:
@@ -1489,7 +1705,10 @@ class FleetPrintersAPIView(HomeAssistantView):
                 cfg = mgr.configs.get(rt.serial, {})
                 d["host"] = rt.host or cfg.get("host", "")
                 d["access_code"] = rt.access_code or cfg.get("access_code", "")
-                d["usage_hours"] = cfg.get("usage_hours", rt.total_usage)
+                d["usage_hours"] = rt.usage_hours or cfg.get("usage_hours", "0")
+                d["extruded_meters"] = round(rt._extruded_meters, 1)
+                d["extruded_grams"] = round(rt._extruded_grams, 0)
+                d["bed_type"] = rt.bed_type or cfg.get("bed_type", "Bambu Textured PEI Plate")
                 printers.append(d)
         return web.json_response({"printers": printers})
 

@@ -3,3 +3,9 @@ node_modules/
 Thumbs.db
 *.log
 .env
+AGENTS.md
+AGENT.md
+GEMINI.md
+CLAUDE.md
+.agents/
+graphify-out/
