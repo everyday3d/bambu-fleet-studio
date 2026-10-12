@@ -1858,13 +1858,17 @@
     { hex: "#4D3324", name: "Espresso Brown", family: "PURPLE_BROWN" }
   ];
 
-  function resolveSpoolColorInfo(hexStr, isEmpty = false) {
+  function resolveSpoolColorInfo(hexStr, arg2 = false, arg3 = "PLA", arg4 = false) {
+    const isEmpty = typeof arg2 === "boolean" ? arg2 : Boolean(arg4);
+    const rawName = typeof arg2 === "string" ? arg2 : "";
+    const rawType = typeof arg3 === "string" ? arg3 : "PLA";
     if (isEmpty) {
-      return { colorName: "Empty Slot", family: "EMPTY", hex: "#334155" };
+      return { colorName: "Empty Slot", displayName: "Empty Slot", family: "EMPTY", hex: "#334155" };
     }
     const clean = String(hexStr || "#334155").trim().replace(/^#/, "");
     if (clean.length < 6) {
-      return { colorName: "Custom Color", family: "BLACK_GRAY", hex: "#334155" };
+      const fallbackTitle = rawName && rawName !== "—" ? rawName : ("Custom Color • " + rawType);
+      return { colorName: "Custom Color", displayName: fallbackTitle, family: "BLACK_GRAY", hex: "#334155" };
     }
     const r = parseInt(clean.slice(0, 2), 16) || 0;
     const g = parseInt(clean.slice(2, 4), 16) || 0;
@@ -1883,8 +1887,15 @@
         best = item;
       }
     }
+    const genericSet = new Set(["", "—", "PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL"]);
+    const trimmedRaw = String(rawName || "").trim();
+    const isGeneric = genericSet.has(trimmedRaw.toUpperCase());
+    const matLabel = (rawType && rawType !== "—") ? rawType : (trimmedRaw || "PLA");
+    const displayName = isGeneric ? `${best.name} • ${matLabel}` : trimmedRaw;
+
     return {
       colorName: best.name,
+      displayName,
       family: best.family,
       hex: "#" + clean.slice(0, 6).toUpperCase()
     };
@@ -1911,7 +1922,7 @@
             const rawColor = (ov && ov.color) ? ov.color : (tr.color || "#334155");
             const rawType = ((ov && ov.type) ? ov.type : (tr.type || (isUnavailable ? "—" : "PLA"))).toUpperCase();
             const rawName = (ov && ov.name) ? ov.name : (tr.name || rawType);
-            const colorInfo = resolveSpoolColorInfo(rawColor, isUnavailable);
+            const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable);
             const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
             const displayTitle = isUnavailable
               ? rawName
@@ -1961,7 +1972,7 @@
         const rawColor = (ov && ov.color) ? ov.color : (p.extSpool.color || "#f59e0b");
         const rawType = ((ov && ov.type) ? ov.type : (p.extSpool.type || "PLA")).toUpperCase();
         const rawName = (ov && ov.name) ? ov.name : p.extSpool.name;
-        const colorInfo = resolveSpoolColorInfo(rawColor, isUnavailable);
+        const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable);
         const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
         const displayTitle = isUnavailable
           ? rawName
@@ -2004,6 +2015,288 @@
       }
     }
     return spools;
+  }
+
+  function stripLeadingEmoji(str) {
+    return String(str || "").replace(/^[^\p{L}\p{N}]+\s*/u, "").trim();
+  }
+
+  // High-Contrast Multi-Color Neon Vector SVG Icon Suite (replaces dated 1980s monochrome wireframes & flat OS emojis)
+  const SVG_ICONS = {
+    fleetCube: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(56,189,248,0.45));">
+      <defs>
+        <linearGradient id="bfsGradCube" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="50%" stop-color="#10b981"/>
+          <stop offset="100%" stop-color="#f59e0b"/>
+        </linearGradient>
+      </defs>
+      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="url(#bfsGradCube)" stroke-width="2.1" fill="rgba(56,189,248,0.1)"/>
+      <path d="M3 7l9 5 9-5M12 22V12" stroke="url(#bfsGradCube)" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="12" r="3" fill="#10b981" stroke="#090c12" stroke-width="1.2"/>
+    </svg>`,
+    filamentSpool: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(236,72,153,0.4));">
+      <circle cx="12" cy="12" r="9.5" stroke="rgba(255,255,255,0.22)" stroke-width="1.2" fill="rgba(15,23,42,0.75)"/>
+      <path d="M12 4.5 A7.5 7.5 0 0 1 19.5 12" stroke="#10b981" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M19.5 12 A7.5 7.5 0 0 1 12 19.5" stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M12 19.5 A7.5 7.5 0 0 1 4.5 12" stroke="#ec4899" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M4.5 12 A7.5 7.5 0 0 1 12 4.5" stroke="#f59e0b" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="12" cy="12" r="3.4" fill="#0f172a" stroke="#f8fafc" stroke-width="1.6"/>
+    </svg>`,
+    radarBell: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 5px rgba(245,158,11,0.45));">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" fill="rgba(245,158,11,0.22)" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="18.5" cy="5.5" r="3" fill="#ef4444" stroke="#090c12" stroke-width="1.2"/>
+    </svg>`,
+    blueprintGuide: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 5px rgba(56,189,248,0.45));">
+      <polygon points="12 2 2 7 12 12 22 7 12 2" fill="rgba(56,189,248,0.25)" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+      <polyline points="2 12 12 17 22 12" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="2 17 12 22 22 17" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+    addCrosshair: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" style="flex-shrink:0;">
+      <rect x="3" y="3" width="18" height="18" rx="5" fill="rgba(9,12,18,0.22)" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 7.5v9M7.5 12h9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`,
+    addSparkle: `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(245,158,11,0.5));">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="6" fill="rgba(245,158,11,0.18)" stroke="#f59e0b" stroke-width="1.8"/>
+      <path d="M12 7v10M7 12h10" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="18" cy="6" r="2" fill="#38bdf8"/>
+    </svg>`,
+    camLens: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;">
+      <rect x="2" y="5" width="15" height="14" rx="3.5" fill="rgba(56,189,248,0.18)" stroke="#38bdf8" stroke-width="2"/>
+      <path d="M17 9.5l5-3v11l-5-3v-5z" fill="rgba(16,185,129,0.25)" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="9.5" cy="12" r="3" fill="#0f172a" stroke="#bae6fd" stroke-width="1.6"/>
+      <circle cx="5.5" cy="8.5" r="1.2" fill="#ef4444"/>
+    </svg>`,
+    mesh3mf: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;">
+      <path d="M12 2.5L3.5 7v10L12 21.5l8.5-4.5V7L12 2.5z" fill="rgba(168,85,247,0.18)" stroke="#c084fc" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M3.5 7L12 11.5 20.5 7M12 21.5v-10" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`,
+    ctrlDeck: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;">
+      <line x1="4" y1="6" x2="20" y2="6" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+      <line x1="4" y1="12" x2="20" y2="12" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+      <line x1="4" y1="18" x2="20" y2="18" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="9" cy="6" r="2.6" fill="#38bdf8" stroke="#090c12" stroke-width="1.2"/>
+      <circle cx="15" cy="12" r="2.6" fill="#10b981" stroke="#090c12" stroke-width="1.2"/>
+      <circle cx="11" cy="18" r="2.6" fill="#f59e0b" stroke="#090c12" stroke-width="1.2"/>
+    </svg>`,
+    lightBulb: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 5px rgba(250,204,21,0.5));">
+      <path d="M9 18h6M10 21h4" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 3a6 6 0 0 0-3.8 10.6c.5.4.8 1 .8 1.7V16h6v-.7c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z" fill="rgba(250,204,21,0.28)" stroke="#fde047" stroke-width="2"/>
+    </svg>`,
+    syncTurbine: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 4px rgba(56,189,248,0.4));">
+      <path d="M21 12a9 9 0 0 0-15.4-6.4L3 8" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="3 3 3 8 8 8" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 12a9 9 0 0 0 15.4 6.4L21 16" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="21 21 21 16 16 16" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+    editTuner: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 4px rgba(168,85,247,0.4));">
+      <path d="M12 20h9" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="rgba(168,85,247,0.24)" stroke="#c084fc" stroke-width="2" stroke-linejoin="round"/>
+    </svg>`,
+    laserTrash: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 4px rgba(244,63,94,0.35));">
+      <polyline points="3 6 5 6 21 6" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="rgba(244,63,94,0.18)" stroke="#f43f5e" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="10" y1="11" x2="10" y2="17" stroke="#fda4af" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="14" y1="11" x2="14" y2="17" stroke="#fda4af" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`,
+    powerPlug: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 5px rgba(16,185,129,0.5));">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="rgba(16,185,129,0.28)" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
+    </svg>`,
+    thermalShield: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" style="flex-shrink:0;filter:drop-shadow(0 0 5px rgba(245,158,11,0.5));">
+      <rect x="4" y="11" width="16" height="10" rx="2.5" fill="rgba(245,158,11,0.25)" stroke="#f59e0b" stroke-width="2"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="#fde047" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  };
+
+  function findHuiRootShadow(startNode) {
+    try {
+      let node = startNode;
+      while (node) {
+        const root = node.getRootNode ? node.getRootNode() : null;
+        if (root && root.host) {
+          if (String(root.host.tagName || "").toLowerCase() === "hui-root") {
+            return root;
+          }
+          node = root.host;
+        } else {
+          break;
+        }
+      }
+      const ha = document.querySelector("home-assistant");
+      const main = ha?.shadowRoot?.querySelector("home-assistant-main");
+      const panel = main?.shadowRoot?.querySelector("ha-panel-lovelace");
+      const huiRoot = panel?.shadowRoot?.querySelector("hui-root");
+      return huiRoot?.shadowRoot || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function enhanceLovelaceTopTabs(hostEl, allPrinters, loadedSpoolCount) {
+    const huiShadow = findHuiRootShadow(hostEl);
+    if (!huiShadow) return;
+
+    if (!huiShadow.getElementById("bfs-juiced-top-tabs-css")) {
+      const styleEl = document.createElement("style");
+      styleEl.id = "bfs-juiced-top-tabs-css";
+      styleEl.textContent = `
+        .bfs-top-tab-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 5px 11px;
+          border-radius: 11px;
+          background: linear-gradient(145deg, rgba(30,41,59,0.75), rgba(15,23,42,0.88));
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+          color: #f8fafc;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.01em;
+          line-height: 1;
+          white-space: nowrap;
+          pointer-events: none;
+          transition: all 0.18s ease;
+        }
+        ha-tab-group-tab[active] .bfs-top-tab-pill,
+        sl-tab[active] .bfs-top-tab-pill,
+        paper-tab.iron-selected .bfs-top-tab-pill,
+        [role="tab"][aria-selected="true"] .bfs-top-tab-pill {
+          background: linear-gradient(135deg, rgba(245,158,11,0.24), rgba(56,189,248,0.18));
+          border-color: rgba(245,158,11,0.75);
+          box-shadow: 0 0 14px rgba(245,158,11,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+          color: #ffffff;
+          transform: translateY(-1px);
+        }
+        .bfs-top-tab-thumb {
+          width: 22px;
+          height: 22px;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 5px rgba(0,0,0,0.75));
+          flex-shrink: 0;
+        }
+        .bfs-top-tab-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .bfs-top-tab-badge {
+          font-size: 10px;
+          font-weight: 900;
+          padding: 2px 6px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #f59e0b, #ea580c);
+          color: #090c12;
+          box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+        }
+        @media (max-width: 720px) {
+          .bfs-top-tab-lbl {
+            display: none;
+          }
+          .bfs-top-tab-pill {
+            padding: 5px 8px;
+            gap: 5px;
+          }
+        }
+      `;
+      huiShadow.appendChild(styleEl);
+    }
+
+    const tabs = Array.from(huiShadow.querySelectorAll("ha-tab-group-tab, sl-tab, paper-tab, [role='tab']"));
+    if (tabs.length === 0) return;
+
+    const findPrinterOnline = (modelCode) => {
+      const m = (allPrinters || []).find(p => p.modelNorm === modelCode || p.rawModelNorm === modelCode);
+      return m ? m.online : null;
+    };
+    const onlineTotal = (allPrinters || []).filter(p => p.online).length;
+
+    const tabSpecsByKey = [
+      {
+        match: ["fleet-overview", "fleet studio"],
+        iconHtml: SVG_ICONS.fleetCube,
+        label: "Fleet Studio",
+        badgeHtml: `<span class="bfs-top-tab-dot" style="background:${onlineTotal > 0 ? '#10b981' : '#64748b'};box-shadow:${onlineTotal > 0 ? '0 0 8px #10b981' : 'none'};"></span>`
+      },
+      {
+        match: ["filament-studio", "filament"],
+        iconHtml: SVG_ICONS.filamentSpool,
+        label: "Filament Studio",
+        badgeHtml: loadedSpoolCount > 0 ? `<span class="bfs-top-tab-badge">${loadedSpoolCount}</span>` : ""
+      },
+      {
+        match: ["bambu-a1", "bambu a1"],
+        iconHtml: `<img class="bfs-top-tab-thumb" src="${getPrinterImage("A1")}" alt="A1" />`,
+        label: "Bambu A1",
+        badgeHtml: `<span class="bfs-top-tab-dot" style="background:${findPrinterOnline("A1") ? '#10b981' : '#64748b'};box-shadow:${findPrinterOnline("A1") ? '0 0 8px #10b981' : 'none'};"></span>`
+      },
+      {
+        match: ["bambu-p2s", "bambu p2s", "p2s"],
+        iconHtml: `<img class="bfs-top-tab-thumb" src="${getPrinterImage("P2S")}" alt="P2S" />`,
+        label: "Bambu P2S",
+        badgeHtml: `<span class="bfs-top-tab-dot" style="background:${findPrinterOnline("P2S") ? '#10b981' : '#64748b'};box-shadow:${findPrinterOnline("P2S") ? '0 0 8px #10b981' : 'none'};"></span>`
+      },
+      {
+        match: ["bambu-p1s", "bambu p1s", "p1s"],
+        iconHtml: `<img class="bfs-top-tab-thumb" src="${getPrinterImage("P1S")}" alt="P1S" />`,
+        label: "Bambu P1S",
+        badgeHtml: findPrinterOnline("P1S") !== null ? `<span class="bfs-top-tab-dot" style="background:${findPrinterOnline("P1S") ? '#10b981' : '#64748b'};"></span>` : ""
+      },
+      {
+        match: ["bambu-a1-mini", "bambu a1 mini", "a1 mini"],
+        iconHtml: `<img class="bfs-top-tab-thumb" src="${getPrinterImage("A1MINI")}" alt="A1 Mini" />`,
+        label: "A1 Mini",
+        badgeHtml: `<span class="bfs-top-tab-dot" style="background:${findPrinterOnline("A1MINI") ? '#10b981' : '#64748b'};"></span>`
+      },
+      {
+        match: ["add-printer-guide", "add printer"],
+        iconHtml: SVG_ICONS.addSparkle,
+        label: "Add Printer",
+        badgeHtml: ""
+      }
+    ];
+
+    tabs.forEach((tabEl, idx) => {
+      try {
+        if (tabEl.shadowRoot && !tabEl.shadowRoot.getElementById("bfs-inner-tab-css")) {
+          const innerStyle = document.createElement("style");
+          innerStyle.id = "bfs-inner-tab-css";
+          innerStyle.textContent = `.tab { padding: 4px 6px !important; }`;
+          tabEl.shadowRoot.appendChild(innerStyle);
+        }
+        const rawPanel = String(
+          tabEl.getAttribute("panel") ||
+          tabEl.getAttribute("aria-label") ||
+          tabEl.getAttribute("title") ||
+          tabEl.querySelector("ha-icon, ha-svg-icon")?.getAttribute("title") ||
+          ""
+        ).toLowerCase().trim();
+
+        let spec = tabSpecsByKey.find(s => s.match.some(m => rawPanel === m || rawPanel.includes(m)));
+        if (!spec && idx < tabSpecsByKey.length) {
+          spec = tabSpecsByKey[idx];
+        }
+        if (!spec) return;
+
+        tabEl.querySelectorAll("ha-icon, ha-svg-icon").forEach(ic => {
+          ic.style.display = "none";
+        });
+
+        let pill = tabEl.querySelector(".bfs-top-tab-pill");
+        if (!pill) {
+          pill = document.createElement("div");
+          pill.className = "bfs-top-tab-pill";
+          tabEl.appendChild(pill);
+        }
+        const nextHtml = `${spec.iconHtml}<span class="bfs-top-tab-lbl">${spec.label}</span>${spec.badgeHtml}`;
+        if (pill.innerHTML !== nextHtml) {
+          pill.innerHTML = nextHtml;
+        }
+      } catch (e) {}
+    });
   }
 
   // Feature 6: Build Automation Configurations & YAML for 1-Click Deployment
@@ -4056,7 +4349,7 @@
       } else {
         stageRightHtml = `
           <div class="stage-offline-box">
-            <span style="font-size:24px;opacity:0.5;">📹</span>
+            <span style="opacity:0.75;transform:scale(1.4);display:inline-flex;">${SVG_ICONS.camLens}</span>
             <div style="font-weight:700;font-size:12px;color:#94a3b8;">${t("cam_offline", activeLang)}</div>
             <div style="font-size:11px;color:#64748b;">IP: ${p.ipAddress}</div>
           </div>
@@ -4107,7 +4400,7 @@
             <div class="ams-slots-grid">
               ${ams.trays.map(tr => {
                 const slotCode = tr.slotCode || ("A" + tr.slot);
-                const ovKey = p.prefix + ":" + slotCode;
+                const ovKey = (p.serial || p.prefix) + ":" + slotCode;
                 const ov = spoolOverrides[ovKey] || {};
                 const effColor = ov.color || tr.color || "#334155";
                 const effType = ov.type || tr.type || "PLA";
@@ -4138,7 +4431,7 @@
         `;
       }).join("");
     } else {
-      const ovKey = p.prefix + ":EXT";
+      const ovKey = (p.serial || p.prefix) + ":EXT";
       const ov = spoolOverrides[ovKey] || {};
       const effColor = ov.color || p.extSpool.color || "#f59e0b";
       const effType = ov.type || p.extSpool.type || "—";
@@ -4154,7 +4447,7 @@
               <div style="font-size:13px;font-weight:700;color:#f8fafc;">${effName}</div>
             </div>
           </div>
-          <span class="ext-badge">🎨 ${t("ext_spool_badge", activeLang)}</span>
+          <span class="ext-badge" style="display:inline-flex;align-items:center;gap:5px;">${SVG_ICONS.filamentSpool} ${t("ext_spool_badge", activeLang)}</span>
         </div>
       `;
     }
@@ -4186,11 +4479,11 @@
             </div>
           </div>
           <div class="p-hdr-actions">
-            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 ' + p.smartPlug.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? '🔒' : '🔌'}</button>` : ''}
-            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="${t("tip_light", activeLang)}">💡</button>
-            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="${t("tip_reload", activeLang)}">🔄</button>
-            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="${t("tip_edit", activeLang)}">✏️</button>
-            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="${t("tip_delete", activeLang)}">🗑️</button>
+            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 ' + p.smartPlug.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? SVG_ICONS.thermalShield : SVG_ICONS.powerPlug}</button>` : ''}
+            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="${t("tip_light", activeLang)}">${SVG_ICONS.lightBulb}</button>
+            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="${t("tip_reload", activeLang)}">${SVG_ICONS.syncTurbine}</button>
+            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="${t("tip_edit", activeLang)}">${SVG_ICONS.editTuner}</button>
+            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="${t("tip_delete", activeLang)}">${SVG_ICONS.laserTrash}</button>
           </div>
         </div>
 
@@ -4204,9 +4497,9 @@
 
           <div class="stage-viewport">
             <div class="viewport-tabs">
-              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}">${t("tab_cam", activeLang)}</button>
-              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}">${t("tab_3mf", activeLang)}</button>
-              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}">${t("tab_ctrl", activeLang)}</button>
+              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.camLens}<span>${stripLeadingEmoji(t("tab_cam", activeLang))}</span></button>
+              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.mesh3mf}<span>${stripLeadingEmoji(t("tab_3mf", activeLang))}</span></button>
+              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.ctrlDeck}<span>${stripLeadingEmoji(t("tab_ctrl", activeLang))}</span></button>
             </div>
             <div class="viewport-body">
               ${stageRightHtml}
@@ -4665,10 +4958,8 @@
       color: #f8fafc;
     }
     .cmd-logo svg {
-      width: 21px;
-      height: 21px;
-      stroke: #f59e0b;
-      fill: none;
+      width: 23px;
+      height: 23px;
     }
     .cmd-logo-dot {
       position: absolute;
@@ -5122,6 +5413,10 @@
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
@@ -6107,7 +6402,7 @@
       if (!this.shadowRoot) return;
       const title = this._config.title || "Bambu Lab Fleet Studio";
       const showWt = this._config.show_walkthrough !== false;
-      const showFf = this._config.show_filament_finder !== false;
+      const showFf = this._config.show_filament_finder === true;
       const filterModel = this._config.printer_model || "";
       const cfgLang = this._config.language || "auto";
 
@@ -6136,7 +6431,7 @@
           </div>
           <div class="chk-row">
             <input id="ffChk" type="checkbox" ${showFf ? "checked" : ""} />
-            <label style="margin:0;">Show Dedicated Cross-Fleet Filament Studio Area</label>
+            <label style="margin:0;">Expand Cross-Fleet Filament Studio Drawer by Default</label>
           </div>
           <div class="chk-row">
             <input id="wtChk" type="checkbox" ${showWt ? "checked" : ""} />
@@ -6182,7 +6477,7 @@
     static getStubConfig() {
       return {
         title: "Bambu Lab Fleet Studio",
-        show_filament_finder: true,
+        show_filament_finder: false,
         show_walkthrough: true
       };
     }
@@ -6195,7 +6490,7 @@
       this._viewModes = {};
       this._walkthroughSeries = "a1";
       this._showWalkthrough = true;
-      this._showFilamentFinder = true;
+      this._showFilamentFinder = false;
       this._filamentMatFilter = "ALL";
       this._filamentColorFamily = "ALL";
       this._filamentReadyOnly = false;
@@ -6341,7 +6636,7 @@
     setConfig(config) {
       this._config = config || {};
       this._showWalkthrough = config.show_walkthrough !== false;
-      this._showFilamentFinder = config.show_filament_finder !== false;
+      this._showFilamentFinder = config.show_filament_finder === true;
       this._lastSig = "";
       this._render();
     }
@@ -6458,12 +6753,7 @@
               <div class="cmd-top-row">
                 <div class="cmd-brand">
                   <div class="cmd-logo">
-                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z"/>
-                      <path d="M12 22V12"/>
-                      <path d="M21 7l-9 5-9-5"/>
-                      <circle cx="12" cy="12" r="2.2" fill="#10b981" stroke="none"/>
-                    </svg>
+                    ${SVG_ICONS.fleetCube}
                     <span class="cmd-logo-dot ${logoDotClass}"></span>
                   </div>
                   <div class="cmd-brand-text">
@@ -6499,12 +6789,22 @@
               </div>
               <div class="cmd-actions">
                 <button type="button" class="cmd-btn ${(this._showFilamentFinder || onlyFilament) ? 'active' : ''}" id="toggleFinderBtn">
-                  <span>${t("btn_filament_finder", lang)}</span>
+                  ${SVG_ICONS.filamentSpool}
+                  <span>${stripLeadingEmoji(t("btn_filament_finder", lang))}</span>
                   ${loadedSpoolCount > 0 ? `<span class="cmd-pill-badge">${loadedSpoolCount}</span>` : ''}
                 </button>
-                <button type="button" class="cmd-btn" id="openAutomationsBtn">${t("btn_automations", lang)}</button>
-                <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">${this._showWalkthrough ? t("btn_hide_guide", lang) : t("btn_setup_guide", lang)}</button>
-                <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">${t("btn_add_printer", lang)}</button>
+                <button type="button" class="cmd-btn" id="openAutomationsBtn">
+                  ${SVG_ICONS.radarBell}
+                  <span>${stripLeadingEmoji(t("btn_automations", lang))}</span>
+                </button>
+                <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">
+                  ${SVG_ICONS.blueprintGuide}
+                  <span>${stripLeadingEmoji(this._showWalkthrough ? t("btn_hide_guide", lang) : t("btn_setup_guide", lang))}</span>
+                </button>
+                <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">
+                  ${SVG_ICONS.addCrosshair}
+                  <span>${stripLeadingEmoji(t("btn_add_printer", lang))}</span>
+                </button>
               </div>
             </div>
           ` : ''}
@@ -6552,6 +6852,11 @@
       });
 
       this._restoreScrollContext(scrollCtx);
+
+      // Upgrade top Home Assistant Lovelace header tabs with multi-color neon SVGs & 3D printer renders
+      enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount);
+      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount), 180);
+      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount), 600);
 
       const openSpoolEditorByKey = (ovKey) => {
         if (!ovKey) return;
@@ -6805,7 +7110,7 @@
               btn.textContent = "✓";
               setTimeout(() => { this._lastSig = ""; this._render(); }, 900);
             } catch (err) {
-              btn.textContent = "🔄";
+              btn.innerHTML = SVG_ICONS.syncTurbine;
             }
           } else if (act === "edit") {
             openStudioModal(this._hass, "edit", p, () => { this._lastSig = ""; this._render(); });

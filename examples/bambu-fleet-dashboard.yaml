@@ -11,7 +11,7 @@ views:
     cards:
       - type: custom:bambu-fleet-studio
         title: Bambu Lab Fleet Studio
-        show_filament_finder: true
+        show_filament_finder: false
         show_walkthrough: true
 
   - type: panel
