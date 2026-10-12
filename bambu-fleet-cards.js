@@ -118,6 +118,709 @@
     } catch (e) {}
   }
 
+  const LANG_STORAGE_KEY = "bambu_fleet_lang_override_v1";
+
+  const SUPPORTED_LANGUAGES = [
+    { code: "auto", label: "🌐 Auto (HA)" },
+    { code: "en", label: "🇺🇸 EN — English" },
+    { code: "de", label: "🇩🇪 DE — Deutsch" },
+    { code: "fr", label: "🇫🇷 FR — Français" },
+    { code: "es", label: "🇪🇸 ES — Español" },
+    { code: "it", label: "🇮🇹 IT — Italiano" },
+    { code: "nl", label: "🇳🇱 NL — Nederlands" },
+    { code: "pl", label: "🇵🇱 PL — Polski" },
+    { code: "pt", label: "🇵🇹 PT — Português" },
+    { code: "zh", label: "🇨🇳 ZH — 简体中文" },
+    { code: "ja", label: "🇯🇵 JA — 日本語" }
+  ];
+
+  const I18N_DICT = {
+    en: {
+      cmdSub: "Bambu Lab Printers, R1 CO2 Laser & AMS Fleet • Local LAN Telemetry, Smart Plugs & Spool Inventory",
+      kpiPrinters: "Printers",
+      kpiOnline: "Online",
+      kpiAmsUnits: "AMS Units",
+      kpiHmsAlerts: "HMS Alerts",
+      kpiPrintHours: "Print Hours",
+      btnFilamentFinder: "🎨 Filament Finder",
+      btnAutomations: "🔔 Alerts & Automations",
+      btnShowGuide: "📖 Setup Guide",
+      btnHideGuide: "📖 Hide Guide",
+      btnAddPrinter: "➕ Add Printer",
+      statusPrinting: "PRINTING",
+      statusIdle: "IDLE",
+      statusPaused: "PAUSED",
+      statusPrepare: "PREPARING",
+      statusFinish: "FINISHED",
+      statusFailed: "FAILED",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Door Open",
+      doorClosed: "🚪 Door Closed",
+      standardPlate: "Standard Plate",
+      tabCam: "📹 Cam",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Ctrl",
+      no3mfPreview: "No Active 3MF Preview",
+      camOffline: "Camera Offline",
+      lightOn: "💡 Light ON",
+      lightOff: "💡 Light OFF",
+      forceSync: "🔄 Force Sync",
+      pause: "⏸️ Pause",
+      resume: "▶️ Resume",
+      stopJob: "⏹️ Stop Job",
+      confirmStopJob: "Stop current print job?",
+      noActiveJob: "No active print job",
+      idleDone: "Idle / Done",
+      layer: "Layer",
+      tileNozzle: "🔥 Nozzle",
+      tileBedChamber: "🛏️ Bed & Chamber",
+      tileBuildPlate: "🛏️ Build Plate",
+      tileCoolingSpeed: "🌀 Cooling & Speed",
+      tileFleetHours: "⏳ Fleet Hours",
+      target: "Target",
+      mode: "Mode",
+      openAirRotary: "🌬️ Open-Air Rotary",
+      drying: "🔥 Drying",
+      emptySlot: "Empty",
+      directExtSpool: "Direct External Spool",
+      singleExtruderNoAms: "Single Extruder • No AMS",
+      amsSubLite: "4-Spool Rotary Feeder",
+      amsSubHt: "85°C Active High-Temp Dryer",
+      amsSub2Pro: "4-Slot Active Drying System",
+      amsSubStd: "4-Slot Enclosed System",
+      ffBadge: "CROSS-FLEET SPOOL INVENTORY",
+      ffTitle: "🎨 Filament Finder — Which Printer Has My Spool?",
+      ffSearchPlaceholder: "Search color, material, or printer...",
+      ffAll: "All",
+      wtBadge: "NEW PRINTER, LASER & AMS WALKTHROUGH",
+      wtTitle: "How to Connect a Bambu Lab Printer, R1 Laser, or AMS in 4 Steps",
+      wtSupportedHdr: "🖼️ SUPPORTED BAMBU LAB PRINTERS, R1 LASER & AMS SYSTEMS — CLICK ANY DEVICE",
+      readyToPair: "Ready to Pair",
+      connectNow: "Connect"
+    },
+    de: {
+      cmdSub: "Bambu Lab Drucker, R1 CO2-Laser & AMS-Flotte • Lokale LAN-Telemetrie, Smart Plugs & Spuleninventar",
+      kpiPrinters: "Drucker",
+      kpiOnline: "Online",
+      kpiAmsUnits: "AMS-Einheiten",
+      kpiHmsAlerts: "HMS-Warnungen",
+      kpiPrintHours: "Druckstunden",
+      btnFilamentFinder: "🎨 Filamentsuche",
+      btnAutomations: "🔔 Warnungen & Automationen",
+      btnShowGuide: "📖 Anleitung",
+      btnHideGuide: "📖 Anleitung ausblenden",
+      btnAddPrinter: "➕ Drucker hinzufügen",
+      statusPrinting: "DRUCKT",
+      statusIdle: "BEREIT",
+      statusPaused: "PAUSIERT",
+      statusPrepare: "VORBEREITUNG",
+      statusFinish: "FERTIG",
+      statusFailed: "FEHLER",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Tür offen",
+      doorClosed: "🚪 Tür geschlossen",
+      standardPlate: "Standard-Druckplatte",
+      tabCam: "📹 Kamera",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Steuerung",
+      no3mfPreview: "Keine aktive 3MF-Vorschau",
+      camOffline: "Kamera offline",
+      lightOn: "💡 Licht AN",
+      lightOff: "💡 Licht AUS",
+      forceSync: "🔄 Synchronisieren",
+      pause: "⏸️ Pause",
+      resume: "▶️ Fortsetzen",
+      stopJob: "⏹️ Abbrechen",
+      confirmStopJob: "Aktuellen Druckauftrag wirklich abbrechen?",
+      noActiveJob: "Kein aktiver Druckauftrag",
+      idleDone: "Bereit / Fertig",
+      layer: "Schicht",
+      tileNozzle: "🔥 Düse",
+      tileBedChamber: "🛏️ Bett & Bauraum",
+      tileBuildPlate: "🛏️ Heizbett",
+      tileCoolingSpeed: "🌀 Kühlung & Tempo",
+      tileFleetHours: "⏳ Betriebsstunden",
+      target: "Ziel",
+      mode: "Modus",
+      openAirRotary: "🌬️ Offenes Dreh-AMS",
+      drying: "🔥 Trocknet",
+      emptySlot: "Leer",
+      directExtSpool: "Externe Einzelspule",
+      singleExtruderNoAms: "Einzelextruder • Kein AMS",
+      amsSubLite: "Offener 4-Spulen-Wechsler",
+      amsSubHt: "85°C Hochtemperatur-Trockner",
+      amsSub2Pro: "4-Fach Aktiv-Trocknungssystem",
+      amsSubStd: "Geschlossenes 4-Fach-System",
+      ffBadge: "FLOTTENWEITES SPULENINVENTAR",
+      ffTitle: "🎨 Filamentsuche — Welcher Drucker hat meine Spule?",
+      ffSearchPlaceholder: "Farbe, Material oder Drucker suchen...",
+      ffAll: "Alle",
+      wtBadge: "EINRICHTUNGSANLEITUNG FÜR DRUCKER, LASER & AMS",
+      wtTitle: "Bambu Lab Drucker, R1 Laser oder AMS in 4 Schritten verbinden",
+      wtSupportedHdr: "🖼️ UNTERSTÜTZTE BAMBU LAB DRUCKER, R1 LASER & AMS — GERÄT ANKLICKEN",
+      readyToPair: "Bereit zum Koppeln",
+      connectNow: "Verbinden"
+    },
+    fr: {
+      cmdSub: "Imprimantes Bambu Lab, Laser CO2 R1 & Flotte AMS • Télémétrie LAN, Prises Connectées & Inventaire Bobines",
+      kpiPrinters: "Imprimantes",
+      kpiOnline: "En ligne",
+      kpiAmsUnits: "Unités AMS",
+      kpiHmsAlerts: "Alertes HMS",
+      kpiPrintHours: "Heures d'impr.",
+      btnFilamentFinder: "🎨 Cherche-Filament",
+      btnAutomations: "🔔 Alertes & Automations",
+      btnShowGuide: "📖 Guide",
+      btnHideGuide: "📖 Masquer Guide",
+      btnAddPrinter: "➕ Ajouter Imprimante",
+      statusPrinting: "IMPRESSION",
+      statusIdle: "PRÊT",
+      statusPaused: "EN PAUSE",
+      statusPrepare: "PRÉPARATION",
+      statusFinish: "TERMINÉ",
+      statusFailed: "ÉCHEC",
+      statusOffline: "HORS LIGNE",
+      doorOpen: "🚪 Porte ouverte",
+      doorClosed: "🚪 Porte fermée",
+      standardPlate: "Plateau standard",
+      tabCam: "📹 Caméra",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Contrôles",
+      no3mfPreview: "Aucun aperçu 3MF actif",
+      camOffline: "Caméra hors ligne",
+      lightOn: "💡 Lumière ON",
+      lightOff: "💡 Lumière OFF",
+      forceSync: "🔄 Synchroniser",
+      pause: "⏸️ Pause",
+      resume: "▶️ Reprendre",
+      stopJob: "⏹️ Arrêter",
+      confirmStopJob: "Arrêter l'impression en cours ?",
+      noActiveJob: "Aucune impression active",
+      idleDone: "Prêt / Terminé",
+      layer: "Couche",
+      tileNozzle: "🔥 Buse",
+      tileBedChamber: "🛏️ Plateau & Chambre",
+      tileBuildPlate: "🛏️ Plateau chauffant",
+      tileCoolingSpeed: "🌀 Refroid. & Vitesse",
+      tileFleetHours: "⏳ Heures totales",
+      target: "Cible",
+      mode: "Mode",
+      openAirRotary: "🌬️ Rotatif ouvert",
+      drying: "🔥 Séchage",
+      emptySlot: "Vide",
+      directExtSpool: "Bobine externe directe",
+      singleExtruderNoAms: "Extrudeur simple • Sans AMS",
+      amsSubLite: "Chargeur rotatif 4 bobines",
+      amsSubHt: "Sécheur haute temp. 85°C",
+      amsSub2Pro: "Système séchage actif 4 empl.",
+      amsSubStd: "Système fermé 4 emplacements",
+      ffBadge: "INVENTAIRE DES BOBINES DE LA FLOTTE",
+      ffTitle: "🎨 Cherche-Filament — Quelle imprimante a ma bobine ?",
+      ffSearchPlaceholder: "Rechercher couleur, matériau ou imprimante...",
+      ffAll: "Tous",
+      wtBadge: "GUIDE DE CONNEXION IMPRIMANTE, LASER & AMS",
+      wtTitle: "Connecter une imprimante Bambu Lab, un laser R1 ou un AMS en 4 étapes",
+      wtSupportedHdr: "🖼️ MATÉRIEL BAMBU LAB SUPPORTÉ — CLIQUEZ SUR UN APPAREIL",
+      readyToPair: "Prêt à associer",
+      connectNow: "Connecter"
+    },
+    es: {
+      cmdSub: "Impresoras Bambu Lab, Láser CO2 R1 y Flota AMS • Telemetría LAN, Enchufes Inteligentes e Inventario de Bobinas",
+      kpiPrinters: "Impresoras",
+      kpiOnline: "En línea",
+      kpiAmsUnits: "Unidades AMS",
+      kpiHmsAlerts: "Alertas HMS",
+      kpiPrintHours: "Horas impr.",
+      btnFilamentFinder: "🎨 Buscar Filamento",
+      btnAutomations: "🔔 Alertas y Autom.",
+      btnShowGuide: "📖 Guía",
+      btnHideGuide: "📖 Ocultar Guía",
+      btnAddPrinter: "➕ Añadir Impresora",
+      statusPrinting: "IMPRIMIENDO",
+      statusIdle: "LISTA",
+      statusPaused: "PAUSADA",
+      statusPrepare: "PREPARANDO",
+      statusFinish: "TERMINADO",
+      statusFailed: "ERROR",
+      statusOffline: "SIN CONEXIÓN",
+      doorOpen: "🚪 Puerta abierta",
+      doorClosed: "🚪 Puerta cerrada",
+      standardPlate: "Placa estándar",
+      tabCam: "📹 Cámara",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Control",
+      no3mfPreview: "Sin vista previa 3MF activa",
+      camOffline: "Cámara sin conexión",
+      lightOn: "💡 Luz ENCENDIDA",
+      lightOff: "💡 Luz APAGADA",
+      forceSync: "🔄 Sincronizar",
+      pause: "⏸️ Pausar",
+      resume: "▶️ Reanudar",
+      stopJob: "⏹️ Detener",
+      confirmStopJob: "¿Detener el trabajo de impresión actual?",
+      noActiveJob: "Sin trabajo de impresión activo",
+      idleDone: "Lista / Terminado",
+      layer: "Capa",
+      tileNozzle: "🔥 Boquilla",
+      tileBedChamber: "🛏️ Cama y Cámara",
+      tileBuildPlate: "🛏️ Cama caliente",
+      tileCoolingSpeed: "🌀 Vent. y Velocidad",
+      tileFleetHours: "⏳ Horas de uso",
+      target: "Obj.",
+      mode: "Modo",
+      openAirRotary: "🌬️ Rotativo abierto",
+      drying: "🔥 Secando",
+      emptySlot: "Vacío",
+      directExtSpool: "Bobina externa directa",
+      singleExtruderNoAms: "Extrusor único • Sin AMS",
+      amsSubLite: "Alimentador rotativo de 4 bobinas",
+      amsSubHt: "Secador activo de alta temp. 85°C",
+      amsSub2Pro: "Sistema de secado activo de 4 ranuras",
+      amsSubStd: "Sistema cerrado de 4 ranuras",
+      ffBadge: "INVENTARIO DE BOBINAS DE LA FLOTA",
+      ffTitle: "🎨 Buscador de Filamento — ¿Qué impresora tiene mi bobina?",
+      ffSearchPlaceholder: "Buscar color, material o impresora...",
+      ffAll: "Todos",
+      wtBadge: "GUÍA DE CONEXIÓN DE IMPRESORA, LÁSER Y AMS",
+      wtTitle: "Cómo conectar una impresora Bambu Lab, láser R1 o AMS en 4 pasos",
+      wtSupportedHdr: "🖼️ EQUIPOS BAMBU LAB COMPATIBLES — HAZ CLIC EN CUALQUIER DISPOSITIVO",
+      readyToPair: "Listo para vincular",
+      connectNow: "Conectar"
+    },
+    it: {
+      cmdSub: "Stampanti Bambu Lab, Laser CO2 R1 e Flotta AMS • Telemetria LAN, Prese Smart e Inventario Bobine",
+      kpiPrinters: "Stampanti",
+      kpiOnline: "Online",
+      kpiAmsUnits: "Unità AMS",
+      kpiHmsAlerts: "Avvisi HMS",
+      kpiPrintHours: "Ore di stampa",
+      btnFilamentFinder: "🎨 Cerca Filamento",
+      btnAutomations: "🔔 Avvisi e Autom.",
+      btnShowGuide: "📖 Guida",
+      btnHideGuide: "📖 Nascondi Guida",
+      btnAddPrinter: "➕ Aggiungi Stampante",
+      statusPrinting: "IN STAMPA",
+      statusIdle: "PRONTA",
+      statusPaused: "IN PAUSA",
+      statusPrepare: "PREPARAZIONE",
+      statusFinish: "COMPLETATA",
+      statusFailed: "ERRORE",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Porta aperta",
+      doorClosed: "🚪 Porta chiusa",
+      standardPlate: "Piatto standard",
+      tabCam: "📹 Cam",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Comandi",
+      no3mfPreview: "Nessuna anteprima 3MF attiva",
+      camOffline: "Fotocamera offline",
+      lightOn: "💡 Luce ON",
+      lightOff: "💡 Luce OFF",
+      forceSync: "🔄 Sincronizza",
+      pause: "⏸️ Pausa",
+      resume: "▶️ Riprendi",
+      stopJob: "⏹️ Ferma",
+      confirmStopJob: "Interrompere la stampa in corso?",
+      noActiveJob: "Nessuna stampa attiva",
+      idleDone: "Pronta / Fine",
+      layer: "Layer",
+      tileNozzle: "🔥 Ugello",
+      tileBedChamber: "🛏️ Piatto e Camera",
+      tileBuildPlate: "🛏️ Piatto di stampa",
+      tileCoolingSpeed: "🌀 Ventole e Velocità",
+      tileFleetHours: "⏳ Ore totali",
+      target: "Target",
+      mode: "Modo",
+      openAirRotary: "🌬️ Rotativo aperto",
+      drying: "🔥 Essiccazione",
+      emptySlot: "Vuoto",
+      directExtSpool: "Bobina esterna diretta",
+      singleExtruderNoAms: "Singolo estrusore • Senza AMS",
+      amsSubLite: "Alimentatore rotativo a 4 bobine",
+      amsSubHt: "Essiccatore attivo 85°C",
+      amsSub2Pro: "Sistema di essiccazione a 4 slot",
+      amsSubStd: "Sistema chiuso a 4 slot",
+      ffBadge: "INVENTARIO BOBINE DELLA FLOTTA",
+      ffTitle: "🎨 Cerca Filamento — Quale stampante ha la mia bobina?",
+      ffSearchPlaceholder: "Cerca colore, materiale o stampante...",
+      ffAll: "Tutti",
+      wtBadge: "GUIDA CONFIGURAZIONE STAMPANTE, LASER E AMS",
+      wtTitle: "Come collegare una stampante Bambu Lab, laser R1 o AMS in 4 passaggi",
+      wtSupportedHdr: "🖼️ DISPOSITIVI BAMBU LAB SUPPORTATI — CLICCA SU UN MODELLO",
+      readyToPair: "Pronto per l'abbinamento",
+      connectNow: "Collega"
+    },
+    nl: {
+      cmdSub: "Bambu Lab Printers, R1 CO2-Laser & AMS-Vloot • Lokale LAN-Telemetrie, Slimme Stekkers & Spoelvoorraad",
+      kpiPrinters: "Printers",
+      kpiOnline: "Online",
+      kpiAmsUnits: "AMS-Units",
+      kpiHmsAlerts: "HMS-Meldingen",
+      kpiPrintHours: "Printuren",
+      btnFilamentFinder: "🎨 Filamentzoeker",
+      btnAutomations: "🔔 Meldingen & Autom.",
+      btnShowGuide: "📖 Handleiding",
+      btnHideGuide: "📖 Verberg Gids",
+      btnAddPrinter: "➕ Printer toevoegen",
+      statusPrinting: "PRINTEN",
+      statusIdle: "GEREED",
+      statusPaused: "GEPAUZEERD",
+      statusPrepare: "VOORBEREIDEN",
+      statusFinish: "VOLTOOID",
+      statusFailed: "MISLUKT",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Deur open",
+      doorClosed: "🚪 Deur dicht",
+      standardPlate: "Standaard bouwplaat",
+      tabCam: "📹 Cam",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Besturing",
+      no3mfPreview: "Geen actief 3MF-voorbeeld",
+      camOffline: "Camera offline",
+      lightOn: "💡 Licht AAN",
+      lightOff: "💡 Licht UIT",
+      forceSync: "🔄 Synchroniseer",
+      pause: "⏸️ Pauze",
+      resume: "▶️ Hervatten",
+      stopJob: "⏹️ Stoppen",
+      confirmStopJob: "Huidige printopdracht stoppen?",
+      noActiveJob: "Geen actieve printopdracht",
+      idleDone: "Gereed / Klaar",
+      layer: "Laag",
+      tileNozzle: "🔥 Nozzle",
+      tileBedChamber: "🛏️ Bed & Kamer",
+      tileBuildPlate: "🛏️ Bouwplaat",
+      tileCoolingSpeed: "🌀 Koeling & Snelheid",
+      tileFleetHours: "⏳ Printuren",
+      target: "Doel",
+      mode: "Modus",
+      openAirRotary: "🌬️ Open roterend",
+      drying: "🔥 Drogen",
+      emptySlot: "Leeg",
+      directExtSpool: "Directe externe spoel",
+      singleExtruderNoAms: "Enkele extruder • Geen AMS",
+      amsSubLite: "Open 4-spoels roterende feeder",
+      amsSubHt: "85°C Hoge-temp actieve droger",
+      amsSub2Pro: "4-Slot actief droogsysteem",
+      amsSubStd: "Gesloten 4-slot systeem",
+      ffBadge: "SPOELVOORRAAD VAN DE VLOOT",
+      ffTitle: "🎨 Filamentzoeker — Welke printer heeft mijn spoel?",
+      ffSearchPlaceholder: "Zoek kleur, materiaal of printer...",
+      ffAll: "Alle",
+      wtBadge: "INSTALLATIEGIDS VOOR PRINTER, LASER & AMS",
+      wtTitle: "Verbind een Bambu Lab printer, R1 laser of AMS in 4 stappen",
+      wtSupportedHdr: "🖼️ ONDERSTEUNDE BAMBU LAB APPARATEN — KLIK OP EEN MODEL",
+      readyToPair: "Klaar om te koppelen",
+      connectNow: "Verbinden"
+    },
+    pl: {
+      cmdSub: "Drukarki Bambu Lab, Laser CO2 R1 i Flota AMS • Telemetria LAN, Inteligentne Gniazdka i Magazyn Szpul",
+      kpiPrinters: "Drukarki",
+      kpiOnline: "Online",
+      kpiAmsUnits: "Jednostki AMS",
+      kpiHmsAlerts: "Alerty HMS",
+      kpiPrintHours: "Godziny druku",
+      btnFilamentFinder: "🎨 Szukaj Filamentu",
+      btnAutomations: "🔔 Alerty i Automatyzacje",
+      btnShowGuide: "📖 Instrukcja",
+      btnHideGuide: "📖 Ukryj Instrukcję",
+      btnAddPrinter: "➕ Dodaj Drukarkę",
+      statusPrinting: "DRUKOWANIE",
+      statusIdle: "GOTOWA",
+      statusPaused: "WSTRZYMANO",
+      statusPrepare: "PRZYGOTOWANIE",
+      statusFinish: "ZAKOŃCZONO",
+      statusFailed: "BŁĄD",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Drzwi otwarte",
+      doorClosed: "🚪 Drzwi zamknięte",
+      standardPlate: "Płyta standardowa",
+      tabCam: "📹 Kamera",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Sterowanie",
+      no3mfPreview: "Brak aktywnego podglądu 3MF",
+      camOffline: "Kamera offline",
+      lightOn: "💡 Światło WŁ.",
+      lightOff: "💡 Światło WYŁ.",
+      forceSync: "🔄 Odśwież",
+      pause: "⏸️ Pauza",
+      resume: "▶️ Wznów",
+      stopJob: "⏹️ Zatrzymaj",
+      confirmStopJob: "Zatrzymać bieżący wydruk?",
+      noActiveJob: "Brak aktywnego zadania druku",
+      idleDone: "Gotowa / Koniec",
+      layer: "Warstwa",
+      tileNozzle: "🔥 Dysza",
+      tileBedChamber: "🛏️ Stół i Komora",
+      tileBuildPlate: "🛏️ Stół roboczy",
+      tileCoolingSpeed: "🌀 Chłodzenie i Prędkość",
+      tileFleetHours: "⏳ Czas pracy",
+      target: "Cel",
+      mode: "Tryb",
+      openAirRotary: "🌬️ Otwarty obrotowy",
+      drying: "🔥 Suszenie",
+      emptySlot: "Pusty",
+      directExtSpool: "Zewnętrzna szpula",
+      singleExtruderNoAms: "Pojedynczy ekstruder • Bez AMS",
+      amsSubLite: "Otwarty podajnik 4-szpulowy",
+      amsSubHt: "Aktywna suszarka 85°C",
+      amsSub2Pro: "4-slotowy system suszenia",
+      amsSubStd: "Zamknięty system 4-slotowy",
+      ffBadge: "MAGAZYN SZPUL CAŁEJ FLOTY",
+      ffTitle: "🎨 Wyszukiwarka Filamentu — Która drukarka ma moją szpulę?",
+      ffSearchPlaceholder: "Szukaj koloru, materiału lub drukarki...",
+      ffAll: "Wszystkie",
+      wtBadge: "PRZEWODNIK PODŁĄCZANIA DRUKARKI, LASERA I AMS",
+      wtTitle: "Jak połączyć drukarkę Bambu Lab, laser R1 lub AMS w 4 krokach",
+      wtSupportedHdr: "🖼️ OBSŁUGIWANE URZĄDZENIA BAMBU LAB — KLIKNIJ DOWOLNY MODEL",
+      readyToPair: "Gotowa do sparowania",
+      connectNow: "Połącz"
+    },
+    pt: {
+      cmdSub: "Impressoras Bambu Lab, Laser CO2 R1 e Frota AMS • Telemetria LAN, Tomadas Inteligentes e Inventário de Bobinas",
+      kpiPrinters: "Impressoras",
+      kpiOnline: "Online",
+      kpiAmsUnits: "Unidades AMS",
+      kpiHmsAlerts: "Alertas HMS",
+      kpiPrintHours: "Horas impr.",
+      btnFilamentFinder: "🎨 Buscar Filamento",
+      btnAutomations: "🔔 Alertas e Autom.",
+      btnShowGuide: "📖 Guia",
+      btnHideGuide: "📖 Ocultar Guia",
+      btnAddPrinter: "➕ Adicionar Impressora",
+      statusPrinting: "IMPRIMINDO",
+      statusIdle: "PRONTA",
+      statusPaused: "PAUSADA",
+      statusPrepare: "PREPARANDO",
+      statusFinish: "CONCLUÍDO",
+      statusFailed: "FALHA",
+      statusOffline: "OFFLINE",
+      doorOpen: "🚪 Porta aberta",
+      doorClosed: "🚪 Porta fechada",
+      standardPlate: "Mesa padrão",
+      tabCam: "📹 Câmera",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ Controle",
+      no3mfPreview: "Sem prévia 3MF ativa",
+      camOffline: "Câmera offline",
+      lightOn: "💡 Luz LIGADA",
+      lightOff: "💡 Luz DESLIGADA",
+      forceSync: "🔄 Sincronizar",
+      pause: "⏸️ Pausar",
+      resume: "▶️ Retomar",
+      stopJob: "⏹️ Parar",
+      confirmStopJob: "Parar a impressão atual?",
+      noActiveJob: "Nenhuma impressão ativa",
+      idleDone: "Pronta / Concluído",
+      layer: "Camada",
+      tileNozzle: "🔥 Bico",
+      tileBedChamber: "🛏️ Mesa e Câmara",
+      tileBuildPlate: "🛏️ Mesa aquecida",
+      tileCoolingSpeed: "🌀 Refrig. e Velocidade",
+      tileFleetHours: "⏳ Horas de uso",
+      target: "Alvo",
+      mode: "Modo",
+      openAirRotary: "🌬️ Rotativo aberto",
+      drying: "🔥 Secando",
+      emptySlot: "Vazio",
+      directExtSpool: "Bobina externa direta",
+      singleExtruderNoAms: "Extrusora única • Sem AMS",
+      amsSubLite: "Alimentador rotativo de 4 bobinas",
+      amsSubHt: "Secador ativo de alta temp. 85°C",
+      amsSub2Pro: "Sistema de secagem ativa de 4 slots",
+      amsSubStd: "Sistema fechado de 4 slots",
+      ffBadge: "INVENTÁRIO DE BOBINAS DA FROTA",
+      ffTitle: "🎨 Buscador de Filamento — Qual impressora tem minha bobina?",
+      ffSearchPlaceholder: "Buscar cor, material ou impressora...",
+      ffAll: "Todos",
+      wtBadge: "GUIA DE CONFIGURAÇÃO DE IMPRESSORA, LASER E AMS",
+      wtTitle: "Como conectar uma impressora Bambu Lab, laser R1 ou AMS em 4 passos",
+      wtSupportedHdr: "🖼️ DISPOSITIVOS BAMBU LAB COMPATÍVEIS — CLIQUE EM QUALQUER MODELO",
+      readyToPair: "Pronto para parear",
+      connectNow: "Conectar"
+    },
+    zh: {
+      cmdSub: "拓竹 Bambu Lab 打印机、R1 激光雕刻机与 AMS 集群 • 局域网遥测、智能插座与耗材库存",
+      kpiPrinters: "打印机",
+      kpiOnline: "在线",
+      kpiAmsUnits: "AMS 数量",
+      kpiHmsAlerts: "HMS 警报",
+      kpiPrintHours: "打印时长",
+      btnFilamentFinder: "🎨 耗材查找",
+      btnAutomations: "🔔 通知与自动化",
+      btnShowGuide: "📖 配网指南",
+      btnHideGuide: "📖 隐藏指南",
+      btnAddPrinter: "➕ 添加打印机",
+      statusPrinting: "打印中",
+      statusIdle: "空闲",
+      statusPaused: "已暂停",
+      statusPrepare: "准备中",
+      statusFinish: "已完成",
+      statusFailed: "失败",
+      statusOffline: "离线",
+      doorOpen: "🚪 舱门已开",
+      doorClosed: "🚪 舱门已关",
+      standardPlate: "标准打印板",
+      tabCam: "📹 监控",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ 控制",
+      no3mfPreview: "暂无 3MF 预览",
+      camOffline: "摄像头离线",
+      lightOn: "💡 仓灯已开",
+      lightOff: "💡 仓灯已关",
+      forceSync: "🔄 强制同步",
+      pause: "⏸️ 暂停",
+      resume: "▶️ 继续",
+      stopJob: "⏹️ 停止打印",
+      confirmStopJob: "确定要停止当前打印任务吗？",
+      noActiveJob: "当前无活动打印任务",
+      idleDone: "空闲 / 已完成",
+      layer: "层数",
+      tileNozzle: "🔥 喷嘴温度",
+      tileBedChamber: "🛏️ 热床与腔温",
+      tileBuildPlate: "🛏️ 热床温度",
+      tileCoolingSpeed: "🌀 风扇与速度",
+      tileFleetHours: "⏳ 累计时长",
+      target: "目标",
+      mode: "模式",
+      openAirRotary: "🌬️ 开放式旋转供料",
+      drying: "🔥 烘干中",
+      emptySlot: "空槽",
+      directExtSpool: "外挂料盘供料",
+      singleExtruderNoAms: "单喷嘴直通 • 无 AMS",
+      amsSubLite: "4 盘开放式旋转供料器",
+      amsSubHt: "85°C 高温主动烘干系统",
+      amsSub2Pro: "4 槽主动烘干供料系统",
+      amsSubStd: "4 槽封闭式供料系统",
+      ffBadge: "全机队耗材库存",
+      ffTitle: "🎨 耗材查找器 — 哪台打印机装着我的料盘？",
+      ffSearchPlaceholder: "搜索颜色、材料或打印机...",
+      ffAll: "全部",
+      wtBadge: "拓竹打印机、激光机与 AMS 四步接入指南",
+      wtTitle: "如何通过 4 个步骤连接 Bambu Lab 打印机、R1 激光机或 AMS",
+      wtSupportedHdr: "🖼️ 支持的拓竹打印机、R1 激光机与 AMS 硬件 — 点击任意设备配对",
+      readyToPair: "等待配对连接",
+      connectNow: "立即连接"
+    },
+    ja: {
+      cmdSub: "Bambu Lab プリンター・R1 レーザー・AMS フリート管理 • LANテレメトリ・スマートプラグ・スプール在庫",
+      kpiPrinters: "プリンター",
+      kpiOnline: "オンライン",
+      kpiAmsUnits: "AMS 台数",
+      kpiHmsAlerts: "HMS 警告",
+      kpiPrintHours: "稼働時間",
+      btnFilamentFinder: "🎨 フィラメント検索",
+      btnAutomations: "🔔 通知と自動化",
+      btnShowGuide: "📖 接続ガイド",
+      btnHideGuide: "📖 ガイドを隠す",
+      btnAddPrinter: "➕ プリンター追加",
+      statusPrinting: "造形中",
+      statusIdle: "待機中",
+      statusPaused: "一時停止",
+      statusPrepare: "準備中",
+      statusFinish: "完了",
+      statusFailed: "エラー",
+      statusOffline: "オフライン",
+      doorOpen: "🚪 ドア開",
+      doorClosed: "🚪 ドア閉",
+      standardPlate: "標準プレート",
+      tabCam: "📹 カメラ",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ 操作",
+      no3mfPreview: "3MF プレビューなし",
+      camOffline: "カメラオフライン",
+      lightOn: "💡 ライト ON",
+      lightOff: "💡 ライト OFF",
+      forceSync: "🔄 同期",
+      pause: "⏸️ 一時停止",
+      resume: "▶️ 再開",
+      stopJob: "⏹️ 停止",
+      confirmStopJob: "現在のプリントを停止しますか？",
+      noActiveJob: "進行中のプリントなし",
+      idleDone: "待機中 / 完了",
+      layer: "レイヤー",
+      tileNozzle: "🔥 ノズル",
+      tileBedChamber: "🛏️ ベッド＆庫内",
+      tileBuildPlate: "🛏️ ビルドプレート",
+      tileCoolingSpeed: "🌀 冷却＆速度",
+      tileFleetHours: "⏳ 累計稼働時間",
+      target: "目標",
+      mode: "モード",
+      openAirRotary: "🌬️ オープン回転式",
+      drying: "🔥 乾燥中",
+      emptySlot: "空",
+      directExtSpool: "外部スプール直結",
+      singleExtruderNoAms: "シングル押出 • AMSなし",
+      amsSubLite: "4スプールオープン回転式",
+      amsSubHt: "85°C 高温アクティブ乾燥",
+      amsSub2Pro: "4スロットアクティブ乾燥",
+      amsSubStd: "4スロット密閉型システム",
+      ffBadge: "フリート全体のスプール在庫",
+      ffTitle: "🎨 フィラメント検索 — どのプリンターにスプールがある？",
+      ffSearchPlaceholder: "色、素材、またはプリンター名で検索...",
+      ffAll: "すべて",
+      wtBadge: "プリンター・レーザー・AMS 接続ガイド",
+      wtTitle: "Bambu Lab プリンター・R1 レーザー・AMS を4ステップで接続",
+      wtSupportedHdr: "🖼️ 対応 BAMBU LAB プリンター・R1 レーザー・AMS 一覧 — クリックして追加",
+      readyToPair: "ペアリング準備完了",
+      connectNow: "接続する"
+    }
+  };
+
+  function getSavedLangOverride() {
+    try {
+      return localStorage.getItem(LANG_STORAGE_KEY) || "auto";
+    } catch (e) {
+      return "auto";
+    }
+  }
+
+  function saveLangOverride(langCode) {
+    try {
+      if (!langCode || langCode === "auto") {
+        localStorage.removeItem(LANG_STORAGE_KEY);
+      } else {
+        localStorage.setItem(LANG_STORAGE_KEY, langCode);
+      }
+    } catch (e) {}
+  }
+
+  function normalizeLangCode(raw) {
+    if (!raw) return "en";
+    const low = String(raw).trim().toLowerCase();
+    const prefix = low.split(/[-_]/)[0];
+    if (I18N_DICT[prefix]) return prefix;
+    return "en";
+  }
+
+  function resolveActiveLang(hass, configLang) {
+    const saved = getSavedLangOverride();
+    if (saved && saved !== "auto" && I18N_DICT[saved]) return saved;
+    if (configLang && configLang !== "auto") {
+      const normCfg = normalizeLangCode(configLang);
+      if (I18N_DICT[normCfg]) return normCfg;
+    }
+    const haLang = hass?.language || hass?.selectedLanguage || (typeof navigator !== "undefined" ? navigator.language : "en");
+    return normalizeLangCode(haLang);
+  }
+
+  function t(key, lang = "en") {
+    const dict = I18N_DICT[lang] || I18N_DICT.en;
+    return dict[key] || I18N_DICT.en[key] || key;
+  }
+
+  function localizeStatusBadge(rawStatus, online, lang = "en") {
+    if (!online) return t("statusOffline", lang);
+    const s = String(rawStatus || "").toLowerCase();
+    if (s === "running") return t("statusPrinting", lang);
+    if (s === "idle") return t("statusIdle", lang);
+    if (s === "pause" || s === "paused") return t("statusPaused", lang);
+    if (s === "prepare") return t("statusPrepare", lang);
+    if (s === "finish" || s === "finished") return t("statusFinish", lang);
+    if (s === "failed") return t("statusFailed", lang);
+    return String(rawStatus).toUpperCase();
+  }
+
   function normalizeModel(m) {
     if (!m) return "P1S";
     const up = String(m).toUpperCase().replace(/\s+/g, "").replace(/-/g, "");
@@ -153,17 +856,17 @@
     return "AMS";
   }
 
-  function getAmsMeta(amsNorm) {
+  function getAmsMeta(amsNorm, lang = "en") {
     if (amsNorm === "AMSLITE") {
-      return { code: "AMSLITE", label: "AMS Lite", sub: "4-Spool Rotary Feeder", img: BUILTIN_IMAGES.AMSLITE };
+      return { code: "AMSLITE", label: "AMS Lite", sub: t("amsSubLite", lang), img: BUILTIN_IMAGES.AMSLITE };
     }
     if (amsNorm === "AMSHT") {
-      return { code: "AMSHT", label: "AMS HT", sub: "85°C Active High-Temp Dryer", img: BUILTIN_IMAGES.AMSHT };
+      return { code: "AMSHT", label: "AMS HT", sub: t("amsSubHt", lang), img: BUILTIN_IMAGES.AMSHT };
     }
     if (amsNorm === "AMS2PRO") {
-      return { code: "AMS2PRO", label: "AMS 2 Pro", sub: "4-Slot Active Drying System", img: BUILTIN_IMAGES.AMS2PRO };
+      return { code: "AMS2PRO", label: "AMS 2 Pro", sub: t("amsSub2Pro", lang), img: BUILTIN_IMAGES.AMS2PRO };
     }
-    return { code: "AMS", label: "AMS", sub: "4-Slot Enclosed System", img: BUILTIN_IMAGES.AMS };
+    return { code: "AMS", label: "AMS", sub: t("amsSubStd", lang), img: BUILTIN_IMAGES.AMS };
   }
 
   function getPrinterImage(model) {
@@ -286,8 +989,9 @@
     return "";
   }
 
-  function resolveAllPrinters(hass, configPlugOverrides) {
+  function resolveAllPrinters(hass, configPlugOverrides, lang) {
     if (!hass || !hass.devices || !hass.states) return [];
+    const activeLang = lang || resolveActiveLang(hass, "");
     const allDevices = Object.values(hass.devices);
     const savedPlugs = { ...loadPlugBindings(), ...(configPlugOverrides || {}) };
     const modelOverrides = loadModelOverrides();
@@ -366,7 +1070,7 @@
       const remainingMins = stVal("sensor", "remaining_time", "0");
       const endTimeRaw = stVal("sensor", "end_time", "—");
       const totalUsage = stVal("sensor", "total_usage", "—");
-      const taskName = stVal("sensor", "task_name", "No active print job");
+      const taskName = stVal("sensor", "task_name", t("job_no_active", activeLang));
       const printWeight = stVal("sensor", "print_weight", "—");
       const printLength = stVal("sensor", "print_length", "—");
       const bedType = stVal("sensor", "print_bed_type", "—").replace(/_/g, " ");
@@ -385,7 +1089,7 @@
       const doorOpen = doorStateObj?.state === "on";
 
       // Format ETA Countdown + Exact Finish Clock Time (e.g., "1h 12m • 7:42 PM")
-      let etaDisplay = "Idle / Done";
+      let etaDisplay = t("job_idle_done", activeLang);
       const remMinsNum = parseFloat(remainingMins);
       const isJobActive = printStatus === "running" || printStatus === "pause" || printStatus === "prepare";
       if (!isNaN(remMinsNum) && remMinsNum > 0 && isJobActive) {
@@ -477,7 +1181,7 @@
           const amsNorm = (amsOverride && amsOverride !== "AUTO")
             ? amsOverride
             : normalizeAmsModel(amsDev.model || amsDev.name, displayModelNorm);
-          const amsMeta = getAmsMeta(amsNorm);
+          const amsMeta = getAmsMeta(amsNorm, activeLang);
           const amsPattern = prefix + "_ams_" + amsNum + "_";
           const fallbackPattern = prefix + "_ams_";
 
@@ -496,8 +1200,8 @@
             const hexColor = rawColor.length >= 7 ? rawColor.slice(0, 7) : "#334155";
             const isEmpty = trayState?.attributes?.empty === true || trayState?.state === "Empty" || trayState?.state === "empty";
             const materialName = (!trayState || trayState.state === "unavailable")
-              ? "Offline"
-              : (isEmpty ? "Empty" : trayState.state);
+              ? t("ams_offline", activeLang)
+              : (isEmpty ? t("ams_empty", activeLang) : trayState.state);
             const filType = trayState?.attributes?.type || "";
             const remain = trayState?.attributes?.remain;
             const isActive = trayState?.attributes?.active === true;
@@ -559,7 +1263,7 @@
       const extState = hass.states[extKey];
       const extEmpty = extState?.attributes?.empty === true || extState?.state === "Empty" || extState?.state === "empty";
       const extSpool = {
-        name: (extState && extState.state !== "unavailable" && extState.state !== "unknown") ? extState.state : "External Spool",
+        name: (extState && extState.state !== "unavailable" && extState.state !== "unknown") ? extState.state : t("ext_spool_title", activeLang),
         type: extState?.attributes?.type || "PLA",
         color: (extState?.attributes?.color || "#f59e0b").slice(0, 7),
         active: hass.states["binary_sensor." + prefix + "_externalspool_active"]?.state === "on",
@@ -2377,16 +3081,15 @@
     }
   }
 
-  function buildPrinterCardHtml(p, viewMode, isHighlighted) {
+  function buildPrinterCardHtml(p, viewMode, isHighlighted, lang) {
+    const activeLang = lang || "en";
     const mode = viewMode || "cam";
     const imgSrc = getPrinterImage(p.modelNorm || p.model);
 
     const stateColor = p.online
       ? (p.printStatus === "running" ? "#10b981" : "#38bdf8")
       : "#64748b";
-    const stateBadgeText = p.online
-      ? (p.printStatus === "running" ? "PRINTING" : String(p.printStatus).toUpperCase())
-      : "OFFLINE";
+    const stateBadgeText = localizeStatusBadge(p.printStatus, p.online, activeLang);
 
     // Feature 5: Smart Plug Header Pill & Safety-Locked Toggle
     let smartPlugHeaderHtml = "";
@@ -2396,7 +3099,7 @@
         ? `<span class="watt-pill" title="Live Smart Plug Power (${sp.powerEntity})">⚡ ${sp.powerVal}${sp.powerUnit}</span>`
         : "";
       const plugBtn = sp.switchEntity
-        ? `<button class="icon-btn ${sp.isOn ? 'plug-on' : 'plug-off'} ${sp.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${sp.safetyLocked ? ('🔒 Safety Lock: ' + sp.lockReason) : ('Toggle Smart Plug (' + sp.switchEntity + ')')}">${sp.safetyLocked ? '🔒' : '🔌'}</button>`
+        ? `<button class="icon-btn ${sp.isOn ? 'plug-on' : 'plug-off'} ${sp.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${sp.safetyLocked ? ('🔒 ' + sp.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + sp.switchEntity + ')')}">${sp.safetyLocked ? '🔒' : '🔌'}</button>`
         : "";
       smartPlugHeaderHtml = wattBadge + plugBtn;
     }
@@ -2413,7 +3116,7 @@
               <div class="hms-msg">${a.message}</div>
             </div>
           </div>
-          <a class="hms-wiki-btn" href="${a.wikiUrl}" target="_blank" rel="noopener noreferrer">📖 Bambu Wiki ↗</a>
+          <a class="hms-wiki-btn" href="${a.wikiUrl}" target="_blank" rel="noopener noreferrer">${t("hms_wiki_btn", activeLang)}</a>
         </div>
       `).join("");
     }
@@ -2423,15 +3126,15 @@
       const previewImg = p.coverPic || p.pickPic;
       stageRightHtml = previewImg && p.online
         ? `<img class="stage-media-img" src="${previewImg}" alt="3MF Cover" />`
-        : `<div class="stage-offline-box"><span>🖼️</span><div>No Active 3MF Preview</div></div>`;
+        : `<div class="stage-offline-box"><span>🖼️</span><div>${t("no_3mf_preview", activeLang)}</div></div>`;
     } else if (mode === "controls") {
       stageRightHtml = `
         <div class="quick-ctrl-grid">
-          <button type="button" class="q-btn" data-ctrl="light" data-prefix="${p.prefix}">${p.lightOn ? '💡 Light ON' : '💡 Light OFF'}</button>
-          <button type="button" class="q-btn" data-ctrl="refresh" data-prefix="${p.prefix}">🔄 Force Sync</button>
-          <button type="button" class="q-btn" data-ctrl="pause" data-prefix="${p.prefix}">⏸️ Pause</button>
-          <button type="button" class="q-btn" data-ctrl="resume" data-prefix="${p.prefix}">▶️ Resume</button>
-          <button type="button" class="q-btn warn" data-ctrl="stop" data-prefix="${p.prefix}">⏹️ Stop Job</button>
+          <button type="button" class="q-btn" data-ctrl="light" data-prefix="${p.prefix}">${p.lightOn ? t("ctrl_light_on", activeLang) : t("ctrl_light_off", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="refresh" data-prefix="${p.prefix}">${t("ctrl_force_sync", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="pause" data-prefix="${p.prefix}">${t("ctrl_pause", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="resume" data-prefix="${p.prefix}">${t("ctrl_resume", activeLang)}</button>
+          <button type="button" class="q-btn warn" data-ctrl="stop" data-prefix="${p.prefix}">${t("ctrl_stop_job", activeLang)}</button>
           <button type="button" class="q-btn" data-ctrl="speed" data-prefix="${p.prefix}">⚡ ${p.speedProfile}</button>
         </div>
       `;
@@ -2446,7 +3149,7 @@
         stageRightHtml = `
           <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to open live camera player">
             <img class="stage-media-img" data-cam-key="${p.prefix}" ${p.isRtspCam ? `data-rtsp-proxy="${p.cameraPic}"` : ''} src="${camFeedUrl}" alt="Live Cam" />
-            <span class="live-tag">● LIVE</span>
+            <span class="live-tag">${t("cam_live", activeLang)}</span>
             <span class="expand-tag">⛶</span>
           </div>
         `;
@@ -2455,9 +3158,9 @@
           <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click for P2S / LAN Only Liveview Setup & Reconnect" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center;">
             ${fallbackPreview ? `<img class="stage-media-img" src="${fallbackPreview}" alt="Preview" style="position:absolute;inset:0;opacity:0.22;filter:blur(1px);" />` : ''}
             <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <span style="font-size:9px;font-weight:800;color:#fde68a;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.45);padding:2px 7px;border-radius:999px;">⚠️ LIVEVIEW OFF ON PRINTER</span>
-              <div style="font-size:11px;font-weight:800;color:#f8fafc;line-height:1.25;">Settings ➔ LAN Only ➔<br/>"LAN Only Liveview" ON</div>
-              <span style="font-size:10px;font-weight:700;color:#38bdf8;margin-top:2px;">Click to Setup / Reconnect ↗</span>
+              <span style="font-size:9px;font-weight:800;color:#fde68a;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.45);padding:2px 7px;border-radius:999px;">${t("cam_liveview_off", activeLang)}</span>
+              <div style="font-size:11px;font-weight:800;color:#f8fafc;line-height:1.25;">${t("cam_lan_liveview_hint", activeLang)}</div>
+              <span style="font-size:10px;font-weight:700;color:#38bdf8;margin-top:2px;">${t("cam_setup_reconnect", activeLang)}</span>
             </div>
           </div>
         `;
@@ -2465,7 +3168,7 @@
         stageRightHtml = `
           <div class="stage-offline-box">
             <span style="font-size:24px;opacity:0.5;">📹</span>
-            <div style="font-weight:700;font-size:12px;color:#94a3b8;">Camera Offline</div>
+            <div style="font-weight:700;font-size:12px;color:#94a3b8;">${t("cam_offline", activeLang)}</div>
             <div style="font-size:11px;color:#64748b;">IP: ${p.ipAddress}</div>
           </div>
         `;
@@ -2487,7 +3190,7 @@
           ? (`${ams.humidityPct}% RH${ams.humidityIndex !== '—' ? ' • Idx ' + ams.humidityIndex : ''}`)
           : (`Idx ${ams.humidityIndex}`);
         const humTitle = ams.isWet
-          ? `Elevated AMS Humidity (${ams.humidityPct}% RH) — Consider running active dryer or replacing desiccant`
+          ? `Elevated AMS Humidity (${ams.humidityPct}% RH)`
           : `AMS Relative Humidity`;
         return `
           <div class="ams-deck">
@@ -2499,32 +3202,32 @@
                     <span class="ams-dot"></span>
                     <strong>Bambu ${ams.model}</strong>
                   </div>
-                  <div class="ams-sub">${ams.subLabel || '4-Slot System'}</div>
+                  <div class="ams-sub">${ams.subLabel || t("ams_4slot", activeLang)}</div>
                 </div>
               </div>
               <div class="ams-Readouts">
                 ${ams.isOpenAir
-                  ? '<span class="ams-chip" title="AMS Lite Open-Air Rotary Feeder (No Enclosure Sensor)">🌬️ Open-Air Rotary</span>'
+                  ? `<span class="ams-chip" title="AMS Lite Open-Air Rotary Feeder">${t("ams_open_air", activeLang)}</span>`
                   : `<span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
                      <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
-                     ${ams.drying ? '<span class="ams-chip drying">🔥 Drying</span>' : ''}`
+                     ${ams.drying ? `<span class="ams-chip drying">${t("ams_drying", activeLang)}</span>` : ''}`
                 }
               </div>
             </div>
             <div class="ams-slots-grid">
-              ${ams.trays.map(t => `
-                <div class="spool-card ${t.active ? 'active-spool' : ''}">
+              ${ams.trays.map(tr => `
+                <div class="spool-card ${tr.active ? 'active-spool' : ''}">
                   <div class="spool-top">
-                    <span class="slot-num">${t.slotCode || ('A' + t.slot)}</span>
-                    <span class="spool-type">${t.type || 'PLA'}</span>
+                    <span class="slot-num">${tr.slotCode || ('A' + tr.slot)}</span>
+                    <span class="spool-type">${tr.type || 'PLA'}</span>
                   </div>
                   <div class="spool-swatch-row">
-                    <span class="spool-ring" style="background:${t.color};"></span>
-                    <div class="spool-name" title="${t.name}">${t.name}</div>
+                    <span class="spool-ring" style="background:${tr.color};"></span>
+                    <div class="spool-name" title="${tr.name}">${tr.name}</div>
                   </div>
-                  ${t.remain !== null ? `
+                  ${tr.remain !== null ? `
                     <div class="spool-Mini-bar">
-                      <div class="spool-Mini-fill" style="width:${t.remain}%;background:${t.color};"></div>
+                      <div class="spool-Mini-fill" style="width:${tr.remain}%;background:${tr.color};"></div>
                     </div>
                   ` : ''}
                 </div>
@@ -2539,11 +3242,11 @@
           <div class="ext-spool-left">
             <span class="spool-ring" style="background:${p.extSpool.color};"></span>
             <div>
-              <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">Direct External Spool</div>
+              <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">${t("ext_spool_title", activeLang)}</div>
               <div style="font-size:13px;font-weight:700;color:#f8fafc;">${p.extSpool.name}</div>
             </div>
           </div>
-          <span class="ext-badge">Single Extruder • No AMS</span>
+          <span class="ext-badge">${t("ext_spool_badge", activeLang)}</span>
         </div>
       `;
     }
@@ -2551,11 +3254,11 @@
     const hasChamber = p.chamberTemp && p.chamberTemp !== "—";
     const bedSubDetail = (p.bedType && p.bedType !== "—" && p.bedType !== "unknown")
       ? p.bedType
-      : (p.hasDoorSensor ? (p.doorOpen ? "🚪 Door Open" : "🚪 Door Closed") : "Standard Plate");
+      : (p.hasDoorSensor ? (p.doorOpen ? t("door_open", activeLang) : t("door_closed", activeLang)) : t("tel_standard_plate", activeLang));
     const hasEnclFans = (p.auxFan && p.auxFan !== "—") || (p.chamberFan && p.chamberFan !== "—");
     const coolingSubDetail = hasEnclFans
-      ? (`Aux ${p.auxFan !== '—' ? p.auxFan + '%' : '0%'} • Chamb ${p.chamberFan !== '—' ? p.chamberFan + '%' : '0%'} • ${p.speedProfile}`)
-      : (`Mode: ${p.speedProfile}`);
+      ? (`${t("tel_aux", activeLang)} ${p.auxFan !== '—' ? p.auxFan + '%' : '0%'} • ${t("tel_chamb", activeLang)} ${p.chamberFan !== '—' ? p.chamberFan + '%' : '0%'} • ${p.speedProfile}`)
+      : (`${t("tel_mode", activeLang)}: ${p.speedProfile}`);
 
     return `
       <div class="p-card ${p.online ? 'is-online' : 'is-offline'} ${isHighlighted ? 'is-highlighted' : ''}" id="printer-card-${p.prefix}" data-prefix="${p.prefix}">
@@ -2566,7 +3269,7 @@
                 <span class="p-dot" style="background:${stateColor};"></span>
                 ${stateBadgeText}
               </span>
-              ${p.doorOpen ? `<span class="watt-pill" title="Printer Enclosure Door is Open">🚪 Door Open</span>` : ''}
+              ${p.doorOpen ? `<span class="watt-pill" title="Printer Enclosure Door">${t("door_open", activeLang)}</span>` : ''}
               ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${p.smartPlug.powerVal}${p.smartPlug.powerUnit}</span>` : ''}
             </div>
             <div class="p-title-wrap">
@@ -2575,11 +3278,11 @@
             </div>
           </div>
           <div class="p-hdr-actions">
-            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 Safety Lock: ' + p.lockReason) : ('Toggle Smart Plug (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? '🔒' : '🔌'}</button>` : ''}
-            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="Toggle Chamber Light">💡</button>
-            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="Reload Connection">🔄</button>
-            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="Edit Printer & Smart Plug">✏️</button>
-            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="Delete Printer">🗑️</button>
+            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 ' + p.smartPlug.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? '🔒' : '🔌'}</button>` : ''}
+            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="${t("tip_light", activeLang)}">💡</button>
+            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="${t("tip_reload", activeLang)}">🔄</button>
+            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="${t("tip_edit", activeLang)}">✏️</button>
+            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="${t("tip_delete", activeLang)}">🗑️</button>
           </div>
         </div>
 
@@ -2593,9 +3296,9 @@
 
           <div class="stage-viewport">
             <div class="viewport-tabs">
-              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}">📹 Cam</button>
-              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}">🖼️ 3MF</button>
-              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}">🎛️ Ctrl</button>
+              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}">${t("tab_cam", activeLang)}</button>
+              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}">${t("tab_3mf", activeLang)}</button>
+              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}">${t("tab_ctrl", activeLang)}</button>
             </div>
             <div class="viewport-body">
               ${stageRightHtml}
@@ -2612,30 +3315,30 @@
             <div class="job-bar-fill" style="width:${p.progress}%;"></div>
           </div>
           <div class="job-meta-pills">
-            <span>📚 Layer ${p.currentLayer} / ${p.totalLayers}</span>
-            <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${p.etaDisplay || 'Idle / Done'}</span>
+            <span>📚 ${t("job_layer", activeLang)} ${p.currentLayer} / ${p.totalLayers}</span>
+            <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${p.etaDisplay || t("job_idle_done", activeLang)}</span>
             <span>⚖️ ${p.printWeight !== '—' ? p.printWeight + 'g' : '—'}</span>
           </div>
         </div>
 
         <div class="p-telemetry-grid">
           <div class="t-tile">
-            <div class="t-lbl">🔥 Nozzle</div>
+            <div class="t-lbl">${t("tel_nozzle", activeLang)}</div>
             <div class="t-val">${p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—'}</div>
-            <div class="t-sub">Target ${p.nozzleTarget}°C • ${p.nozzleSize}mm</div>
+            <div class="t-sub">${t("tel_target", activeLang)} ${p.nozzleTarget}°C • ${p.nozzleSize}mm</div>
           </div>
           <div class="t-tile">
-            <div class="t-lbl">${hasChamber ? '🛏️ Bed & Chamber' : '🛏️ Build Plate'}</div>
+            <div class="t-lbl">${hasChamber ? t("tel_bed_chamber", activeLang) : t("tel_build_plate", activeLang)}</div>
             <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°C' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°C</span>` : ''}</div>
-            <div class="t-sub">Target ${p.bedTarget}°C • ${bedSubDetail}</div>
+            <div class="t-sub">${t("tel_target", activeLang)} ${p.bedTarget}°C • ${bedSubDetail}</div>
           </div>
           <div class="t-tile">
-            <div class="t-lbl">🌀 Cooling & Speed</div>
+            <div class="t-lbl">${t("tel_cooling_speed", activeLang)}</div>
             <div class="t-val">${p.coolingFan !== '—' ? p.coolingFan + '%' : '—'}</div>
             <div class="t-sub" title="${coolingSubDetail}">${coolingSubDetail}</div>
           </div>
           <div class="t-tile">
-            <div class="t-lbl">⏳ Fleet Hours</div>
+            <div class="t-lbl">${t("tel_fleet_hours", activeLang)}</div>
             <div class="t-val">${p.totalUsage !== '—' ? p.totalUsage + 'h' : '—'}</div>
             <div class="t-sub">IP: ${p.ipAddress}</div>
           </div>
@@ -2647,7 +3350,8 @@
   }
 
   // Feature 2: Build Cross-Fleet Filament Finder Deck HTML
-  function buildFilamentFinderHtml(allPrinters, activeMatFilter, searchQuery) {
+  function buildFilamentFinderHtml(allPrinters, activeMatFilter, searchQuery, lang) {
+    const activeLang = lang || "en";
     const allSpools = collectFleetSpools(allPrinters);
     const matTypes = Array.from(new Set(allSpools.filter(s => !s.empty && s.type !== "—").map(s => s.type))).sort();
     const curMat = activeMatFilter || "ALL";
@@ -2666,13 +3370,13 @@
       <div class="ff-section">
         <div class="ff-hdr">
           <div>
-            <span class="wt-badge">CROSS-FLEET SPOOL INVENTORY</span>
-            <div class="wt-title">🎨 Filament Finder — Which Printer Has My Spool?</div>
+            <span class="wt-badge">${t("ff_badge", activeLang)}</span>
+            <div class="wt-title">${t("ff_title", activeLang)}</div>
           </div>
           <div class="ff-controls">
-            <input id="ffSearchInp" class="ff-search" type="text" placeholder="Search color, material, or printer..." value="${searchQuery || ''}" />
+            <input id="ffSearchInp" class="ff-search" type="text" placeholder="${t("ff_search_placeholder", activeLang)}" value="${searchQuery || ''}" />
             <div class="wt-pills">
-              <button class="wt-pill ff-mat-pill ${curMat === 'ALL' ? 'active' : ''}" data-mat="ALL">All (${allSpools.length})</button>
+              <button class="wt-pill ff-mat-pill ${curMat === 'ALL' ? 'active' : ''}" data-mat="ALL">${t("ff_all", activeLang)} (${allSpools.length})</button>
               ${matTypes.map(m => `
                 <button class="wt-pill ff-mat-pill ${curMat === m ? 'active' : ''}" data-mat="${m}">${m}</button>
               `).join("")}
@@ -2682,7 +3386,7 @@
 
         <div class="ff-grid">
           ${filtered.map(s => `
-            <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-jump="${s.printerPrefix}" title="Click to highlight ${s.printerName}">
+            <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-jump="${s.printerPrefix}" title="${t("ff_click_highlight", activeLang)} ${s.printerName}">
               <div class="ff-swatch" style="background:${s.color};"></div>
               <div class="ff-info">
                 <div class="ff-top-row">
@@ -2723,7 +3427,8 @@
     { code: "AMSHT", label: "AMS HT", sub: "85°C High-Temp", addTarget: "H2D" }
   ];
 
-  function buildWalkthroughDeckHtml(selectedSeries) {
+  function buildWalkthroughDeckHtml(selectedSeries, lang) {
+    const activeLang = lang || "en";
     const s = selectedSeries || "a1";
     const specs = ({
       a1: {
@@ -2808,8 +3513,8 @@
       <div class="wt-section">
         <div class="wt-hdr">
           <div class="wt-hdr-left">
-            <span class="wt-badge">NEW PRINTER, LASER & AMS WALKTHROUGH</span>
-            <div class="wt-title">How to Connect a Bambu Lab Printer, R1 Laser, or AMS in 4 Steps</div>
+            <span class="wt-badge">${t("wt_badge", activeLang)}</span>
+            <div class="wt-title">${t("wt_title", activeLang)}</div>
           </div>
           <div class="wt-pills">
             <button class="wt-pill wt-series-pill ${s === 'a1' ? 'active' : ''}" data-series="a1">A1 / Mini / A2L</button>
@@ -2824,51 +3529,51 @@
         <div class="wt-cards-grid">
           <div class="wt-card">
             <div class="wt-step-top">
-              <span class="wt-num">STEP 01</span>
+              <span class="wt-num">${t("wt_step", activeLang)} 01</span>
               <span class="wt-icon">📶</span>
             </div>
-            <div class="wt-card-title">${s === 'ams' ? 'Connect Bus Cable' : 'Locate Local IP'}</div>
+            <div class="wt-card-title">${s === 'ams' ? t("wt_s1_ams_title", activeLang) : t("wt_s1_title", activeLang)}</div>
             <div class="wt-crumb">${specs.step1Path}</div>
             <div class="wt-desc">${specs.step1Detail}</div>
           </div>
 
           <div class="wt-card">
             <div class="wt-step-top">
-              <span class="wt-num">STEP 02</span>
+              <span class="wt-num">${t("wt_step", activeLang)} 02</span>
               <span class="wt-icon">🔑</span>
             </div>
-            <div class="wt-card-title">${s === 'ams' ? 'Auto Telemetry Sync' : '8-Digit Access Code'}</div>
+            <div class="wt-card-title">${s === 'ams' ? t("wt_s2_ams_title", activeLang) : t("wt_s2_title", activeLang)}</div>
             <div class="wt-crumb">${specs.step2Path}</div>
             <div class="wt-desc">${specs.step2Detail}</div>
           </div>
 
           <div class="wt-card">
             <div class="wt-step-top">
-              <span class="wt-num">STEP 03</span>
+              <span class="wt-num">${t("wt_step", activeLang)} 03</span>
               <span class="wt-icon">🏷️</span>
             </div>
-            <div class="wt-card-title">${s === 'ams' ? 'Select AMS Artwork' : '15-Char Serial (SN)'}</div>
+            <div class="wt-card-title">${s === 'ams' ? t("wt_s3_ams_title", activeLang) : t("wt_s3_title", activeLang)}</div>
             <div class="wt-crumb">${specs.step3Path}</div>
             <div class="wt-desc">${specs.step3Detail}</div>
           </div>
 
           <div class="wt-card highlight">
             <div class="wt-step-top">
-              <span class="wt-num">STEP 04</span>
+              <span class="wt-num">${t("wt_step", activeLang)} 04</span>
               <div style="display:flex;gap:6px;align-items:center;">
                 <img src="${specs.modelImg}" style="width:46px;height:46px;object-fit:contain;" />
                 ${s === 'ams' ? `<img src="${getPrinterImage('AMSHT')}" style="width:42px;height:42px;object-fit:contain;" />` : ''}
               </div>
             </div>
-            <div class="wt-card-title">${s === 'ams' ? 'Pair Host Printer' : ('Add ' + specs.title)}</div>
-            <div class="wt-desc" style="margin-bottom:10px;">Enter IP, Access Code & Serial in the popup wizard:</div>
-            <button class="wt-cta-btn" id="wtAddPrinterBtn" data-model="${specs.defaultModel}">➕ Connect ${specs.defaultModel} Now</button>
+            <div class="wt-card-title">${s === 'ams' ? t("wt_s4_ams_title", activeLang) : (t("wt_s4_add_prefix", activeLang) + ' ' + specs.title)}</div>
+            <div class="wt-desc" style="margin-bottom:10px;">${t("wt_s4_desc", activeLang)}</div>
+            <button class="wt-cta-btn" id="wtAddPrinterBtn" data-model="${specs.defaultModel}">➕ ${t("wt_connect_now", activeLang)} ${specs.defaultModel}</button>
           </div>
         </div>
 
         <div class="hw-gallery-wrap">
           <div class="hw-gallery-hdr">
-            <span>🖼️ SUPPORTED BAMBU LAB PRINTERS, R1 LASER & AMS SYSTEMS — CLICK ANY DEVICE</span>
+            <span>${t("wt_gallery_hdr", activeLang)}</span>
           </div>
           <div class="hw-gallery-grid">
             ${HARDWARE_SHOWCASE_MODELS.map(m => `
@@ -2996,6 +3701,26 @@
       background: linear-gradient(135deg, #f59e0b, #ea580c);
       color: #090c12;
       border: none;
+    }
+    .lang-select {
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: #f8fafc;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .lang-select:hover, .lang-select:focus {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.16);
+    }
+    .lang-select option {
+      background: #14171f;
+      color: #f8fafc;
     }
     .printers-grid {
       display: grid;
@@ -4113,18 +4838,26 @@
       const showWt = this._config.show_walkthrough !== false;
       const showFf = this._config.show_filament_finder === true;
       const filterModel = this._config.printer_model || "";
+      const cfgLang = this._config.language || "auto";
 
       this.shadowRoot.innerHTML = `
         <style>
           .ed-wrap { display:flex; flex-direction:column; gap:12px; padding:12px 0; font-family:Roboto,sans-serif; }
           label { font-size:12px; font-weight:600; color:var(--secondary-text-color); display:block; margin-bottom:4px; }
-          input[type="text"] { width:100%; padding:8px; border-radius:6px; border:1px solid var(--divider-color); box-sizing:border-box; }
+          input[type="text"], select { width:100%; padding:8px; border-radius:6px; border:1px solid var(--divider-color); box-sizing:border-box; }
           .chk-row { display:flex; align-items:center; gap:8px; }
         </style>
         <div class="ed-wrap">
           <div>
             <label>Studio Header Title</label>
             <input id="titleInp" type="text" value="${title}" />
+          </div>
+          <div>
+            <label>🌐 Language (Auto-Detects Home Assistant Profile Language by Default)</label>
+            <select id="langInp">
+              <option value="auto" ${cfgLang === "auto" ? "selected" : ""}>🌐 Auto (Home Assistant Language)</option>
+              ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${cfgLang === l.code ? "selected" : ""}>${l.flag} ${l.label} (${l.code.toUpperCase()})</option>`).join("")}
+            </select>
           </div>
           <div>
             <label>Filter by Printer Model (Optional — e.g. A1, A1MINI, A2L, P1S, P2S, X1C, X2D, H2C, H2S, R1)</label>
@@ -4152,6 +4885,11 @@
 
       this.shadowRoot.getElementById("titleInp").onchange = (e) => {
         fire({ ...this._config, title: e.target.value });
+      };
+      this.shadowRoot.getElementById("langInp").onchange = (e) => {
+        const val = e.target.value;
+        saveLangOverride(val);
+        fire({ ...this._config, language: val });
       };
       this.shadowRoot.getElementById("modelInp").onchange = (e) => {
         fire({ ...this._config, printer_model: e.target.value.trim() });
@@ -4318,8 +5056,9 @@
 
     set hass(hass) {
       this._hass = hass;
-      const printers = resolveAllPrinters(hass, this._config.smart_plugs);
-      const sig = JSON.stringify(printers.map(p => [
+      const activeLang = resolveActiveLang(hass, this._config.language);
+      const printers = resolveAllPrinters(hass, this._config.smart_plugs, activeLang);
+      const sig = activeLang + "|" + JSON.stringify(printers.map(p => [
         p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
         p.chamberTemp, p.auxFan, p.chamberFan, p.doorOpen, p.remainingMins,
         p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
@@ -4334,6 +5073,9 @@
     _render() {
       if (!this.shadowRoot || !this._hass) return;
       this._startRtspFrameLoop();
+
+      const lang = resolveActiveLang(this._hass, this._config.language);
+      const savedLangPref = getSavedLangOverride() || this._config.language || "auto";
 
       // Preserve live camera <img> DOM nodes so MJPEG streams and RTSPS frames never blink or reconnect on state updates
       const preservedCamImgs = {};
@@ -4351,7 +5093,7 @@
       }
       const scrollCtx = this._captureScrollContext(this._lastInteractedPrefix);
 
-      const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs);
+      const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs, lang);
       const filterPrefix = this._config.printer_prefix || this._config.prefix || "";
       const filterModel = (this._config.printer_model || "").toUpperCase().replace(/\s+/g, "");
 
@@ -4389,54 +5131,58 @@
                 <div class="cmd-logo">🖨️</div>
                 <div>
                   <div class="cmd-title">${studioTitle}</div>
-                  <div class="cmd-sub">Bambu Lab Printers, R1 CO2 Laser & AMS Fleet • Local LAN Telemetry, Smart Plugs & Spool Inventory</div>
+                  <div class="cmd-sub">${t("cmd_subtitle", lang)}</div>
                 </div>
               </div>
               <div class="cmd-kpis">
                 <div class="kpi-pill">
                   <span class="kpi-val">${allPrinters.length}</span>
-                  <span class="kpi-lbl">Printers</span>
+                  <span class="kpi-lbl">${t("kpi_printers", lang)}</span>
                 </div>
                 <div class="kpi-pill">
                   <span class="kpi-val" style="color:#10b981;">${onlineCount}</span>
-                  <span class="kpi-lbl">Online</span>
+                  <span class="kpi-lbl">${t("kpi_online", lang)}</span>
                 </div>
                 <div class="kpi-pill">
                   <span class="kpi-val" style="color:#38bdf8;">${amsCount}</span>
-                  <span class="kpi-lbl">AMS Units</span>
+                  <span class="kpi-lbl">${t("kpi_ams_units", lang)}</span>
                 </div>
                 <div class="kpi-pill">
                   <span class="kpi-val" style="color:${alertCount > 0 ? '#ef4444' : '#f59e0b'};">${alertCount > 0 ? (alertCount + ' 🚨') : (totalHrs + 'h')}</span>
-                  <span class="kpi-lbl">${alertCount > 0 ? 'HMS Alerts' : 'Print Hours'}</span>
+                  <span class="kpi-lbl">${alertCount > 0 ? t("kpi_hms_alerts", lang) : t("kpi_print_hours", lang)}</span>
                 </div>
               </div>
               <div class="cmd-actions">
-                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">🎨 Filament Finder</button>
-                <button type="button" class="cmd-btn" id="openAutomationsBtn">🔔 Alerts & Automations</button>
-                <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">📖 ${this._showWalkthrough ? 'Hide Guide' : 'Setup Guide'}</button>
-                <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">➕ Add Printer</button>
+                <select class="lang-select" id="langSelectBtn" title="Switch Language / Sprache / Langue / Idioma">
+                  <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${t("lang_auto", lang)} (${lang.toUpperCase()})</option>
+                  ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${savedLangPref === l.code ? "selected" : ""}>${l.flag} ${l.label}</option>`).join("")}
+                </select>
+                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">${t("btn_filament_finder", lang)}</button>
+                <button type="button" class="cmd-btn" id="openAutomationsBtn">${t("btn_automations", lang)}</button>
+                <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">${this._showWalkthrough ? t("btn_hide_guide", lang) : t("btn_setup_guide", lang)}</button>
+                <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">${t("btn_add_printer", lang)}</button>
               </div>
             </div>
           ` : ''}
 
           ${this._showFilamentFinder && !onlySinglePrinter && !onlyWalkthrough
-            ? buildFilamentFinderHtml(allPrinters, this._filamentMatFilter, this._filamentSearch)
+            ? buildFilamentFinderHtml(allPrinters, this._filamentMatFilter, this._filamentSearch, lang)
             : ''
           }
 
           ${!onlyWalkthrough ? `
             <div class="printers-grid">
               ${printers.length > 0
-                ? printers.map(p => buildPrinterCardHtml(p, this._viewModes[p.prefix] || "cam", this._highlightedPrefix === p.prefix)).join("")
+                ? printers.map(p => buildPrinterCardHtml(p, this._viewModes[p.prefix] || "cam", this._highlightedPrefix === p.prefix, lang)).join("")
                 : `
                   <div class="empty-printer-card">
                     <img src="${getPrinterImage(expectedModelNorm)}" alt="${expectedModelNorm}" />
-                    <div style="font-size:18px;font-weight:800;color:#f8fafc;">Bambu Lab ${expectedModelNorm} — Ready to Pair</div>
+                    <div style="font-size:18px;font-weight:800;color:#f8fafc;">Bambu Lab ${expectedModelNorm} — ${t("empty_ready_pair", lang)}</div>
                     <div style="font-size:13px;color:#94a3b8;max-width:460px;line-height:1.5;">
-                      No active Home Assistant integration entry was found for <strong>${filterPrefix || expectedModelNorm}</strong>. Connect this device over Local LAN (Port 8883) or Bambu Cloud to view live telemetry.
+                      <strong>${filterPrefix || expectedModelNorm}</strong>: ${t("empty_no_entry", lang)}
                     </div>
                     <button type="button" class="wt-cta-btn" id="emptyConnectBtn" data-model="${expectedModelNorm}" style="margin-top:6px;padding:11px 20px;font-size:13px;">
-                      ➕ Connect Bambu Lab ${expectedModelNorm}
+                      ➕ ${t("empty_connect_btn", lang)} Bambu Lab ${expectedModelNorm}
                     </button>
                   </div>
                 `
@@ -4444,7 +5190,7 @@
             </div>
           ` : ''}
 
-          ${(this._showWalkthrough || onlyWalkthrough) && !onlySinglePrinter ? buildWalkthroughDeckHtml(this._walkthroughSeries) : ''}
+          ${(this._showWalkthrough || onlyWalkthrough) && !onlySinglePrinter ? buildWalkthroughDeckHtml(this._walkthroughSeries, lang) : ''}
         </div>
       `;
 
@@ -4463,6 +5209,14 @@
 
       this._restoreScrollContext(scrollCtx);
 
+      const langSelectBtn = this.shadowRoot.getElementById("langSelectBtn");
+      if (langSelectBtn) {
+        langSelectBtn.onchange = (e) => {
+          saveLangOverride(e.target.value);
+          this._lastSig = "";
+          this._render();
+        };
+      }
       const addMain = this.shadowRoot.getElementById("addPrinterMainBtn");
       if (addMain) {
         addMain.onclick = () => openStudioModal(this._hass, "add", {}, () => { this._lastSig = ""; this._render(); });
@@ -4588,11 +5342,11 @@
 
           if (act === "smart-plug" && p.smartPlug && p.smartPlug.switchEntity) {
             if (p.smartPlug.safetyLocked) {
-              alert("🔒 Safety Lock Active!\n\nCannot toggle mains power on " + p.name + " right now:\n" + p.smartPlug.lockReason + "\n\nWait until the print completes and the nozzle cools below 60°C to prevent heat-creep filament jams.");
+              alert("🔒 " + t("safety_lock_alert_title", lang) + "\n\n" + p.name + ":\n" + p.smartPlug.lockReason + "\n\n" + t("safety_lock_alert_wait", lang));
               return;
             }
-            const nextAction = p.smartPlug.isOn ? "Turn OFF" : "Turn ON";
-            if (confirm(nextAction + " smart plug (" + p.smartPlug.switchEntity + ") for " + p.name + "?")) {
+            const nextAction = p.smartPlug.isOn ? "OFF" : "ON";
+            if (confirm(nextAction + " (" + p.smartPlug.switchEntity + ") — " + p.name + "?")) {
               this._hass.callService("switch", "toggle", { entity_id: p.smartPlug.switchEntity });
             }
           } else if (act === "light") {
@@ -4603,7 +5357,7 @@
               if (qLight) {
                 const isLit = btn.classList.contains("lit-on");
                 qLight.classList.toggle("active-lit", isLit);
-                qLight.innerHTML = `💡 Light ${isLit ? 'ON' : 'OFF'}`;
+                qLight.innerHTML = isLit ? t("ctrl_light_on", lang) : t("ctrl_light_off", lang);
               }
             }
             this._hass.callService("light", "toggle", { entity_id: p.lightEntityId });
@@ -4636,7 +5390,7 @@
           if (ctrl === "light") {
             const isLit = !btn.classList.contains("active-lit");
             btn.classList.toggle("active-lit", isLit);
-            btn.innerHTML = `💡 Light ${isLit ? 'ON' : 'OFF'}`;
+            btn.innerHTML = isLit ? t("ctrl_light_on", lang) : t("ctrl_light_off", lang);
             const cardEl = this.shadowRoot.getElementById("printer-card-" + pref);
             if (cardEl) {
               const iconLight = cardEl.querySelector(".icon-btn[data-act='light']");
@@ -4651,7 +5405,7 @@
           } else if (ctrl === "resume") {
             this._hass.callService("button", "press", { entity_id: "button." + pref + "_resume_printing" });
           } else if (ctrl === "stop") {
-            if (confirm("Stop current print job?")) {
+            if (confirm(t("stop_job_confirm", lang))) {
               this._hass.callService("button", "press", { entity_id: "button." + pref + "_stop_printing" });
             }
           }
