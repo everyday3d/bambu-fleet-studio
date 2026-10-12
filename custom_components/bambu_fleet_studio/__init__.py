@@ -454,6 +454,7 @@ class BambuPrinterRuntime:
         self._job_accumulated_m: float = 0.0
         self._rfid_accumulated_m: float = 0.0
         self._last_tray_remains: dict[str, int] = {}
+        self._low_spool_alerted: set[str] = set()
 
         # Live telemetry state
         self.online: bool = False
@@ -1132,6 +1133,8 @@ class BambuPrinterRuntime:
                     if remain is not None:
                         prev_rem = self._last_tray_remains.get(global_tray_id)
                         self._last_tray_remains[global_tray_id] = remain
+                        if remain > 25:
+                            self._low_spool_alerted.discard(global_tray_id)
                         if is_active and self.print_status == "running" and prev_rem is not None:
                             drop = prev_rem - remain
                             if 1 <= drop <= 5:
@@ -1142,6 +1145,29 @@ class BambuPrinterRuntime:
                                     self._extruded_grams += diff_m * 3.03
                                     self._job_accumulated_m += diff_m
                                     self._odometer_dirty = True
+                        if (
+                            is_active
+                            and not is_empty
+                            and self.print_status in ("running", "prepare")
+                            and 0 < remain <= 25
+                            and global_tray_id not in self._low_spool_alerted
+                        ):
+                            try:
+                                mgr_ref = self.hass.data.get(DOMAIN, {}).get("manager")
+                                thresh = int((mgr_ref.notifications if mgr_ref else {}).get("low_spool_threshold_pct", 15) or 15)
+                            except Exception:
+                                thresh = 15
+                            if remain <= thresh:
+                                self._low_spool_alerted.add(global_tray_id)
+                                self._emit_runtime_event(
+                                    "low_spool_alert",
+                                    {
+                                        "slot_code": f"{bank_letter}{slot_num}",
+                                        "name": t_sub or t_type or "PLA",
+                                        "type": t_type or "PLA",
+                                        "remain": remain,
+                                    },
+                                )
 
                     trays_out.append({
                         "slot": slot_num,
@@ -1177,6 +1203,9 @@ class BambuPrinterRuntime:
         )
 
         # Trigger standalone notification / automation hooks on status transitions or new HMS faults
+        if prev_status != self.print_status and self.print_status in ("prepare", "running", "pause", "finish", "failed", "idle"):
+            self._emit_runtime_event("status_change", {"prev_status": prev_status, "new_status": self.print_status})
+
         if prev_status in ("running", "prepare", "pause") and self.print_status == "finish":
             self._emit_runtime_event("print_complete")
         elif (
@@ -1186,13 +1215,13 @@ class BambuPrinterRuntime:
         ):
             self._emit_runtime_event("hms_error")
 
-    def _emit_runtime_event(self, event_type: str) -> None:
+    def _emit_runtime_event(self, event_type: str, extra: Optional[dict[str, Any]] = None) -> None:
         """Schedule a standalone notification or automation action on the Home Assistant event loop."""
         try:
             mgr = self.hass.data.get(DOMAIN, {}).get("manager")
             if mgr and hasattr(mgr, "async_handle_printer_event"):
                 self.hass.loop.call_soon_threadsafe(
-                    lambda: self.hass.async_create_task(mgr.async_handle_printer_event(self, event_type))
+                    lambda: self.hass.async_create_task(mgr.async_handle_printer_event(self, event_type, extra))
                 )
         except Exception as err:
             LOGGER.debug("Failed to schedule runtime event %s for %s: %s", event_type, self.serial, err)
@@ -1365,6 +1394,16 @@ class BambuFleetStudioManager:
             "hms_error": True,
             "auto_light_off": True,
             "auto_light_off_delay_sec": 300,
+            "rgb_light_sync": False,
+            "rgb_light_entity": "",
+            "tts_voice_alert": False,
+            "tts_media_player": "",
+            "tts_quiet_hours": True,
+            "safe_cooldown_plug_off": False,
+            "cooldown_switch_entity": "",
+            "cooldown_target_temp": 50,
+            "low_spool_alert": True,
+            "low_spool_threshold_pct": 15,
         }
 
     def _schedule_save_from_thread(self) -> None:
@@ -1447,16 +1486,35 @@ class BambuFleetStudioManager:
 
     async def async_update_notifications(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Update and persist standalone notification & automation preferences."""
-        if "notify_service" in payload:
-            self.notifications["notify_service"] = str(payload.get("notify_service") or "").strip()
-        if "target_printer" in payload:
-            self.notifications["target_printer"] = str(payload.get("target_printer") or "__ALL__").strip()
-        for bool_key in ("print_complete", "hms_error", "auto_light_off"):
+        for str_key in ("notify_service", "target_printer", "rgb_light_entity", "tts_media_player", "cooldown_switch_entity"):
+            if str_key in payload:
+                default_val = "__ALL__" if str_key == "target_printer" else ""
+                self.notifications[str_key] = str(payload.get(str_key) or default_val).strip()
+        for bool_key in (
+            "print_complete",
+            "hms_error",
+            "auto_light_off",
+            "rgb_light_sync",
+            "tts_voice_alert",
+            "tts_quiet_hours",
+            "safe_cooldown_plug_off",
+            "low_spool_alert",
+        ):
             if bool_key in payload:
                 self.notifications[bool_key] = bool(payload[bool_key])
         if "auto_light_off_delay_sec" in payload:
             try:
                 self.notifications["auto_light_off_delay_sec"] = max(10, int(payload["auto_light_off_delay_sec"]))
+            except Exception:
+                pass
+        if "cooldown_target_temp" in payload:
+            try:
+                self.notifications["cooldown_target_temp"] = max(35, min(70, int(payload["cooldown_target_temp"])))
+            except Exception:
+                pass
+        if "low_spool_threshold_pct" in payload:
+            try:
+                self.notifications["low_spool_threshold_pct"] = max(5, min(50, int(payload["low_spool_threshold_pct"])))
             except Exception:
                 pass
         await self.async_save()
@@ -1491,20 +1549,113 @@ class BambuFleetStudioManager:
             LOGGER.warning("Failed to call notification service %s: %s", svc_full, err)
             return False
 
-    async def async_handle_printer_event(self, rt: BambuPrinterRuntime, event_type: str) -> None:
-        """Execute standalone notifications and chamber light automations when a printer changes state."""
+    async def async_sync_rgb_light(self, state_key: str, light_entity_override: str = "") -> bool:
+        """Sync a smart RGB light entity color to printer status (Amber=prepare, Cyan=running, Green=finish, Red=fault)."""
+        light_ent = (light_entity_override or str(self.notifications.get("rgb_light_entity") or "")).strip()
+        if not light_ent:
+            return False
+        color_map = {
+            "prepare": ([245, 158, 11], 85),
+            "running": ([56, 189, 248], 90),
+            "finish": ([16, 185, 129], 100),
+            "pause": ([239, 68, 68], 100),
+            "failed": ([239, 68, 68], 100),
+            "hms_error": ([239, 68, 68], 100),
+        }
+        try:
+            if state_key in ("off", "idle"):
+                await self.hass.services.async_call("light", "turn_off", {"entity_id": light_ent})
+                return True
+            rgb, bri = color_map.get(state_key, ([56, 189, 248], 90))
+            await self.hass.services.async_call(
+                "light",
+                "turn_on",
+                {"entity_id": light_ent, "rgb_color": rgb, "brightness_pct": bri},
+            )
+            return True
+        except Exception as err:
+            LOGGER.warning("Failed to sync RGB status light %s: %s", light_ent, err)
+            return False
+
+    async def async_speak_tts(self, text: str, media_player_override: str = "", force: bool = False) -> bool:
+        """Announce a voice message on a Home Assistant media_player entity using available TTS services."""
+        mp_ent = (media_player_override or str(self.notifications.get("tts_media_player") or "")).strip()
+        if not mp_ent or not text:
+            return False
+        if not force and self.notifications.get("tts_quiet_hours", True):
+            local_hr = time.localtime().tm_hour
+            if local_hr >= 22 or local_hr < 8:
+                return False
+        try:
+            tts_services = (self.hass.services.async_services() or {}).get("tts", {})
+            for tts_svc in ("google_translate_say", "cloud_say", "piper_say", "say"):
+                if tts_svc in tts_services:
+                    await self.hass.services.async_call(
+                        "tts",
+                        tts_svc,
+                        {"entity_id": mp_ent, "message": text},
+                    )
+                    return True
+            # Fallback to modern tts.speak if a tts.* entity exists
+            tts_entities = [st.entity_id for st in self.hass.states.async_all("tts")]
+            if tts_entities and "speak" in tts_services:
+                await self.hass.services.async_call(
+                    "tts",
+                    "speak",
+                    {
+                        "entity_id": tts_entities[0],
+                        "media_player_entity_id": mp_ent,
+                        "message": text,
+                    },
+                )
+                return True
+            return False
+        except Exception as err:
+            LOGGER.warning("Failed to speak TTS on %s: %s", mp_ent, err)
+            return False
+
+    async def async_handle_printer_event(
+        self,
+        rt: BambuPrinterRuntime,
+        event_type: str,
+        extra: Optional[dict[str, Any]] = None,
+    ) -> None:
+        """Execute standalone notifications, RGB light sync, TTS voice, low spool alerts, and safe cooldown power-off."""
         target = str(self.notifications.get("target_printer") or "__ALL__").strip().upper()
         if target not in ("__ALL__", "", rt.serial.upper(), rt.prefix.upper()):
             return
 
+        extra_dict = extra or {}
         cam_url = f"/api/bambu_fleet_studio/camera/{rt.serial}"
-        if event_type == "print_complete":
+
+        if event_type == "status_change":
+            new_st = str(extra_dict.get("new_status") or rt.print_status).lower()
+            if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
+                if new_st in ("prepare", "running", "pause", "failed"):
+                    await self.async_sync_rgb_light(new_st)
+
+        elif event_type == "print_complete":
             if self.notifications.get("print_complete", True) and self.notifications.get("notify_service"):
                 await self.async_send_notification(
                     title=f"✅ Print Complete — {rt.name}",
                     message=f"Job '{rt.task_name}' finished! Filament used: {rt.print_weight} g ({rt.print_length} m).",
                     extra_data={"image": cam_url, "entity_id": cam_url},
                 )
+            if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
+                await self.async_sync_rgb_light("finish")
+
+                async def _delayed_rgb_off() -> None:
+                    await asyncio.sleep(900)
+                    if rt.print_status in ("finish", "idle"):
+                        await self.async_sync_rgb_light("off")
+
+                self.hass.async_create_task(_delayed_rgb_off())
+
+            if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
+                await self.async_speak_tts(
+                    f"Print complete on {rt.name}. Job {rt.task_name} has finished printing."
+                )
+
             if self.notifications.get("auto_light_off", True):
                 delay_sec = int(self.notifications.get("auto_light_off_delay_sec", 300) or 300)
 
@@ -1514,6 +1665,46 @@ class BambuFleetStudioManager:
                         await self.hass.async_add_executor_job(rt.send_action, "light_off")
 
                 self.hass.async_create_task(_delayed_light_off())
+
+            if self.notifications.get("safe_cooldown_plug_off"):
+                plug_ent = str(
+                    (rt.smart_plug or {}).get("switch_entity")
+                    or self.notifications.get("cooldown_switch_entity")
+                    or ""
+                ).strip()
+                target_temp = float(self.notifications.get("cooldown_target_temp", 50) or 50)
+                if plug_ent:
+
+                    async def _safe_cooldown_power_off() -> None:
+                        # Poll every 15s up to 45 minutes until nozzle drops <= target_temp (default 50°C)
+                        for _ in range(180):
+                            await asyncio.sleep(15)
+                            if rt.print_status in ("running", "prepare", "pause"):
+                                return
+                            try:
+                                cur_nozzle = float(rt.nozzle_temp)
+                            except Exception:
+                                cur_nozzle = 999.0
+                            if 0 < cur_nozzle <= target_temp:
+                                # Wait 120s safety buffer after reaching target temp, then power off
+                                await asyncio.sleep(120)
+                                if rt.print_status in ("finish", "idle"):
+                                    await self.hass.services.async_call(
+                                        "switch",
+                                        "turn_off",
+                                        {"entity_id": plug_ent},
+                                    )
+                                    if self.notifications.get("notify_service"):
+                                        await self.async_send_notification(
+                                            title=f"🔌 Safe Cooldown Auto-Off — {rt.name}",
+                                            message=(
+                                                f"Nozzle cooled to {rt.nozzle_temp}°C (≤ {int(target_temp)}°C). "
+                                                f"Powered off smart plug ({plug_ent}) safely."
+                                            ),
+                                        )
+                                return
+
+                    self.hass.async_create_task(_safe_cooldown_power_off())
 
         elif event_type == "hms_error":
             if self.notifications.get("hms_error", True) and self.notifications.get("notify_service"):
@@ -1529,6 +1720,31 @@ class BambuFleetStudioManager:
                         "priority": "high",
                         "image": cam_url,
                     },
+                )
+            if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
+                await self.async_sync_rgb_light("hms_error")
+            if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
+                await self.async_speak_tts(
+                    f"Attention required on {rt.name}. A printer fault or filament runout was detected."
+                )
+
+        elif event_type == "low_spool_alert":
+            rem = int(extra_dict.get("remain", 15) or 15)
+            slot_code = str(extra_dict.get("slot_code") or "A1")
+            fil_name = str(extra_dict.get("name") or "PLA")
+            est_g = int(round(rem * 10))
+            if self.notifications.get("low_spool_alert", True) and self.notifications.get("notify_service"):
+                await self.async_send_notification(
+                    title=f"📦 Low Spool Alert ({rem}%) — {rt.name}",
+                    message=(
+                        f"AMS Slot {slot_code} ({fil_name}) on {rt.name} is down to {rem}% "
+                        f"(~{est_g}g remaining). Prepare a replacement spool soon!"
+                    ),
+                    extra_data={"image": cam_url},
+                )
+            if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
+                await self.async_speak_tts(
+                    f"Low filament warning on {rt.name}. AMS slot {slot_code} is down to {rem} percent."
                 )
 
     async def async_start_printer(self, serial: str, cfg: dict[str, Any]) -> BambuPrinterRuntime:
@@ -1850,6 +2066,17 @@ class FleetNotificationsAPIView(HomeAssistantView):
                         f"Notification target ({saved.get('notify_service') or 'none'}) saved & verified! "
                         "Print Complete and HMS Fault alerts are active."
                     ),
+                )
+            if body.get("test_rgb"):
+                tested = await mgr.async_sync_rgb_light(
+                    str(body.get("rgb_test_state") or "finish"),
+                    str(body.get("rgb_light_entity") or ""),
+                )
+            if body.get("test_tts"):
+                tested = await mgr.async_speak_tts(
+                    "Bambu Fleet Studio voice alerts are now connected and active.",
+                    str(body.get("tts_media_player") or ""),
+                    force=True,
                 )
             return web.json_response({
                 "ok": True,

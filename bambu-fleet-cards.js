@@ -1287,6 +1287,16 @@
       print_complete: server.print_complete !== undefined ? Boolean(server.print_complete) : (local.print_complete !== undefined ? Boolean(local.print_complete) : true),
       hms_error: server.hms_error !== undefined ? Boolean(server.hms_error) : (local.hms_error !== undefined ? Boolean(local.hms_error) : true),
       auto_light_off: server.auto_light_off !== undefined ? Boolean(server.auto_light_off) : (local.auto_light_off !== undefined ? Boolean(local.auto_light_off) : true),
+      rgb_light_sync: server.rgb_light_sync !== undefined ? Boolean(server.rgb_light_sync) : Boolean(local.rgb_light_sync),
+      rgb_light_entity: server.rgb_light_entity || local.rgb_light_entity || "",
+      tts_voice_alert: server.tts_voice_alert !== undefined ? Boolean(server.tts_voice_alert) : Boolean(local.tts_voice_alert),
+      tts_media_player: server.tts_media_player || local.tts_media_player || "",
+      tts_quiet_hours: server.tts_quiet_hours !== undefined ? Boolean(server.tts_quiet_hours) : (local.tts_quiet_hours !== undefined ? Boolean(local.tts_quiet_hours) : true),
+      safe_cooldown_plug_off: server.safe_cooldown_plug_off !== undefined ? Boolean(server.safe_cooldown_plug_off) : Boolean(local.safe_cooldown_plug_off),
+      cooldown_switch_entity: server.cooldown_switch_entity || local.cooldown_switch_entity || "",
+      cooldown_target_temp: Number(server.cooldown_target_temp || local.cooldown_target_temp || 50),
+      low_spool_alert: server.low_spool_alert !== undefined ? Boolean(server.low_spool_alert) : (local.low_spool_alert !== undefined ? Boolean(local.low_spool_alert) : true),
+      low_spool_threshold_pct: Number(server.low_spool_threshold_pct || local.low_spool_threshold_pct || 15),
       saved: Boolean(server.notify_service || local.notify_service)
     };
   }
@@ -2703,7 +2713,7 @@
   }
 
   // Feature 6: Build Automation Configurations & YAML for 1-Click Deployment
-  function buildAutomationBlueprint(blueprintId, printer, notifyService) {
+  function buildAutomationBlueprint(blueprintId, printer, notifyService, extraOpts = {}) {
     const pref = printer.prefix;
     const pName = printer.name;
     const svc = notifyService || "notify.persistent_notification";
@@ -2805,6 +2815,154 @@
                       message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}"
                     }
               }
+        ]
+      };
+      return { id, alias, config };
+    }
+
+    if (blueprintId === "rgb_light_sync") {
+      const lightEnt = extraOpts.rgb_light_entity || "light.workshop_status_led";
+      const id = "bambu_fleet_rgb_sync_" + pref;
+      const alias = "Bambu Fleet Studio — " + pName + " RGB Status Light Sync";
+      const config = {
+        id,
+        alias,
+        description: "Syncs " + lightEnt + " RGB color to " + pName + " status (Amber=Prepare, Cyan=Printing, Green=Finished, Red=Fault).",
+        mode: "restart",
+        trigger: [
+          {
+            platform: "state",
+            entity_id: "sensor." + pref + "_print_status"
+          }
+        ],
+        condition: [],
+        action: [
+          {
+            choose: [
+              {
+                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "prepare" }],
+                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [245, 158, 11], brightness_pct: 85 } }]
+              },
+              {
+                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "running" }],
+                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [56, 189, 248], brightness_pct: 90 } }]
+              },
+              {
+                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "finish" }],
+                sequence: [
+                  { service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [16, 185, 129], brightness_pct: 100 } },
+                  { delay: { hours: 0, minutes: 15, seconds: 0 } },
+                  { service: "light.turn_off", target: { entity_id: lightEnt } }
+                ]
+              },
+              {
+                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: ["pause", "failed"] }],
+                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [239, 68, 68], brightness_pct: 100 } }]
+              }
+            ]
+          }
+        ]
+      };
+      return { id, alias, config };
+    }
+
+    if (blueprintId === "tts_voice_alert") {
+      const mpEnt = extraOpts.tts_media_player || "media_player.workshop_speaker";
+      const quietHours = extraOpts.tts_quiet_hours !== false;
+      const id = "bambu_fleet_tts_alert_" + pref;
+      const alias = "Bambu Fleet Studio — " + pName + " Smart Speaker Voice Alert";
+      const config = {
+        id,
+        alias,
+        description: "Announces print completion and HMS faults for " + pName + " on " + mpEnt + ".",
+        mode: "single",
+        trigger: [
+          {
+            platform: "state",
+            entity_id: "sensor." + pref + "_print_status",
+            to: ["finish", "failed"]
+          }
+        ],
+        condition: quietHours
+          ? [{ condition: "time", after: "08:00:00", before: "22:00:00" }]
+          : [],
+        action: [
+          {
+            service: "tts.google_translate_say",
+            data: {
+              entity_id: mpEnt,
+              message: "Bambu printer " + pName + " status is now {{ states('sensor." + pref + "_print_status') }}."
+            }
+          }
+        ]
+      };
+      return { id, alias, config };
+    }
+
+    if (blueprintId === "safe_cooldown_plug_off") {
+      const plugEnt = extraOpts.cooldown_switch_entity || (printer.smartPlugCfg && printer.smartPlugCfg.switch_entity) || "switch.bambu_smart_plug";
+      const targetTemp = Number(extraOpts.cooldown_target_temp || 50);
+      const id = "bambu_fleet_safe_cooldown_" + pref;
+      const alias = "Bambu Fleet Studio — " + pName + " Safe Cooldown Smart Plug Auto-Off (<" + targetTemp + "°C)";
+      const config = {
+        id,
+        alias,
+        description: "Waits until " + pName + " nozzle cools below " + targetTemp + "°C after print finish before turning off " + plugEnt + ".",
+        mode: "single",
+        trigger: [
+          {
+            platform: "state",
+            entity_id: "sensor." + pref + "_print_status",
+            to: "finish"
+          }
+        ],
+        condition: [],
+        action: [
+          {
+            wait_template: "{{ states('sensor." + pref + "_nozzle_temperature') | float(999) <= " + targetTemp + " }}",
+            timeout: "00:45:00",
+            continue_on_timeout: false
+          },
+          { delay: { hours: 0, minutes: 2, seconds: 0 } },
+          {
+            service: "switch.turn_off",
+            target: { entity_id: plugEnt }
+          }
+        ]
+      };
+      return { id, alias, config };
+    }
+
+    if (blueprintId === "low_spool_alert") {
+      const threshPct = Number(extraOpts.low_spool_threshold_pct || 15);
+      const id = "bambu_fleet_low_spool_" + pref;
+      const alias = "Bambu Fleet Studio — " + pName + " Low Filament Spool Alert (<=" + threshPct + "%)";
+      const config = {
+        id,
+        alias,
+        description: "Sends a push notification when an active AMS RFID spool on " + pName + " drops to or below " + threshPct + "%.",
+        mode: "single",
+        trigger: [
+          {
+            platform: "numeric_state",
+            entity_id: [
+              "sensor." + pref + "_ams_1_tray_1_remaining",
+              "sensor." + pref + "_ams_1_tray_2_remaining",
+              "sensor." + pref + "_ams_1_tray_3_remaining",
+              "sensor." + pref + "_ams_1_tray_4_remaining"
+            ],
+            below: threshPct + 1
+          }
+        ],
+        condition: [],
+        action: [
+          {
+            service: isPersistent ? "persistent_notification.create" : (svcDomain + "." + svcName),
+            data: {
+              title: "📦 Low Filament Spool (≤" + threshPct + "%) — " + pName,
+              message: "An active AMS spool on " + pName + " has dropped below " + threshPct + "% remaining (~" + (threshPct * 10) + "g)."
+            }
+          }
         ]
       };
       return { id, alias, config };
@@ -3509,6 +3667,26 @@
         notifySvcs.push("notify.persistent_notification");
       }
 
+      // Discover Home Assistant light.*, media_player.*, and switch.* entities for 1-click dropdowns
+      const lightEntities = [];
+      const mediaPlayerEntities = [];
+      const switchEntities = [];
+      if (hass.states) {
+        for (const [eid, st] of Object.entries(hass.states)) {
+          const fname = (st && st.attributes && st.attributes.friendly_name) ? st.attributes.friendly_name : eid;
+          if (eid.startsWith("light.") && !eid.endsWith("_chamber_light")) {
+            lightEntities.push({ id: eid, label: `${fname} (${eid})` });
+          } else if (eid.startsWith("media_player.")) {
+            mediaPlayerEntities.push({ id: eid, label: `${fname} (${eid})` });
+          } else if (eid.startsWith("switch.")) {
+            switchEntities.push({ id: eid, label: `${fname} (${eid})` });
+          }
+        }
+      }
+      lightEntities.sort((a, b) => a.label.localeCompare(b.label));
+      mediaPlayerEntities.sort((a, b) => a.label.localeCompare(b.label));
+      switchEntities.sort((a, b) => a.label.localeCompare(b.label));
+
       const savedPrefs = loadNotifyPrefs();
       const preferredMobileApp = notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
       const initialNotifySvc = (savedPrefs.notify_service && notifySvcs.includes(savedPrefs.notify_service))
@@ -3518,9 +3696,65 @@
       let isCurrentlySaved = Boolean(savedPrefs.saved && savedPrefs.notify_service === initialNotifySvc);
 
       shadow.innerHTML = `
-        <style>${modalCss}</style>
+        <style>
+          ${modalCss}
+          .bp-cfg-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 2px;
+            padding: 8px 10px;
+            border-radius: 9px;
+            background: rgba(9, 12, 18, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+          .bp-cfg-lbl {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+          }
+          .bp-cfg-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #f8fafc;
+            border-radius: 7px;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-weight: 700;
+          }
+          .bp-color-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 2px;
+          }
+          .bp-color-Chip {
+            font-size: 9.5px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+          }
+          .bp-sec-hdr {
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+          }
+        </style>
         <div class="overlay" id="bgOverlay">
-          <div class="dialog wide">
+          <div class="dialog wide" style="width:min(920px,96vw);max-height:92vh;overflow-y:auto;">
             <div class="hdr">
               <div class="hdr-title">🔔 1-Click Printer Notifications & Automations</div>
               <button class="x-btn" id="xBtn">✕</button>
@@ -3539,7 +3773,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                   <label style="margin:0;">Notification Target Service</label>
                   <span id="notifySaveStatusBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;${isCurrentlySaved ? "color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.35);" : "color:#f59e0b;background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.35);"}">
-                    ${isCurrentlySaved ? "✓ Saved Target" : "● Unsaved — Click Save"}
+                    ${isCurrentlySaved ? "✓ Saved: " + initialNotifySvc : "● Unsaved — Click Save"}
                   </span>
                 </div>
                 <div style="display:flex;gap:8px;align-items:stretch;">
@@ -3599,11 +3833,136 @@
               </div>
             </div>
 
+            <div class="bp-sec-hdr">
+              <span>⚡ Smart Home, Voice, Thermal Cooldown & Spool Inventory 1-Click Automations</span>
+              <span style="color:#38bdf8;font-size:10px;">ZERO YAML REQUIRED</span>
+            </div>
+
+            <div class="bp-grid" style="grid-template-columns:repeat(auto-fit,minmax(360px,1fr));">
+              <!-- 4. RGB Status Light Sync -->
+              <div class="bp-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:22px;">🌈</span>
+                  <span style="font-size:10px;font-weight:800;color:#c084fc;background:rgba(192,132,252,0.15);padding:3px 8px;border-radius:999px;">SMART RGB LIGHT SYNC</span>
+                </div>
+                <div class="bp-title">RGB Status Light Sync (WLED / Hue / Govee / Zigbee)</div>
+                <div class="bp-desc">
+                  Automatically changes any smart RGB bulb or LED strip color to match live printer status, then turns off 15 minutes after completion.
+                </div>
+                <div class="bp-color-legend">
+                  <span class="bp-color-Chip" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);">🟠 Amber: Prepare</span>
+                  <span class="bp-color-Chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);">🔵 Cyan: Printing</span>
+                  <span class="bp-color-Chip" style="background:rgba(16,185,129,0.16);color:#10b981;border:1px solid rgba(16,185,129,0.35);">🟢 Green: Finished</span>
+                  <span class="bp-color-Chip" style="background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.35);">🔴 Red: HMS / Pause</span>
+                </div>
+                <div class="bp-cfg-row">
+                  <span class="bp-cfg-lbl">Select Smart RGB Light Entity (<code>light.*</code>)</span>
+                  <select id="rgbLightEntitySel" class="bp-cfg-select">
+                    <option value="">— Select a Smart RGB Light / Strip —</option>
+                    ${lightEntities.map(l => `<option value="${l.id}" ${savedPrefs.rgb_light_entity === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="bp-actions">
+                  <button class="bp-btn deploy" data-bp="rgb_light_sync" data-act="deploy">${savedPrefs.rgb_light_sync && savedPrefs.rgb_light_entity ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn" id="testRgbLightBtn" type="button">🎨 Test Light</button>
+                  <button class="bp-btn" data-bp="rgb_light_sync" data-act="yaml">📋 YAML</button>
+                </div>
+              </div>
+
+              <!-- 5. Smart Speaker Voice Alert (TTS) -->
+              <div class="bp-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:22px;">🔊</span>
+                  <span style="font-size:10px;font-weight:800;color:#fde047;background:rgba(250,204,21,0.15);padding:3px 8px;border-radius:999px;">VOICE TTS ANNOUNCER</span>
+                </div>
+                <div class="bp-title">Smart Speaker Voice Alert (HomePod / Nest / Echo / Sonos)</div>
+                <div class="bp-desc">
+                  Speaks Print Complete, Low Filament, and HMS/Runout alerts aloud on your workshop or living room smart speaker.
+                </div>
+                <div class="bp-cfg-row">
+                  <span class="bp-cfg-lbl">Select Smart Speaker (<code>media_player.*</code>)</span>
+                  <select id="ttsMediaPlayerSel" class="bp-cfg-select">
+                    <option value="">— Select a Smart Speaker / Media Player —</option>
+                    ${mediaPlayerEntities.map(m => `<option value="${m.id}" ${savedPrefs.tts_media_player === m.id ? "selected" : ""}>${m.label}</option>`).join("")}
+                  </select>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#cbd5e1;margin-top:4px;cursor:pointer;text-transform:none;letter-spacing:0;">
+                    <input type="checkbox" id="ttsQuietHoursChk" ${savedPrefs.tts_quiet_hours !== false ? "checked" : ""} style="width:auto;margin:0;" />
+                    🌙 Quiet Hours Mute (10:00 PM – 8:00 AM)
+                  </label>
+                </div>
+                <div class="bp-actions">
+                  <button class="bp-btn deploy" data-bp="tts_voice_alert" data-act="deploy">${savedPrefs.tts_voice_alert && savedPrefs.tts_media_player ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn" id="testTtsVoiceBtn" type="button">🔊 Test Voice</button>
+                  <button class="bp-btn" data-bp="tts_voice_alert" data-act="yaml">📋 YAML</button>
+                </div>
+              </div>
+
+              <!-- 6. Safe Cooldown Smart Plug Auto-Off -->
+              <div class="bp-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:22px;">🔌</span>
+                  <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.15);padding:3px 8px;border-radius:999px;">HEAT-CREEP SAFE (&lt;50°C)</span>
+                </div>
+                <div class="bp-title">Safe Cooldown Smart Plug Auto-Off</div>
+                <div class="bp-desc">
+                  Waits after print completion until the hotend nozzle cools below target temperature + 2m buffer before turning off the smart plug.
+                </div>
+                <div class="bp-cfg-row">
+                  <div style="display:grid;grid-template-columns:2fr 1fr;gap:6px;">
+                    <div>
+                      <span class="bp-cfg-lbl">Smart Plug (<code>switch.*</code>)</span>
+                      <select id="cooldownSwitchSel" class="bp-cfg-select">
+                        <option value="">⚡ Use Printer's Assigned Smart Plug</option>
+                        ${switchEntities.map(s => `<option value="${s.id}" ${savedPrefs.cooldown_switch_entity === s.id ? "selected" : ""}>${s.label}</option>`).join("")}
+                      </select>
+                    </div>
+                    <div>
+                      <span class="bp-cfg-lbl">Safe Nozzle Temp</span>
+                      <select id="cooldownTempSel" class="bp-cfg-select">
+                        <option value="45" ${Number(savedPrefs.cooldown_target_temp) === 45 ? "selected" : ""}>≤ 45°C</option>
+                        <option value="50" ${Number(savedPrefs.cooldown_target_temp || 50) === 50 ? "selected" : ""}>≤ 50°C (Rec.)</option>
+                        <option value="55" ${Number(savedPrefs.cooldown_target_temp) === 55 ? "selected" : ""}>≤ 55°C</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="bp-actions">
+                  <button class="bp-btn deploy" data-bp="safe_cooldown_plug_off" data-act="deploy">${savedPrefs.safe_cooldown_plug_off ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn" data-bp="safe_cooldown_plug_off" data-act="yaml">📋 Copy YAML</button>
+                </div>
+              </div>
+
+              <!-- 7. Low Spool Filament Alert -->
+              <div class="bp-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:22px;">📦</span>
+                  <span style="font-size:10px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,0.16);padding:3px 8px;border-radius:999px;">AMS RFID WATCHDOG</span>
+                </div>
+                <div class="bp-title">Low Spool Filament Alert (&le; ${savedPrefs.low_spool_threshold_pct || 15}%)</div>
+                <div class="bp-desc">
+                  Sends a low-filament push notification (with slot code, color &amp; remaining grams) when an active AMS RFID spool drops below threshold.
+                </div>
+                <div class="bp-cfg-row">
+                  <span class="bp-cfg-lbl">Remaining Spool Alert Threshold</span>
+                  <select id="lowSpoolThresholdSel" class="bp-cfg-select">
+                    <option value="10" ${Number(savedPrefs.low_spool_threshold_pct) === 10 ? "selected" : ""}>≤ 10% Remaining (~100g on 1kg Spool)</option>
+                    <option value="15" ${Number(savedPrefs.low_spool_threshold_pct || 15) === 15 ? "selected" : ""}>≤ 15% Remaining (~150g — Recommended)</option>
+                    <option value="20" ${Number(savedPrefs.low_spool_threshold_pct) === 20 ? "selected" : ""}>≤ 20% Remaining (~200g on 1kg Spool)</option>
+                    <option value="25" ${Number(savedPrefs.low_spool_threshold_pct) === 25 ? "selected" : ""}>≤ 25% Remaining (~250g on 1kg Spool)</option>
+                  </select>
+                </div>
+                <div class="bp-actions">
+                  <button class="bp-btn deploy" data-bp="low_spool_alert" data-act="deploy">${savedPrefs.saved && savedPrefs.low_spool_alert !== false ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn" data-bp="low_spool_alert" data-act="yaml">📋 Copy YAML</button>
+                </div>
+              </div>
+            </div>
+
             <div id="alertBox" class="alert"></div>
 
             <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Notification Settings</button>
+                <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Notification & Automation Settings</button>
                 <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Snapshot Alert Now</button>
               </div>
               <button class="btn btn-ghost" id="closeBtn">Close</button>
@@ -3619,6 +3978,12 @@
       const alertBox = shadow.getElementById("alertBox");
       const autoPrinterSel = shadow.getElementById("autoPrinterSel");
       const autoNotifySel = shadow.getElementById("autoNotifySel");
+      const rgbLightEntitySel = shadow.getElementById("rgbLightEntitySel");
+      const ttsMediaPlayerSel = shadow.getElementById("ttsMediaPlayerSel");
+      const ttsQuietHoursChk = shadow.getElementById("ttsQuietHoursChk");
+      const cooldownSwitchSel = shadow.getElementById("cooldownSwitchSel");
+      const cooldownTempSel = shadow.getElementById("cooldownTempSel");
+      const lowSpoolThresholdSel = shadow.getElementById("lowSpoolThresholdSel");
       const saveStatusBadge = shadow.getElementById("notifySaveStatusBadge");
       const saveInlineBtn = shadow.getElementById("saveNotifyInlineBtn");
       const saveFooterBtn = shadow.getElementById("saveNotifyFooterBtn");
@@ -3638,18 +4003,36 @@
         }
       };
 
-      autoNotifySel.onchange = () => updateBadgeState(false);
-      autoPrinterSel.onchange = () => updateBadgeState(false);
+      [autoNotifySel, autoPrinterSel, rgbLightEntitySel, ttsMediaPlayerSel, ttsQuietHoursChk, cooldownSwitchSel, cooldownTempSel, lowSpoolThresholdSel].forEach(el => {
+        if (el) el.onchange = () => updateBadgeState(false);
+      });
+
+      const gatherCurrentFormOptions = () => {
+        const cur = loadNotifyPrefs();
+        const rgbEnt = rgbLightEntitySel ? rgbLightEntitySel.value : "";
+        const ttsEnt = ttsMediaPlayerSel ? ttsMediaPlayerSel.value : "";
+        return {
+          notify_service: autoNotifySel.value,
+          target_printer: autoPrinterSel.value,
+          print_complete: cur.print_complete !== false,
+          hms_error: cur.hms_error !== false,
+          auto_light_off: cur.auto_light_off !== false,
+          rgb_light_entity: rgbEnt,
+          rgb_light_sync: Boolean(rgbEnt ? (cur.rgb_light_sync || true) : false),
+          tts_media_player: ttsEnt,
+          tts_voice_alert: Boolean(ttsEnt ? (cur.tts_voice_alert || true) : false),
+          tts_quiet_hours: ttsQuietHoursChk ? Boolean(ttsQuietHoursChk.checked) : true,
+          safe_cooldown_plug_off: Boolean(cur.safe_cooldown_plug_off),
+          cooldown_switch_entity: cooldownSwitchSel ? cooldownSwitchSel.value : "",
+          cooldown_target_temp: Number(cooldownTempSel ? cooldownTempSel.value : 50),
+          low_spool_alert: cur.low_spool_alert !== false,
+          low_spool_threshold_pct: Number(lowSpoolThresholdSel ? lowSpoolThresholdSel.value : 15)
+        };
+      };
 
       const persistNotifySettings = async (extraPatch = {}, showBanner = true) => {
-        const notifySvc = autoNotifySel.value;
-        const targetPrn = autoPrinterSel.value;
         const payloadToSave = {
-          notify_service: notifySvc,
-          target_printer: targetPrn,
-          print_complete: true,
-          hms_error: true,
-          auto_light_off: true,
+          ...gatherCurrentFormOptions(),
           ...extraPatch
         };
         saveNotifyPrefsLocal(payloadToSave);
@@ -3657,16 +4040,15 @@
           await hass.callApi("POST", "bambu_fleet_studio/notifications", payloadToSave);
         } catch (e) {}
         updateBadgeState(true);
-        shadow.querySelectorAll('.bp-btn.deploy').forEach(b => {
-          b.textContent = "✓ Active (Re-Install)";
-        });
         if (showBanner) {
+          const targetPrn = payloadToSave.target_printer;
           const targetLabel = targetPrn === "__ALL__"
             ? "All Fleet Printers (" + printers.length + ")"
             : ((printers.find(p => p.prefix === targetPrn) || {}).name || targetPrn);
           alertBox.className = "alert ok";
-          alertBox.textContent = "✓ Saved notification target (" + notifySvc + ") for " + targetLabel + "! Print Complete, HMS Error, and Auto-Off Chamber Light automations are active.";
+          alertBox.textContent = "✓ Saved notification target (" + payloadToSave.notify_service + ") and 1-click automation settings for " + targetLabel + "!";
         }
+        return payloadToSave;
       };
 
       saveInlineBtn.onclick = async () => {
@@ -3686,10 +4068,60 @@
         await persistNotifySettings({}, true);
         saveFooterBtn.textContent = "✓ Settings Saved";
         setTimeout(() => {
-          saveFooterBtn.textContent = "💾 Save Notification Settings";
+          saveFooterBtn.textContent = "💾 Save Notification & Automation Settings";
           saveFooterBtn.disabled = false;
         }, 1600);
       };
+
+      const testRgbBtn = shadow.getElementById("testRgbLightBtn");
+      if (testRgbBtn) {
+        testRgbBtn.onclick = async () => {
+          const rgbEnt = rgbLightEntitySel ? rgbLightEntitySel.value : "";
+          if (!rgbEnt) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Select a Smart RGB Light (light.*) from the dropdown first.";
+            return;
+          }
+          testRgbBtn.disabled = true;
+          testRgbBtn.textContent = "Testing...";
+          try {
+            await persistNotifySettings({ rgb_light_entity: rgbEnt, rgb_light_sync: true, test_rgb: true, rgb_test_state: "finish" }, false);
+            alertBox.className = "alert ok";
+            alertBox.textContent = "✓ Saved & set " + rgbEnt + " to Print Complete Emerald Green!";
+          } catch (e) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "RGB Light test failed: " + (e.message || e);
+          } finally {
+            testRgbBtn.textContent = "🎨 Test Light";
+            testRgbBtn.disabled = false;
+          }
+        };
+      }
+
+      const testTtsBtn = shadow.getElementById("testTtsVoiceBtn");
+      if (testTtsBtn) {
+        testTtsBtn.onclick = async () => {
+          const mpEnt = ttsMediaPlayerSel ? ttsMediaPlayerSel.value : "";
+          if (!mpEnt) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Select a Smart Speaker (media_player.*) from the dropdown first.";
+            return;
+          }
+          testTtsBtn.disabled = true;
+          testTtsBtn.textContent = "Speaking...";
+          try {
+            await persistNotifySettings({ tts_media_player: mpEnt, tts_voice_alert: true, test_tts: true }, false);
+            alertBox.className = "alert ok";
+            alertBox.textContent = "✓ Saved & sent voice announcement to " + mpEnt + "!";
+          } catch (e) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Voice TTS test failed: " + (e.message || e);
+          } finally {
+            testTtsBtn.textContent = "🔊 Test Voice";
+            testTtsBtn.disabled = false;
+          }
+        };
+      }
 
       shadow.getElementById("testAlertBtn").onclick = async () => {
         const selPref = autoPrinterSel.value;
@@ -3722,21 +4154,22 @@
         }
       };
 
-      shadow.querySelectorAll(".bp-btn").forEach(btn => {
+      shadow.querySelectorAll(".bp-btn[data-bp]").forEach(btn => {
         btn.onclick = async () => {
           const bpType = btn.getAttribute("data-bp");
           const act = btn.getAttribute("data-act");
           const selPref = autoPrinterSel.value;
           const notifySvc = autoNotifySel.value;
+          const extraOpts = gatherCurrentFormOptions();
           const targets = selPref === "__ALL__" ? printers : printers.filter(p => p.prefix === selPref);
 
           if (act === "yaml") {
-            const items = targets.map(p => buildAutomationBlueprint(bpType, p, notifySvc).config);
+            const items = targets.map(p => buildAutomationBlueprint(bpType, p, notifySvc, extraOpts).config);
             const yamlStr = JSON.stringify(items, null, 2);
             try {
               await navigator.clipboard.writeText(yamlStr);
               alertBox.className = "alert ok";
-              alertBox.textContent = "✓ Copied automation configuration for " + targets.length + " printer(s) to clipboard!";
+              alertBox.textContent = "✓ Copied '" + bpType + "' automation configuration for " + targets.length + " printer(s) to clipboard!";
             } catch (e) {
               alertBox.className = "alert err";
               alertBox.textContent = "Clipboard access denied by browser.";
@@ -3744,25 +4177,36 @@
             return;
           }
 
+          if (bpType === "rgb_light_sync" && !extraOpts.rgb_light_entity) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Please select a Smart RGB Light (light.*) from the dropdown before enabling RGB Status Light Sync.";
+            return;
+          }
+          if (bpType === "tts_voice_alert" && !extraOpts.tts_media_player) {
+            alertBox.className = "alert err";
+            alertBox.textContent = "Please select a Smart Speaker (media_player.*) from the dropdown before enabling Voice Alerts.";
+            return;
+          }
+
           btn.disabled = true;
           const origTxt = btn.textContent;
-          btn.textContent = "Saving & Installing...";
+          btn.textContent = "Saving & Activating...";
           try {
             await persistNotifySettings({ [bpType]: true }, false);
             for (const p of targets) {
-              const bp = buildAutomationBlueprint(bpType, p, notifySvc);
+              const bp = buildAutomationBlueprint(bpType, p, notifySvc, extraOpts);
               try {
                 await hass.callApi("POST", "config/automation/config/" + bp.id, bp.config);
               } catch (haAutoErr) {
-                // Standalone runtime handles notification & auto_light_off natively even if HA automations.yaml is read-only
+                // Standalone runtime handles notification & automation execution natively
               }
             }
             try {
               await hass.callService("automation", "reload", {});
             } catch (e) {}
             alertBox.className = "alert ok";
-            alertBox.textContent = "✓ Saved target (" + notifySvc + ") and activated '" + bpType + "' for " + targets.length + " printer(s)!";
-            btn.textContent = "✓ Installed & Saved";
+            alertBox.textContent = "✓ Saved & activated '" + bpType + "' automation for " + targets.length + " printer(s)!";
+            btn.textContent = "✓ Active & Saved";
             btn.disabled = false;
           } catch (err) {
             alertBox.className = "alert err";
