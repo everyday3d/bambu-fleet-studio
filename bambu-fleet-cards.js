@@ -1065,7 +1065,8 @@
     empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", ru: "К этому слоту еще не привязан принтер. Подключитесь по локальной сети LAN (порт 8883) для получения телеметрии.", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", "zh-tw": "此槽位尚未配對列印機。請透過區域網路 (連接埠 8883) 連線以取得即時遙測資料。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" },
     tel_odometer: { en: "⏱️ Hours & Odometer", de: "⏱️ Stunden & Odometer", fr: "⏱️ Heures & Odomètre", es: "⏱️ Horas y Odómetro", it: "⏱️ Ore e Odometro", nl: "⏱️ Uren & Odometer", pl: "⏱️ Godziny i Licznik", pt: "⏱️ Horas e Odômetro", ru: "⏱️ Часы и Одометр", zh: "⏱️ 时长与计米器", "zh-tw": "⏱️ 時數與計米器", ja: "⏱️ 稼働時間＆オドメーター" },
     odo_spools: { en: "Spools", de: "Spulen", fr: "Bobines", es: "Bobinas", it: "Bobine", nl: "Spoelen", pl: "Szpul", pt: "Bobinas", ru: "кат.", zh: "盘耗材", "zh-tw": "盤耗材", ja: "スプール" },
-    tip_odometer_meters: { en: "Lifetime Extruded Filament (Calibrate in ✏️ Edit Device)", de: "Extrudiertes Filament gesamt (Kalibrieren unter ✏️ Bearbeiten)", fr: "Filament extrudé total (Calibrer dans ✏️ Modifier)", es: "Filamento extruido total (Calibrar en ✏️ Editar)", it: "Filamento estruso totale (Calibra in ✏️ Modifica)", nl: "Totaal geëxtrudeerd filament (Kalibreer in ✏️ Bewerken)", pl: "Całkowity wytłoczony filament (Kalibruj w ✏️ Edytuj)", pt: "Filamento extrudado total (Calibrar em ✏️ Editar)", ru: "Всего экструдировано пластика (Калибровка в ✏️ Настроить)", zh: "累计挤出耗材长度（可在 ✏️ 编辑设备 中校准基线）", "zh-tw": "累計擠出耗材長度（可在 ✏️ 編輯裝置 中校準基線）", ja: "累計押出フィラメント長（✏️ 編集で初期値を校正可能）" }
+    tip_odometer_meters: { en: "Lifetime Extruded Filament (Calibrate in ✏️ Edit Device)", de: "Extrudiertes Filament gesamt (Kalibrieren unter ✏️ Bearbeiten)", fr: "Filament extrudé total (Calibrer dans ✏️ Modifier)", es: "Filamento extruido total (Calibrar en ✏️ Editar)", it: "Filamento estruso totale (Calibra in ✏️ Modifica)", nl: "Totaal geëxtrudeerd filament (Kalibreer in ✏️ Bewerken)", pl: "Całkowity wytłoczony filament (Kalibruj w ✏️ Edytuj)", pt: "Filamento extrudado total (Calibrar em ✏️ Editar)", ru: "Всего экструдировано пластика (Калибровка в ✏️ Настроить)", zh: "累计挤出耗材长度（可在 ✏️ 编辑设备 中校准基线）", "zh-tw": "累計擠出耗材長度（可在 ✏️ 編輯裝置 中校準基線）", ja: "累計押出フィラメント長（✏️ 編集で初期値を校正可能）" },
+    last_online: { en: "Last Online", de: "Zuletzt online", fr: "Vu en ligne", es: "Últ. vez en línea", it: "Ultimo accesso", nl: "Laatst online", pl: "Ostatnio online", pt: "Visto por último", ru: "Был в сети", zh: "最后在线", "zh-tw": "最後在線", ja: "最終オンライン" }
   };
 
   function t(key, lang = "en") {
@@ -1577,6 +1578,121 @@
     };
   }
 
+  const STORAGE_LAST_ONLINE_KEY = "bambu_fleet_studio_last_online_v1";
+  let _lastOnlineCache = null;
+  const _lastOnlineWriteTs = {};
+
+  function loadLastOnlineMap() {
+    if (_lastOnlineCache) return _lastOnlineCache;
+    try {
+      const raw = localStorage.getItem(STORAGE_LAST_ONLINE_KEY);
+      _lastOnlineCache = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      _lastOnlineCache = {};
+    }
+    return _lastOnlineCache;
+  }
+
+  function recordPrinterOnlineTimestamp(serial, prefix, tsSec) {
+    const map = loadLastOnlineMap();
+    const nowSec = tsSec || Math.floor(Date.now() / 1000);
+    const key = serial || prefix;
+    if (!key) return;
+    if (serial) map[serial] = nowSec;
+    if (prefix) map[prefix] = nowSec;
+    const prevWrite = _lastOnlineWriteTs[key] || 0;
+    if (nowSec - prevWrite >= 60) {
+      _lastOnlineWriteTs[key] = nowSec;
+      try {
+        localStorage.setItem(STORAGE_LAST_ONLINE_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
+  }
+
+  function resolvePrinterLastOnlineTs(spOrNull, hass, prefix, serial, plugCfg, isOnline) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (isOnline) {
+      recordPrinterOnlineTimestamp(serial, prefix, nowSec);
+      return nowSec;
+    }
+    const candidates = [];
+    if (spOrNull && Number(spOrNull.lastOnlineTs) > 0) {
+      candidates.push(Number(spOrNull.lastOnlineTs));
+    }
+    const localMap = loadLastOnlineMap();
+    if (serial && Number(localMap[serial]) > 0) candidates.push(Number(localMap[serial]));
+    if (prefix && Number(localMap[prefix]) > 0) candidates.push(Number(localMap[prefix]));
+
+    if (hass && hass.states) {
+      const stateKeys = [
+        "binary_sensor." + prefix + "_online",
+        "sensor." + prefix + "_print_status"
+      ];
+      if (plugCfg && plugCfg.switchEntity && hass.states[plugCfg.switchEntity]?.state === "off") {
+        stateKeys.push(plugCfg.switchEntity);
+      }
+      for (const sk of stateKeys) {
+        const stObj = hass.states[sk];
+        if (stObj && stObj.last_changed) {
+          const parsedMs = Date.parse(stObj.last_changed);
+          if (!isNaN(parsedMs) && parsedMs > 0) {
+            candidates.push(Math.floor(parsedMs / 1000));
+          }
+        }
+      }
+    }
+    const valid = candidates.filter(v => v > 1700000000 && v <= nowSec + 60);
+    return valid.length > 0 ? Math.max(...valid) : 0;
+  }
+
+  function formatLastOnline(tsSec) {
+    if (!tsSec || tsSec <= 0) {
+      return {
+        short: "Unknown",
+        full: "No recent connection recorded"
+      };
+    }
+    const nowSec = Math.floor(Date.now() / 1000);
+    const diffSec = Math.max(0, nowSec - Math.floor(tsSec));
+    let relStr = "";
+    if (diffSec < 60) {
+      relStr = "Just now";
+    } else if (diffSec < 3600) {
+      relStr = `${Math.floor(diffSec / 60)}m ago`;
+    } else if (diffSec < 86400) {
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      relStr = m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
+    } else {
+      const d = Math.floor(diffSec / 86400);
+      const h = Math.floor((diffSec % 86400) / 3600);
+      relStr = h > 0 ? `${d}d ${h}h ago` : `${d}d ago`;
+    }
+
+    const dt = new Date(tsSec * 1000);
+    const nowDt = new Date();
+    const timePart = dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const isSameDay = dt.toDateString() === nowDt.toDateString();
+    const yesterdayDt = new Date(nowDt);
+    yesterdayDt.setDate(nowDt.getDate() - 1);
+    const isYesterday = dt.toDateString() === yesterdayDt.toDateString();
+
+    let clockStr = "";
+    if (isSameDay) {
+      clockStr = timePart;
+    } else if (isYesterday) {
+      clockStr = `Yesterday ${timePart}`;
+    } else {
+      const datePart = dt.toLocaleDateString([], { month: "short", day: "numeric" });
+      clockStr = `${datePart}, ${timePart}`;
+    }
+
+    return {
+      short: `${relStr} (${clockStr})`,
+      full: `${relStr} • ${clockStr}`
+    };
+  }
+
   function hydrateStandalonePrinter(sp, hass, savedPlugs, modelOverrides, amsOverrides, activeLang) {
     const serial = String(sp.serial || "").trim().toUpperCase();
     const rawModelNorm = normalizeModel(sp.modelNorm || sp.model || inferModelFromSerial(serial));
@@ -1586,8 +1702,7 @@
     const displayModelLabel = displayModelNorm === "R1" ? "R1 Laser" : (overrideMod || sp.model || displayModelNorm);
 
     const haOnline = hass?.states?.["binary_sensor." + prefix + "_online"]?.state === "on";
-    const hasLiveNozzle = Boolean(sp.nozzleTemp && sp.nozzleTemp !== "—" && sp.nozzleTemp !== "0" && sp.wifiSignal && sp.wifiSignal !== "—");
-    const online = Boolean(sp.online || haOnline || hasLiveNozzle);
+    const online = typeof sp.online === "boolean" ? sp.online : Boolean(haOnline);
     const rawStatus = String(sp.printStatus || "").toLowerCase();
     const printStatus = online ? (rawStatus && rawStatus !== "offline" ? rawStatus : "idle") : "offline";
     const rawStage = String(sp.currentStage || "").toLowerCase();
@@ -1720,6 +1835,9 @@
     const defaultPlateForModel = getBuildPlateOptionsForModel(displayModelNorm).defaultPlate;
     const rawBedType = localBedPlate || (sp.bedType && sp.bedType !== "Textured Plate" ? sp.bedType : "") || sp.bedType || defaultPlateForModel;
 
+    const lastOnlineTs = resolvePrinterLastOnlineTs(sp, hass, prefix, serial, plugCfg, online);
+    const lastOnlineFmt = formatLastOnline(lastOnlineTs);
+
     return {
       deviceId: sp.deviceId || "",
       entryId: serial,
@@ -1731,6 +1849,9 @@
       serial,
       swVersion: sp.swVersion || "—",
       online,
+      lastOnlineTs,
+      lastOnlineDisplay: lastOnlineFmt.short,
+      lastOnlineFull: lastOnlineFmt.full,
       printStatus,
       currentStage,
       progress,
@@ -2099,6 +2220,9 @@
         empty: extEmpty
       };
 
+      const lastOnlineTs = resolvePrinterLastOnlineTs(null, hass, prefix, serial, plugCfg, online);
+      const lastOnlineFmt = formatLastOnline(lastOnlineTs);
+
       return {
         deviceId: dev.id,
         entryId,
@@ -2110,6 +2234,9 @@
         serial,
         swVersion: dev.sw_version || "—",
         online,
+        lastOnlineTs,
+        lastOnlineDisplay: lastOnlineFmt.short,
+        lastOnlineFull: lastOnlineFmt.full,
         printStatus,
         currentStage,
         progress,
@@ -2180,6 +2307,8 @@
         const keepCover = spHydrated.coverPic || existing.coverPic;
         const keepPick = spHydrated.pickPic || existing.pickPic;
         const mergedOnline = Boolean(spHydrated.online || existing.online);
+        const mergedLastOnlineTs = Math.max(spHydrated.lastOnlineTs || 0, existing.lastOnlineTs || 0);
+        const mergedLastOnlineFmt = formatLastOnline(mergedLastOnlineTs);
         const mergedStatus = mergedOnline
           ? ((spHydrated.printStatus && spHydrated.printStatus !== "offline") ? spHydrated.printStatus : (existing.printStatus !== "offline" ? existing.printStatus : "idle"))
           : "offline";
@@ -2191,6 +2320,9 @@
           deviceId: spHydrated.deviceId || keepDeviceId,
           entryId: spHydrated.entryId || keepEntryId,
           online: mergedOnline,
+          lastOnlineTs: mergedLastOnlineTs,
+          lastOnlineDisplay: mergedLastOnlineFmt.short,
+          lastOnlineFull: mergedLastOnlineFmt.full,
           printStatus: mergedStatus,
           currentStage: mergedStage,
           camAvailable: mergedCamAvail,
@@ -4419,6 +4551,10 @@
           const isNew = !item.configured;
           const ipChanged = Boolean(item.ip_changed);
           const isOnline = item.online !== false;
+          const snUpper = String(item.serial || "").trim().toUpperCase();
+          const pfxLow = modNorm.toLowerCase() + "_" + snUpper.toLowerCase();
+          const lastTs = resolvePrinterLastOnlineTs(item, hass, pfxLow, snUpper, null, isOnline);
+          const lastFmt = !isOnline && lastTs > 0 ? formatLastOnline(lastTs).short : "";
           let badgeHtml = "";
           if (isNew) {
             badgeHtml = `<span class="disc-badge" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.5);color:#34d399;">✨ NEW ON LAN</span>`;
@@ -4427,7 +4563,7 @@
           } else if (isOnline) {
             badgeHtml = `<span class="disc-badge" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;">✅ PAIRED • ONLINE</span>`;
           } else {
-            badgeHtml = `<span class="disc-badge" style="background:rgba(148,163,184,0.14);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;">💤 PAIRED • OFFLINE</span>`;
+            badgeHtml = `<span class="disc-badge" style="background:rgba(148,163,184,0.14);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;">💤 PAIRED • OFFLINE${lastFmt ? ' • Last Online: ' + lastFmt : ''}</span>`;
           }
           return `
             <div class="disc-card ${isNew ? 'is-new' : ''}" data-disc-idx="${idx}">
@@ -4437,7 +4573,7 @@
                   <span class="disc-name">${item.name || ('Bambu Lab ' + modNorm)}</span>
                   ${badgeHtml}
                 </div>
-                <div class="disc-meta">🌐 ${item.host || 'No IP'} • SN: ${item.serial} • Model: ${modNorm}</div>
+                <div class="disc-meta">🌐 ${item.host || 'No IP'} • SN: ${item.serial} • Model: ${modNorm}${!isOnline && lastFmt ? ' • 🕒 Last Online: ' + lastFmt : ''}</div>
               </div>
               <span class="disc-cta">${isNew ? '➕ Pair ➔' : (ipChanged ? '🔄 Update IP ➔' : 'Select ➔')}</span>
             </div>
@@ -5396,6 +5532,7 @@
             <span style="opacity:0.75;transform:scale(1.4);display:inline-flex;">${SVG_ICONS.camLens}</span>
             <div style="font-weight:700;font-size:12px;color:#94a3b8;">${t("cam_offline", activeLang)}</div>
             <div style="font-size:11px;color:#64748b;">IP: ${p.ipAddress}</div>
+            <div style="font-size:10.5px;color:#cbd5e1;margin-top:2px;font-weight:700;">🕒 ${t("last_online", activeLang)}: ${p.lastOnlineDisplay || 'Unknown'}</div>
           </div>
         `;
       }
@@ -5513,6 +5650,7 @@
                 <span class="p-dot" style="background:${stateColor};"></span>
                 ${stateBadgeText}
               </span>
+              ${!p.online ? `<span class="watt-pill" style="color:#cbd5e1;border-color:rgba(148,163,184,0.32);background:rgba(15,23,42,0.75);font-weight:700;" title="${t("last_online", activeLang)}: ${p.lastOnlineFull || p.lastOnlineDisplay || 'Unknown'}">🕒 ${t("last_online", activeLang)}: ${p.lastOnlineDisplay || 'Unknown'}</span>` : ''}
               ${p.doorOpen ? `<span class="watt-pill" title="Printer Enclosure Door">${t("door_open", activeLang)}</span>` : ''}
               ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${p.smartPlug.powerVal}${p.smartPlug.powerUnit}</span>` : ''}
             </div>

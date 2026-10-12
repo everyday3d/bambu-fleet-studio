@@ -460,6 +460,10 @@ class BambuPrinterRuntime:
         self.online: bool = False
         self.auth_failed: bool = False
         self.last_seen: float = 0.0
+        try:
+            self.last_online_ts: float = max(0.0, float(config.get("last_online_ts") or 0.0))
+        except Exception:
+            self.last_online_ts = 0.0
         self.sw_version: str = "—"
         self.print_status: str = "offline"
         self.current_stage: str = "offline"
@@ -506,13 +510,40 @@ class BambuPrinterRuntime:
             return str(int(rounded))
         return str(rounded)
 
+    def _touch_online(self, now_ts: Optional[float] = None) -> None:
+        """Record live online heartbeat and schedule periodic persistence of last_online_ts."""
+        ts = now_ts if now_ts is not None else time.time()
+        was_online = self.online
+        self.online = True
+        self.last_seen = ts
+        self.last_online_ts = ts
+        if isinstance(self._config_ref, dict):
+            self._config_ref["last_online_ts"] = round(ts, 1)
+        if not was_online or (ts - self._last_odometer_save_ts) >= 300.0:
+            self._odometer_dirty = True
+            if not was_online:
+                self._persist_odometer(ts)
+
+    def _mark_offline(self, now_ts: Optional[float] = None) -> None:
+        """Mark printer offline and persist the exact last_online_ts timestamp."""
+        ts = now_ts if now_ts is not None else time.time()
+        was_online = self.online
+        self.online = False
+        self.print_status = "offline"
+        if was_online:
+            if self.last_online_ts <= 0:
+                self.last_online_ts = self.last_seen if self.last_seen > 0 else ts
+            self._persist_odometer(ts)
+
     def _persist_odometer(self, now_ts: Optional[float] = None) -> None:
-        """Sync live odometer counters back into config dict and trigger async Store save."""
+        """Sync live odometer counters and last_online_ts back into config dict and trigger async Store save."""
         self.usage_hours = self._fmt_num(self._usage_hours_val, 1)
         if isinstance(self._config_ref, dict):
             self._config_ref["usage_hours"] = self.usage_hours
             self._config_ref["extruded_meters"] = round(self._extruded_meters, 2)
             self._config_ref["extruded_grams"] = round(self._extruded_grams, 1)
+            if self.last_online_ts > 0:
+                self._config_ref["last_online_ts"] = round(self.last_online_ts, 1)
         self._odometer_dirty = False
         self._last_odometer_save_ts = now_ts if now_ts is not None else time.time()
         if callable(self._on_odometer_save):
@@ -771,8 +802,7 @@ class BambuPrinterRuntime:
                     if rc_val == 0:
                         disconnected[0] = False
                         self.auth_failed = False
-                        self.online = True
-                        self.last_seen = time.time()
+                        self._touch_online()
                         if self.print_status == "offline":
                             self.print_status = "idle"
                             self.current_stage = "idle"
@@ -802,19 +832,16 @@ class BambuPrinterRuntime:
                         rc_str = str(rc).lower()
                         if rc_val in (4, 5, 134, 135) or "not authorized" in rc_str or "bad user name or password" in rc_str:
                             self.auth_failed = True
-                            self.online = False
-                            self.print_status = "offline"
+                            self._mark_offline()
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
 
                 def on_disconnect(cli, userdata, *args):
                     disconnected[0] = True
                     if (time.time() - self.last_seen) > 90.0:
-                        self.online = False
-                        self.print_status = "offline"
+                        self._mark_offline()
 
                 def on_message(cli, userdata, msg):
-                    self.online = True
-                    self.last_seen = time.time()
+                    self._touch_online()
                     if self.print_status == "offline":
                         self.print_status = "idle"
                     try:
@@ -839,7 +866,8 @@ class BambuPrinterRuntime:
                     if self.online and (now_ts - last_pushall) > 60.0:
                         last_pushall = now_ts
                         self.send_action("pushall")
-                    if (now_ts - self.last_seen) > 120.0:
+                    if (now_ts - self.last_seen) > 75.0:
+                        self._mark_offline(now_ts)
                         break
 
                 try:
@@ -852,9 +880,7 @@ class BambuPrinterRuntime:
                         break
                     time.sleep(0.5)
             except Exception as err:
-                if (time.time() - self.last_seen) > 90.0:
-                    self.online = False
-                    self.print_status = "offline"
+                self._mark_offline()
                 LOGGER.warning("MQTT loop error for %s (%s): %s", self.serial, self.host, err)
                 for _ in range(10):
                     if self._stop_event.is_set():
@@ -1264,7 +1290,7 @@ class BambuPrinterRuntime:
                                     jpeg_bytes = bytes(buf[soi : eoi + 2])
                                     del buf[: eoi + 2]
                                     if len(jpeg_bytes) > 1024:
-                                        self.online = True
+                                        self._touch_online()
                                         with self._jpeg_lock:
                                             self._last_jpeg = jpeg_bytes
                                             self._last_jpeg_ts = time.monotonic()
@@ -1313,9 +1339,9 @@ class BambuPrinterRuntime:
 
     def to_status_dict(self) -> dict[str, Any]:
         """Serialize runtime state for /api/bambu_fleet_studio/status."""
-        recent_mqtt = self.last_seen > 0 and (time.time() - self.last_seen) < 120.0
-        recent_cam = self._last_jpeg_ts > 0 and (time.monotonic() - self._last_jpeg_ts) < 30.0
-        is_online = bool(self.online or recent_mqtt or recent_cam)
+        recent_cam = self._last_jpeg_ts > 0 and (time.monotonic() - self._last_jpeg_ts) < 15.0
+        is_online = bool(self.online or recent_cam)
+        eff_last_online = time.time() if is_online else (self.last_online_ts if self.last_online_ts > 0 else self.last_seen)
         cam_available = is_online and (
             (self.model in RTSP_MODELS and self.rtsp_url != "disable")
             or (self.model not in RTSP_MODELS and self._last_jpeg is not None)
@@ -1336,6 +1362,7 @@ class BambuPrinterRuntime:
             "ipAddress": self.host,
             "swVersion": self.sw_version,
             "online": is_online,
+            "lastOnlineTs": round(eff_last_online, 1) if eff_last_online > 0 else 0,
             "authFailed": self.auth_failed,
             "printStatus": p_status,
             "currentStage": c_stage,
@@ -1470,6 +1497,20 @@ class BambuFleetStudioManager:
                             if usage_hours != "0":
                                 self.configs[sn]["usage_hours"] = usage_hours
                                 imported = True
+
+        for sn, cfg in list(self.configs.items()):
+            if not cfg.get("last_online_ts"):
+                mod_norm = normalize_model_code(str(cfg.get("model", "")), sn).lower()
+                pfx = f"{mod_norm}_{sn.lower()}"
+                for cand_ent in (f"binary_sensor.{pfx}_online", f"sensor.{pfx}_print_status"):
+                    st_obj = self.hass.states.get(cand_ent)
+                    if st_obj and getattr(st_obj, "last_changed", None):
+                        try:
+                            cfg["last_online_ts"] = round(float(st_obj.last_changed.timestamp()), 1)
+                            imported = True
+                            break
+                        except Exception:
+                            pass
 
         if imported:
             await self.async_save()
@@ -1808,6 +1849,11 @@ class BambuFleetStudioManager:
         ).strip() or "Bambu Textured PEI Plate"
         smart_plug = payload.get("smart_plug") if "smart_plug" in payload else existing.get("smart_plug", {})
         resolved_host = host or existing.get("host", "")
+        prev_last_online = (
+            existing_rt.last_online_ts
+            if existing_rt and existing_rt.last_online_ts > 0
+            else float(existing.get("last_online_ts") or 0.0)
+        )
 
         cfg = {
             "serial": serial,
@@ -1821,6 +1867,7 @@ class BambuFleetStudioManager:
             "bed_type": bed_type,
             "ams_override": ams_override,
             "smart_plug": smart_plug,
+            "last_online_ts": round(prev_last_online, 1) if prev_last_online > 0 else 0.0,
         }
         self.configs[serial] = cfg
         await self.async_save()
@@ -1902,6 +1949,7 @@ async def async_scan_bambu_network(hass: HomeAssistant, subnet_override: str = "
                 "entry_id": sn,
                 "configured": True,
                 "online": rt.online,
+                "lastOnlineTs": round(rt.last_online_ts, 1) if rt.last_online_ts > 0 else 0,
                 "source": "bambu_fleet_studio",
             }
 

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2026-10-12
 
 ### Added
+- **Offline Printer `Last Online:` Timestamp & Relative Duration Readout (`#34`)**:
+  - Offline printer cards now display a **`🕒 Last Online: <relative> (<time>)`** pill badge next to the `OFFLINE` status pill, inside the Camera Offline viewport box, and in the **`➕ Add / Manage Printer`** network discovery list (localized across all 12 supported languages).
+  - Persists `last_online_ts` in `BambuPrinterRuntime` (`.storage/bambu_fleet_studio.printers`) across Home Assistant restarts, with automatic fallback to Home Assistant entity `last_changed` (`binary_sensor.<prefix>_online`, `sensor.<prefix>_print_status`, or bound Smart Plug `switch.*` power-off timestamp) and browser `localStorage` (`bambu_fleet_studio_last_online_v1`).
 - **4 User-Configurable 1-Click Smart Home & Hardware Automations (`#33`)**:
   - **🌈 RGB Status Light Sync (`rgb_light_sync` — `light.*`)**: Select any smart RGB bulb or LED strip (WLED, Hue, Govee, Zigbee/Matter) with a 1-click **`🎨 Test Light`** button to automatically sync color to printer state (`🟠 Amber` = Preparing, `🔵 Cyan` = Printing, `🟢 Emerald Green` = Finished + 15m auto-off, `🔴 Red` = HMS Fault / Paused).
   - **🔊 Smart Speaker Voice Alert (`tts_voice_alert` — `media_player.*`)**: Select any smart speaker (HomePod, Google Nest, Echo, Sonos) with an optional **🌙 Quiet Hours Mute (`10:00 PM – 8:00 AM`)** toggle and **`🔊 Test Voice`** button to speak Print Complete, Low Filament, and HMS/Runout alerts aloud (`tts.google_translate_say` / `tts.cloud_say` / `tts.speak`).
