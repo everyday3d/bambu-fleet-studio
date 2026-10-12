@@ -24,6 +24,7 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
+import urllib.request
 from urllib.parse import urlparse
 
 from aiohttp import web
@@ -701,76 +702,6 @@ class BambuPrinterRuntime:
                     "param": lvl,
                 }
             })
-        if act in ("ams_filament_setting", "set_filament") and isinstance(value, dict):
-            is_ext = bool(value.get("is_ext") or str(value.get("slot_code") or "").upper() == "EXT")
-            unit_num = int(value.get("unit_num", 1) or 1)
-            slot_num = int(value.get("slot", 1) or 1)
-            ams_id = 255 if is_ext else max(0, unit_num - 1)
-            tray_id = 254 if is_ext else max(0, slot_num - 1)
-            raw_hex = str(value.get("color") or "#00AE42").strip().lstrip("#").upper()
-            if len(raw_hex) == 6:
-                rgba_hex = raw_hex + "FF"
-            elif len(raw_hex) == 8:
-                rgba_hex = raw_hex
-            else:
-                rgba_hex = "00AE42FF"
-            fil_type = str(value.get("type") or "PLA").strip().upper()
-            idx_map = {
-                "PLA": ("GFL99", 190, 240),
-                "PLA+": ("GFL99", 195, 240),
-                "PLA-CF": ("GFL98", 200, 240),
-                "PETG": ("GFG99", 220, 260),
-                "ABS": ("GFB99", 240, 280),
-                "ASA": ("GFB98", 240, 280),
-                "TPU": ("GFU99", 200, 240),
-                "PA": ("GFN99", 260, 300),
-                "PA-CF": ("GFN98", 260, 300),
-                "PC": ("GFC99", 260, 290),
-            }
-            default_idx, default_min, default_max = idx_map.get(fil_type, ("GFL99", 190, 240))
-            tray_info_idx = str(value.get("tray_info_idx") or default_idx)
-            temp_min = int(value.get("nozzle_temp_min") or default_min)
-            temp_max = int(value.get("nozzle_temp_max") or default_max)
-            custom_name = str(value.get("name") or fil_type).strip()
-
-            # Optimistically update in-memory tray state
-            css_hex = "#" + rgba_hex[:6]
-            if is_ext:
-                self.ext_spool = {
-                    "name": custom_name,
-                    "type": fil_type,
-                    "color": css_hex,
-                    "active": bool(self.ext_spool.get("active")),
-                    "empty": False,
-                }
-            else:
-                for u in self.ams_units:
-                    if int(u.get("unitNum", 1)) == unit_num:
-                        for tr in u.get("trays", []):
-                            if int(tr.get("slot", 0)) == slot_num:
-                                tr["name"] = custom_name
-                                tr["type"] = fil_type
-                                tr["color"] = css_hex
-                                tr["empty"] = False
-                                if value.get("remain") is not None:
-                                    try:
-                                        tr["remain"] = max(0, min(100, int(value["remain"])))
-                                    except Exception:
-                                        pass
-
-            return self.publish_command({
-                "print": {
-                    "sequence_id": self._next_seq(),
-                    "command": "ams_filament_setting",
-                    "ams_id": ams_id,
-                    "tray_id": tray_id,
-                    "tray_info_idx": tray_info_idx,
-                    "tray_color": rgba_hex,
-                    "nozzle_temp_min": temp_min,
-                    "nozzle_temp_max": temp_max,
-                    "tray_type": fil_type,
-                }
-            })
         return False
 
     def _mqtt_loop(self) -> None:
@@ -962,6 +893,7 @@ class BambuPrinterRuntime:
             self._job_length_m = round(self._job_weight_g * 0.33, 2)
             self.print_length = self._fmt_num(self._job_length_m, 1)
 
+        prev_progress = self.progress
         if "mc_percent" in p:
             try:
                 new_prog = min(100, max(0, int(float(p["mc_percent"]))))
@@ -1228,11 +1160,16 @@ class BambuPrinterRuntime:
             force_save=(prev_status == "running" and self.print_status in ("finish", "idle", "failed", "pause")),
         )
 
-        # Trigger standalone notification / automation hooks on status transitions or new HMS faults
+        # Trigger standalone notification / automation hooks on status transitions, progress changes, or new HMS faults
         if prev_status != self.print_status and self.print_status in ("prepare", "running", "pause", "finish", "failed", "idle"):
             self._emit_runtime_event("status_change", {"prev_status": prev_status, "new_status": self.print_status})
 
-        if prev_status in ("running", "prepare", "pause") and self.print_status == "finish":
+        if self.print_status == "running" and self.progress != prev_progress and 0 < self.progress < 100:
+            self._emit_runtime_event("progress_change", {"progress": self.progress, "prev_progress": prev_progress})
+
+        if (prev_status in ("running", "prepare", "pause") and self.print_status == "finish") or (
+            self.print_status == "running" and prev_progress < 100 and self.progress == 100
+        ):
             self._emit_runtime_event("print_complete")
         elif (
             (prev_status in ("running", "prepare", "pause") and self.print_status == "failed")
@@ -1414,6 +1351,8 @@ class BambuFleetStudioManager:
         self.store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self.runtimes: dict[str, BambuPrinterRuntime] = {}
         self.configs: dict[str, dict[str, Any]] = {}
+        self._rgb_auto_off_task: Optional[asyncio.Task] = None
+        self._last_wled_progress_pushed: int = -1
         self.notifications: dict[str, Any] = {
             "notify_service": "",
             "target_printer": "__ALL__",
@@ -1432,6 +1371,31 @@ class BambuFleetStudioManager:
             "low_spool_alert": True,
             "low_spool_threshold_pct": 15,
         }
+
+    def _resolve_default_notify_service(self) -> str:
+        """Return the configured notify_service or auto-detect the primary mobile_app_* service."""
+        cur = str(self.notifications.get("notify_service") or "").strip()
+        if cur and cur not in ("notify.send_message", "send_message"):
+            return cur
+        try:
+            notify_svcs = (self.hass.services.async_services() or {}).get("notify", {})
+            for svc_key in notify_svcs:
+                if str(svc_key).startswith("mobile_app_"):
+                    resolved = f"notify.{svc_key}"
+                    self.notifications["notify_service"] = resolved
+                    return resolved
+            for st in self.hass.states.async_all("notify"):
+                slug = st.entity_id.split(".", 1)[1]
+                if f"mobile_app_{slug}" in notify_svcs:
+                    resolved = f"notify.mobile_app_{slug}"
+                    self.notifications["notify_service"] = resolved
+                    return resolved
+                resolved = st.entity_id
+                self.notifications["notify_service"] = resolved
+                return resolved
+        except Exception:
+            pass
+        return cur
 
     def _schedule_save_from_thread(self) -> None:
         """Schedule an async store save from a background runtime thread."""
@@ -1512,6 +1476,17 @@ class BambuFleetStudioManager:
                         except Exception:
                             pass
 
+        # Auto-resolve default mobile_app notification service if unset or set to invalid send_message
+        prev_svc = self.notifications.get("notify_service", "")
+        resolved_svc = self._resolve_default_notify_service()
+        if resolved_svc and resolved_svc != prev_svc:
+            imported = True
+
+        # Pre-select light.wled if available and rgb_light_entity is unset
+        if not self.notifications.get("rgb_light_entity") and self.hass.states.get("light.wled"):
+            self.notifications["rgb_light_entity"] = "light.wled"
+            imported = True
+
         if imported:
             await self.async_save()
 
@@ -1530,7 +1505,10 @@ class BambuFleetStudioManager:
         for str_key in ("notify_service", "target_printer", "rgb_light_entity", "tts_media_player", "cooldown_switch_entity"):
             if str_key in payload:
                 default_val = "__ALL__" if str_key == "target_printer" else ""
-                self.notifications[str_key] = str(payload.get(str_key) or default_val).strip()
+                val = str(payload.get(str_key) or default_val).strip()
+                if str_key == "notify_service" and val in ("", "notify.send_message", "send_message"):
+                    val = self._resolve_default_notify_service()
+                self.notifications[str_key] = val
         for bool_key in (
             "print_complete",
             "hms_error",
@@ -1568,8 +1546,10 @@ class BambuFleetStudioManager:
         extra_data: Optional[dict[str, Any]] = None,
         service_override: str = "",
     ) -> bool:
-        """Call the configured Home Assistant notify service."""
+        """Call the configured Home Assistant notify service (supports notify.mobile_app_* & notify.* entities)."""
         svc_full = (service_override or str(self.notifications.get("notify_service") or "")).strip()
+        if not svc_full or svc_full in ("notify.send_message", "send_message"):
+            svc_full = self._resolve_default_notify_service()
         if not svc_full:
             return False
         try:
@@ -1580,7 +1560,22 @@ class BambuFleetStudioManager:
                     {"title": title, "message": message},
                 )
                 return True
+
             domain, svc_name = svc_full.split(".", 1) if "." in svc_full else ("notify", svc_full)
+            notify_svcs = (self.hass.services.async_services() or {}).get("notify", {})
+
+            # If user selected a notify.<slug> entity name that maps to mobile_app_<slug>, prefer mobile_app_<slug> for rich push data
+            if domain == "notify" and svc_name not in notify_svcs and f"mobile_app_{svc_name}" in notify_svcs:
+                svc_name = f"mobile_app_{svc_name}"
+
+            if domain == "notify" and svc_name not in notify_svcs and self.hass.states.get(f"notify.{svc_name}"):
+                await self.hass.services.async_call(
+                    "notify",
+                    "send_message",
+                    {"entity_id": f"notify.{svc_name}", "title": title, "message": message},
+                )
+                return True
+
             svc_payload: dict[str, Any] = {"title": title, "message": message}
             if extra_data:
                 svc_payload["data"] = extra_data
@@ -1590,24 +1585,237 @@ class BambuFleetStudioManager:
             LOGGER.warning("Failed to call notification service %s: %s", svc_full, err)
             return False
 
-    async def async_sync_rgb_light(self, state_key: str, light_entity_override: str = "") -> bool:
-        """Sync a smart RGB light entity color to printer status (Amber=prepare, Cyan=running, Green=finish, Red=fault)."""
+    def _resolve_wled_ip(self, light_ent: str) -> str:
+        """Resolve the local IP address of a WLED controller from sensor.<slug>_ip or device registry."""
+        slug = light_ent.split(".", 1)[1] if "." in light_ent else light_ent
+        for cand_sensor in (f"sensor.{slug}_ip", "sensor.wled_ip"):
+            st = self.hass.states.get(cand_sensor)
+            if st and st.state and re.match(r"^\d+\.\d+\.\d+\.\d+$", str(st.state).strip()):
+                return str(st.state).strip()
+        return ""
+
+    @staticmethod
+    def _post_wled_json_sync(wled_ip: str, payload: dict[str, Any]) -> bool:
+        """Send a direct HTTP JSON state update to a WLED controller (/json/state)."""
+        if not wled_ip:
+            return False
+        try:
+            req = urllib.request.Request(
+                f"http://{wled_ip}/json/state",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                return resp.status == 200
+        except Exception:
+            return False
+
+    def _cancel_rgb_auto_off(self) -> None:
+        """Cancel any pending 5-minute WLED / RGB auto-shutoff timer."""
+        if self._rgb_auto_off_task and not self._rgb_auto_off_task.done():
+            self._rgb_auto_off_task.cancel()
+        self._rgb_auto_off_task = None
+
+    def _schedule_rgb_auto_off(self, light_ent: str, delay_sec: int = 300) -> None:
+        """Schedule an automatic shutoff for WLED / RGB status light (default 5 minutes = 300s after completion)."""
+        self._cancel_rgb_auto_off()
+
+        async def _auto_off_coro() -> None:
+            try:
+                await asyncio.sleep(delay_sec)
+                any_printing = any(
+                    r.online and r.print_status in ("running", "prepare")
+                    for r in self.runtimes.values()
+                )
+                if not any_printing:
+                    await self.async_sync_rgb_light("off", light_ent)
+            except asyncio.CancelledError:
+                pass
+            except Exception as err:
+                LOGGER.debug("RGB auto-off error for %s: %s", light_ent, err)
+
+        self._rgb_auto_off_task = self.hass.async_create_task(_auto_off_coro())
+
+    async def async_sync_rgb_light(
+        self,
+        state_key: str,
+        light_entity_override: str = "",
+        progress: Optional[int] = None,
+    ) -> bool:
+        """Sync smart RGB light or WLED strip.
+
+        When a WLED entity is selected:
+        - Operates as a live Print Progress Bar (0% -> 100% strip length via WLED 'Percent' effect fx=98 + intensity).
+        - At 100% / finish: flashes Emerald Green 3 times, then goes 100% Solid Emerald Green across all LEDs,
+          with a 5-minute (300s) automatic shutoff timer on completion.
+        """
         light_ent = (light_entity_override or str(self.notifications.get("rgb_light_entity") or "")).strip()
         if not light_ent:
             return False
+
+        st_obj = self.hass.states.get(light_ent)
+        effect_list = (st_obj.attributes.get("effect_list") or []) if (st_obj and st_obj.attributes) else []
+        slug = light_ent.split(".", 1)[1] if "." in light_ent else light_ent
+        intensity_ent = f"number.{slug}_intensity" if self.hass.states.get(f"number.{slug}_intensity") else (
+            "number.wled_intensity" if self.hass.states.get("number.wled_intensity") else ""
+        )
+        is_wled = ("wled" in light_ent.lower()) or ("Percent" in effect_list) or bool(intensity_ent)
+        wled_ip = self._resolve_wled_ip(light_ent) if is_wled else ""
+
         color_map = {
             "prepare": ([245, 158, 11], 85),
-            "running": ([56, 189, 248], 90),
+            "running": ([14, 165, 233], 90),
+            "progress": ([14, 165, 233], 90),
             "finish": ([16, 185, 129], 100),
             "pause": ([239, 68, 68], 100),
             "failed": ([239, 68, 68], 100),
             "hms_error": ([239, 68, 68], 100),
         }
+
         try:
             if state_key in ("off", "idle"):
+                self._cancel_rgb_auto_off()
+                if wled_ip:
+                    await self.hass.async_add_executor_job(self._post_wled_json_sync, wled_ip, {"on": False})
                 await self.hass.services.async_call("light", "turn_off", {"entity_id": light_ent})
                 return True
-            rgb, bri = color_map.get(state_key, ([56, 189, 248], 90))
+
+            self._cancel_rgb_auto_off()
+
+            if is_wled and state_key == "test_wled_bar":
+                # Live interactive demo of the WLED progress bar (25% -> 60% -> 90% -> 100% Flash 3x -> Solid Green + 5m Auto-Off)
+                for demo_pct in (25, 60, 90):
+                    if wled_ip:
+                        await self.hass.async_add_executor_job(
+                            self._post_wled_json_sync,
+                            wled_ip,
+                            {
+                                "on": True,
+                                "bri": 230,
+                                "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": demo_pct, "col": [[14, 165, 233], [0, 0, 0], [0, 0, 0]]}],
+                            },
+                        )
+                    if intensity_ent:
+                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": demo_pct})
+                    await self.hass.services.async_call(
+                        "light",
+                        "turn_on",
+                        {"entity_id": light_ent, "rgb_color": [14, 165, 233], "brightness_pct": 90, "effect": "Percent"},
+                    )
+                    await asyncio.sleep(0.55)
+                state_key = "finish"
+                progress = 100
+
+            if is_wled and state_key in ("prepare", "running", "progress"):
+                rgb, bri = color_map.get(state_key, ([14, 165, 233], 90))
+                bar_pct = max(3, min(99, int(progress if progress is not None else (5 if state_key == "prepare" else 10))))
+                if wled_ip:
+                    await self.hass.async_add_executor_job(
+                        self._post_wled_json_sync,
+                        wled_ip,
+                        {
+                            "on": True,
+                            "bri": int(round(bri * 2.55)),
+                            "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": bar_pct, "col": [rgb, [0, 0, 0], [0, 0, 0]]}],
+                        },
+                    )
+                if intensity_ent:
+                    await self.hass.services.async_call(
+                        "number",
+                        "set_value",
+                        {"entity_id": intensity_ent, "value": bar_pct},
+                    )
+                await self.hass.services.async_call(
+                    "light",
+                    "turn_on",
+                    {"entity_id": light_ent, "rgb_color": rgb, "brightness_pct": bri, "effect": "Percent"},
+                )
+                return True
+
+            if state_key == "finish":
+                if is_wled:
+                    # 1. Reach 100% progress bar fill
+                    if wled_ip:
+                        await self.hass.async_add_executor_job(
+                            self._post_wled_json_sync,
+                            wled_ip,
+                            {
+                                "on": True,
+                                "bri": 255,
+                                "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": 100, "col": [[16, 185, 129], [0, 0, 0], [0, 0, 0]]}],
+                            },
+                        )
+                    if intensity_ent:
+                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": 100})
+                    await self.hass.services.async_call(
+                        "light",
+                        "turn_on",
+                        {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100, "effect": "Solid"},
+                    )
+                    await asyncio.sleep(0.35)
+
+                    # 2. Flash 3 times at 100% completion
+                    for _ in range(3):
+                        if wled_ip:
+                            await self.hass.async_add_executor_job(self._post_wled_json_sync, wled_ip, {"on": False})
+                        await self.hass.services.async_call("light", "turn_off", {"entity_id": light_ent})
+                        await asyncio.sleep(0.32)
+                        if wled_ip:
+                            await self.hass.async_add_executor_job(
+                                self._post_wled_json_sync,
+                                wled_ip,
+                                {
+                                    "on": True,
+                                    "bri": 255,
+                                    "seg": [{"id": 0, "fx": 0, "sx": 128, "ix": 100, "col": [[16, 185, 129], [16, 185, 129], [0, 0, 0]]}],
+                                },
+                            )
+                        await self.hass.services.async_call(
+                            "light",
+                            "turn_on",
+                            {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100, "effect": "Solid"},
+                        )
+                        await asyncio.sleep(0.42)
+
+                    # 3. Hold Solid Emerald Green across all 100% of strip
+                    if wled_ip:
+                        await self.hass.async_add_executor_job(
+                            self._post_wled_json_sync,
+                            wled_ip,
+                            {
+                                "on": True,
+                                "bri": 255,
+                                "seg": [{"id": 0, "fx": 0, "sx": 128, "ix": 100, "col": [[16, 185, 129], [16, 185, 129], [0, 0, 0]]}],
+                            },
+                        )
+                    await self.hass.services.async_call(
+                        "light",
+                        "turn_on",
+                        {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100, "effect": "Solid"},
+                    )
+                else:
+                    await self.hass.services.async_call(
+                        "light",
+                        "turn_on",
+                        {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100},
+                    )
+
+                # 4. Schedule 5-minute (300s) auto-shutoff on completion
+                self._schedule_rgb_auto_off(light_ent, delay_sec=300)
+                return True
+
+            rgb, bri = color_map.get(state_key, ([14, 165, 233], 90))
+            if is_wled and wled_ip:
+                await self.hass.async_add_executor_job(
+                    self._post_wled_json_sync,
+                    wled_ip,
+                    {
+                        "on": True,
+                        "bri": int(round(bri * 2.55)),
+                        "seg": [{"id": 0, "fx": 0, "sx": 128, "ix": 100, "col": [rgb, rgb, [0, 0, 0]]}],
+                    },
+                )
             await self.hass.services.async_call(
                 "light",
                 "turn_on",
@@ -1661,36 +1869,60 @@ class BambuFleetStudioManager:
         event_type: str,
         extra: Optional[dict[str, Any]] = None,
     ) -> None:
-        """Execute standalone notifications, RGB light sync, TTS voice, low spool alerts, and safe cooldown power-off."""
+        """Execute standalone notifications, WLED/RGB progress bar sync, TTS voice, low spool alerts, and safe cooldown power-off."""
+        extra_dict = extra or {}
+        try:
+            self.hass.bus.async_fire(
+                "bambu_fleet_studio_printer_event",
+                {
+                    "serial": rt.serial,
+                    "prefix": rt.prefix,
+                    "name": rt.name,
+                    "event_type": event_type,
+                    "print_status": rt.print_status,
+                    "progress": rt.progress,
+                    "task_name": rt.task_name,
+                    "print_weight": rt.print_weight,
+                    "print_length": rt.print_length,
+                    "current_stage": rt.current_stage,
+                    "nozzle_temp": rt.nozzle_temp,
+                    **extra_dict,
+                },
+            )
+        except Exception:
+            pass
+
         target = str(self.notifications.get("target_printer") or "__ALL__").strip().upper()
         if target not in ("__ALL__", "", rt.serial.upper(), rt.prefix.upper()):
             return
 
-        extra_dict = extra or {}
-        cam_url = f"/api/bambu_fleet_studio/camera/{rt.serial}"
+        has_cam_frame = bool(rt._last_jpeg is not None)
+        cam_url = f"/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
+        snap_extra = {"image": cam_url} if has_cam_frame else None
 
         if event_type == "status_change":
             new_st = str(extra_dict.get("new_status") or rt.print_status).lower()
             if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
                 if new_st in ("prepare", "running", "pause", "failed"):
-                    await self.async_sync_rgb_light(new_st)
+                    await self.async_sync_rgb_light(new_st, progress=rt.progress)
+
+        elif event_type == "progress_change":
+            if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
+                prog = int(extra_dict.get("progress", rt.progress) or 0)
+                if 0 < prog < 100 and prog != self._last_wled_progress_pushed:
+                    self._last_wled_progress_pushed = prog
+                    await self.async_sync_rgb_light("running", progress=prog)
 
         elif event_type == "print_complete":
-            if self.notifications.get("print_complete", True) and self.notifications.get("notify_service"):
+            self._last_wled_progress_pushed = 100
+            if self.notifications.get("print_complete", True):
                 await self.async_send_notification(
                     title=f"✅ Print Complete — {rt.name}",
-                    message=f"Job '{rt.task_name}' finished! Filament used: {rt.print_weight} g ({rt.print_length} m).",
-                    extra_data={"image": cam_url, "entity_id": cam_url},
+                    message=f"Job '{rt.task_name}' finished (100%)! Filament used: {rt.print_weight} g ({rt.print_length} m).",
+                    extra_data=snap_extra,
                 )
             if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
-                await self.async_sync_rgb_light("finish")
-
-                async def _delayed_rgb_off() -> None:
-                    await asyncio.sleep(900)
-                    if rt.print_status in ("finish", "idle"):
-                        await self.async_sync_rgb_light("off")
-
-                self.hass.async_create_task(_delayed_rgb_off())
+                await self.async_sync_rgb_light("finish", progress=100)
 
             if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
                 await self.async_speak_tts(
@@ -1735,35 +1967,36 @@ class BambuFleetStudioManager:
                                         "turn_off",
                                         {"entity_id": plug_ent},
                                     )
-                                    if self.notifications.get("notify_service"):
-                                        await self.async_send_notification(
-                                            title=f"🔌 Safe Cooldown Auto-Off — {rt.name}",
-                                            message=(
-                                                f"Nozzle cooled to {rt.nozzle_temp}°C (≤ {int(target_temp)}°C). "
-                                                f"Powered off smart plug ({plug_ent}) safely."
-                                            ),
-                                        )
+                                    await self.async_send_notification(
+                                        title=f"🔌 Safe Cooldown Auto-Off — {rt.name}",
+                                        message=(
+                                            f"Nozzle cooled to {rt.nozzle_temp}°C (≤ {int(target_temp)}°C). "
+                                            f"Powered off smart plug ({plug_ent}) safely."
+                                        ),
+                                    )
                                 return
 
                     self.hass.async_create_task(_safe_cooldown_power_off())
 
         elif event_type == "hms_error":
-            if self.notifications.get("hms_error", True) and self.notifications.get("notify_service"):
+            if self.notifications.get("hms_error", True):
+                err_extra: dict[str, Any] = {
+                    "push": {"interruption-level": "time-sensitive"},
+                    "ttl": 0,
+                    "priority": "high",
+                }
+                if has_cam_frame:
+                    err_extra["image"] = cam_url
                 await self.async_send_notification(
                     title=f"🚨 Printer Alert — {rt.name}",
                     message=(
                         f"{rt.name} reported a print error or HMS fault during '{rt.task_name}' "
                         f"(Stage: {rt.current_stage}). Check the chamber camera immediately!"
                     ),
-                    extra_data={
-                        "push": {"interruption-level": "time-sensitive"},
-                        "ttl": 0,
-                        "priority": "high",
-                        "image": cam_url,
-                    },
+                    extra_data=err_extra,
                 )
             if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
-                await self.async_sync_rgb_light("hms_error")
+                await self.async_sync_rgb_light("hms_error", progress=rt.progress)
             if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
                 await self.async_speak_tts(
                     f"Attention required on {rt.name}. A printer fault or filament runout was detected."
@@ -1774,14 +2007,14 @@ class BambuFleetStudioManager:
             slot_code = str(extra_dict.get("slot_code") or "A1")
             fil_name = str(extra_dict.get("name") or "PLA")
             est_g = int(round(rem * 10))
-            if self.notifications.get("low_spool_alert", True) and self.notifications.get("notify_service"):
+            if self.notifications.get("low_spool_alert", True):
                 await self.async_send_notification(
                     title=f"📦 Low Spool Alert ({rem}%) — {rt.name}",
                     message=(
                         f"AMS Slot {slot_code} ({fil_name}) on {rt.name} is down to {rem}% "
                         f"(~{est_g}g remaining). Prepare a replacement spool soon!"
                     ),
-                    extra_data={"image": cam_url},
+                    extra_data=snap_extra,
                 )
             if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
                 await self.async_speak_tts(
@@ -2108,17 +2341,29 @@ class FleetNotificationsAPIView(HomeAssistantView):
             saved = await mgr.async_update_notifications(body)
             tested = False
             if body.get("test"):
-                tested = await mgr.async_send_notification(
-                    title="🔔 Bambu Fleet Studio — Test Notification",
-                    message=(
+                custom_title = str(body.get("test_title") or "🔔 Bambu Fleet Studio — Test Notification").strip()
+                custom_msg = str(
+                    body.get("test_message")
+                    or (
                         f"Notification target ({saved.get('notify_service') or 'none'}) saved & verified! "
                         "Print Complete and HMS Fault alerts are active."
-                    ),
+                    )
+                ).strip()
+                extra_data = body.get("test_data") if isinstance(body.get("test_data"), dict) else None
+                tested = await mgr.async_send_notification(
+                    title=custom_title,
+                    message=custom_msg,
+                    extra_data=extra_data,
                 )
-            if body.get("test_rgb"):
+            if body.get("test_rgb") or body.get("rgb_test_state"):
+                light_ent = str(body.get("rgb_light_entity") or saved.get("rgb_light_entity") or "")
+                default_rgb_test = "test_wled_bar" if "wled" in light_ent.lower() else "finish"
+                req_test_state = str(body.get("rgb_test_state") or default_rgb_test)
+                req_progress = int(body.get("progress_pct", body.get("progress", 100)))
                 tested = await mgr.async_sync_rgb_light(
-                    str(body.get("rgb_test_state") or "finish"),
-                    str(body.get("rgb_light_entity") or ""),
+                    req_test_state,
+                    light_ent,
+                    progress=req_progress,
                 )
             if body.get("test_tts"):
                 tested = await mgr.async_speak_tts(

@@ -987,7 +987,6 @@
     ff_search_placeholder: "ffSearchPlaceholder",
     ff_search_ph: "ffSearchPlaceholder",
     ff_all: "ffAll",
-    ff_live_lan_badge: "ff_mqtt_prog_badge",
     ff_ready_btn: "ff_ready_to_print_btn",
     ff_show_empty: "ff_show_empty_btn",
     ff_hide_empty: "ff_hide_empty_btn",
@@ -1027,7 +1026,6 @@
     tip_edit: { en: "Edit Printer, AMS & Smart Plug", de: "Drucker, AMS & Smart-Plug bearbeiten", fr: "Modifier imprimante, AMS & prise", es: "Editar impresora, AMS y enchufe", it: "Modifica stampante, AMS e presa", nl: "Printer, AMS & stekker bewerken", pl: "Edytuj drukarkę, AMS i gniazdko", pt: "Editar impressora, AMS e tomada", ru: "Настроить принтер, AMS и умную розетку", zh: "编辑打印机、AMS 与智能插座", "zh-tw": "編輯列印機、AMS 與智慧插座", ja: "プリンター・AMS・プラグ編集" },
     tip_delete: { en: "Remove Printer", de: "Drucker entfernen", fr: "Supprimer l'imprimante", es: "Eliminar impresora", it: "Rimuovi stampante", nl: "Printer verwijderen", pl: "Usuń drukarkę", pt: "Remover impressora", ru: "Удалить принтер", zh: "移除打印机", "zh-tw": "移除列印機", ja: "プリンターを削除" },
     ff_click_highlight: { en: "Click to highlight", de: "Klicken zum Hervorheben von", fr: "Cliquer pour mettre en évidence", es: "Clic para resaltar", it: "Clicca per evidenziare", nl: "Klik om te markeren", pl: "Kliknij, aby podświetlić", pt: "Clique para destacar", ru: "Нажмите, чтобы выделить", zh: "点击高亮定位", "zh-tw": "點擊高亮定位", ja: "クリックしてハイライト" },
-    ff_mqtt_prog_badge: { en: "📡 LIVE LAN MQTT AMS PROGRAMMER", de: "📡 LIVE-LAN-MQTT AMS-PROGRAMMIERER", fr: "📡 PROGRAMMEUR AMS MQTT LAN EN DIRECT", es: "📡 PROGRAMADOR AMS MQTT LAN EN VIVO", it: "📡 PROGRAMMATORE AMS MQTT LAN LIVE", nl: "📡 LIVE LAN MQTT AMS-PROGRAMMEUR", pl: "📡 PROGRAMATOR AMS MQTT LAN NA ŻYWO", pt: "📡 PROGRAMADOR AMS MQTT LAN AO VIVO", ru: "📡 ПРОГРАММАТОР AMS ПО LAN MQTT", zh: "📡 局域网 MQTT AMS 实时料槽编程", "zh-tw": "📡 區域網路 MQTT AMS 即時料槽編程", ja: "📡 LAN MQTT AMS ライブプログラマー" },
     ff_loaded_spools: { en: "Loaded Spools", de: "Geladene Spulen", fr: "Bobines Chargées", es: "Bobinas Cargadas", it: "Bobine Caricate", nl: "Geladen Spoelen", pl: "Załadowane Szpule", pt: "Bobinas Carregadas", ru: "Загружено катушек", zh: "已装料盘", "zh-tw": "已裝料盤", ja: "装填スプール" },
     ff_ready_now: { en: "Ready Now", de: "Sofort Bereit", fr: "Prêt Maintenant", es: "Listo Ahora", it: "Pronto Ora", nl: "Nu Gereed", pl: "Gotowe Teraz", pt: "Pronto Agora", ru: "Готово сейчас", zh: "立即可打", "zh-tw": "立即可印", ja: "造形可能" },
     ff_humid_ams: { en: "Humid AMS", de: "Feuchtes AMS", fr: "AMS Humide", es: "AMS Húmedo", it: "AMS Umido", nl: "Vochtig AMS", pl: "Wilgotny AMS", pt: "AMS Úmido", ru: "Влажный AMS", zh: "AMS 潮湿", "zh-tw": "AMS 潮濕", ja: "高湿度 AMS" },
@@ -1046,7 +1044,6 @@
     ff_pill_offline: { en: "💤 Offline", de: "💤 Offline", fr: "💤 Hors ligne", es: "💤 Desconectado", it: "💤 Offline", nl: "💤 Offline", pl: "💤 Offline", pt: "💤 Offline", ru: "💤 Офлайн", zh: "💤 离线", "zh-tw": "💤 離線", ja: "💤 オフライン" },
     ff_pill_printing: { en: "🖨️ Printing", de: "🖨️ Druckt", fr: "🖨️ Impression", es: "🖨️ Imprimiendo", it: "🖨️ Stampa", nl: "🖨️ Printen", pl: "🖨️ Drukuje", pt: "🖨️ Imprimindo", ru: "🖨️ Печать", zh: "🖨️ 打印中", "zh-tw": "🖨️ 列印中", ja: "🖨️ 造形中" },
     ff_pill_ready: { en: "🟢 Ready", de: "🟢 Bereit", fr: "🟢 Prêt", es: "🟢 Listo", it: "🟢 Pronto", nl: "🟢 Gereed", pl: "🟢 Gotowa", pt: "🟢 Pronto", ru: "🟢 Готова", zh: "🟢 就绪", "zh-tw": "🟢 就緒", ja: "🟢 準備完了" },
-    ff_edit_btn: { en: "🎨 Edit", de: "🎨 Bearb.", fr: "🎨 Éditer", es: "🎨 Editar", it: "🎨 Modifica", nl: "🎨 Bewerk", pl: "🎨 Edytuj", pt: "🎨 Editar", ru: "🎨 Изм.", zh: "🎨 编辑", "zh-tw": "🎨 編輯", ja: "🎨 編集" },
     wt_pill_r1: { en: "🔥 R1 CO2 Laser", de: "🔥 R1 CO2-Laser", fr: "🔥 Laser CO2 R1", es: "🔥 Láser CO2 R1", it: "🔥 Laser CO2 R1", nl: "🔥 R1 CO2-Laser", pl: "🔥 Laser CO2 R1", pt: "🔥 Laser CO2 R1", ru: "🔥 Лазер R1 CO2", zh: "🔥 R1 CO2 激光", "zh-tw": "🔥 R1 CO2 雷射", ja: "🔥 R1 CO2 レーザー" },
     wt_pill_ams: { en: "🎨 AMS Lite / AMS HT", de: "🎨 AMS Lite / AMS HT", fr: "🎨 AMS Lite / AMS HT", es: "🎨 AMS Lite / AMS HT", it: "🎨 AMS Lite / AMS HT", nl: "🎨 AMS Lite / AMS HT", pl: "🎨 AMS Lite / AMS HT", pt: "🎨 AMS Lite / AMS HT", ru: "🎨 AMS Lite / AMS HT", zh: "🎨 AMS Lite / AMS HT", "zh-tw": "🎨 AMS Lite / AMS HT", ja: "🎨 AMS Lite / AMS HT" },
     top_tab_fleet: { en: "Fleet Studio", zh: "机队总览", "zh-tw": "機隊總覽" },
@@ -1282,8 +1279,11 @@
       if (raw) local = JSON.parse(raw) || {};
     } catch (e) {}
     const server = STANDALONE_FLEET_STATE.notifications || {};
+    const rawSvc = (server.notify_service && server.notify_service !== "notify.send_message")
+      ? server.notify_service
+      : ((local.notify_service && local.notify_service !== "notify.send_message") ? local.notify_service : "");
     return {
-      notify_service: server.notify_service || local.notify_service || "",
+      notify_service: rawSvc,
       target_printer: server.target_printer || local.target_printer || "__ALL__",
       print_complete: server.print_complete !== undefined ? Boolean(server.print_complete) : (local.print_complete !== undefined ? Boolean(local.print_complete) : true),
       hms_error: server.hms_error !== undefined ? Boolean(server.hms_error) : (local.hms_error !== undefined ? Boolean(local.hms_error) : true),
@@ -1298,7 +1298,7 @@
       cooldown_target_temp: Number(server.cooldown_target_temp || local.cooldown_target_temp || 50),
       low_spool_alert: server.low_spool_alert !== undefined ? Boolean(server.low_spool_alert) : (local.low_spool_alert !== undefined ? Boolean(local.low_spool_alert) : true),
       low_spool_threshold_pct: Number(server.low_spool_threshold_pct || local.low_spool_threshold_pct || 15),
-      saved: Boolean(server.notify_service || local.notify_service)
+      saved: Boolean(rawSvc)
     };
   }
 
@@ -1322,9 +1322,13 @@
     try {
       const res = await hass.callApi("GET", "bambu_fleet_studio/status");
       if (res && res.notifications && typeof res.notifications === "object") {
+        const curNotif = STANDALONE_FLEET_STATE.notifications || {};
         STANDALONE_FLEET_STATE.notifications = {
-          ...(STANDALONE_FLEET_STATE.notifications || {}),
-          ...res.notifications
+          ...curNotif,
+          ...res.notifications,
+          notify_service: (res.notifications.notify_service && res.notifications.notify_service !== "notify.send_message")
+            ? res.notifications.notify_service
+            : (curNotif.notify_service || "")
         };
       }
       if (res && Array.isArray(res.printers)) {
@@ -2339,29 +2343,6 @@
     return result;
   }
 
-  const STORAGE_SPOOL_OVERRIDES_KEY = "bambu_fleet_studio_spool_overrides_v1";
-
-  function loadSpoolOverrides() {
-    try {
-      const raw = localStorage.getItem(STORAGE_SPOOL_OVERRIDES_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function saveSpoolOverride(key, data) {
-    try {
-      const cur = loadSpoolOverrides();
-      if (!data) {
-        delete cur[key];
-      } else {
-        cur[key] = data;
-      }
-      localStorage.setItem(STORAGE_SPOOL_OVERRIDES_KEY, JSON.stringify(cur));
-    } catch (e) {}
-  }
-
   const BAMBU_COLOR_PALETTE = [
     { hex: "#FFFFFF", name: "Jade White", zh: "玉石白", zhTw: "玉石白", family: "WHITE" },
     { hex: "#F5F5F0", name: "Ivory / Bone White", zh: "象牙白 / 骨白", zhTw: "象牙白 / 骨白", family: "WHITE" },
@@ -2444,7 +2425,6 @@
   // Feature 2: Collect all loaded spools across the fleet for the Cross-Fleet Filament Finder
   function collectFleetSpools(allPrinters, lang = "en") {
     const spools = [];
-    const overrides = loadSpoolOverrides();
     const genericNames = new Set(["PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL", "直接外挂料盘", "直接外掛料盤"]);
     const slotWord = (lang === "zh" || lang === "zh-tw") ? "槽位 " : "Slot ";
 
@@ -2457,23 +2437,20 @@
         for (const unit of units) {
           for (const tr of (unit.trays || [])) {
             const slotBadge = tr.slotCode || ("A" + tr.slot);
-            const ovKey = (p.serial || p.prefix) + ":" + slotBadge;
-            const ov = overrides[ovKey] || null;
-            const isUnavailable = ov ? false : (tr.name === "Offline" || tr.empty);
-            const rawColor = (ov && ov.color) ? ov.color : (tr.color || "#334155");
-            const rawType = ((ov && ov.type) ? ov.type : (tr.type || (isUnavailable ? "—" : "PLA"))).toUpperCase();
-            const rawName = (ov && ov.name) ? ov.name : (tr.name || rawType);
+            const isUnavailable = Boolean(tr.name === "Offline" || tr.empty);
+            const rawColor = tr.color || "#334155";
+            const rawType = (tr.type || (isUnavailable ? "—" : "PLA")).toUpperCase();
+            const rawName = tr.name || rawType;
             const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
             const trimmedRaw = String(rawName || "").trim();
             const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
             const displayTitle = isUnavailable
               ? colorInfo.displayName
               : (isGeneric ? (colorInfo.colorName + " • " + rawName) : rawName);
-            const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : tr.remain;
-            const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
+            const remainVal = tr.remain;
+            const weightGrams = typeof remainVal === "number" ? Math.round(remainVal * 10) : null;
 
             spools.push({
-              ovKey,
               printerSerial: p.serial || "",
               printerName: p.name,
               printerPrefix: p.prefix,
@@ -2508,24 +2485,18 @@
           }
         }
       } else if (p.extSpool) {
-        const slotBadge = "EXT";
-        const ovKey = (p.serial || p.prefix) + ":EXT";
-        const ov = overrides[ovKey] || null;
-        const isUnavailable = ov ? false : (p.extSpool.empty || p.extSpool.name === "Empty");
-        const rawColor = (ov && ov.color) ? ov.color : (p.extSpool.color || "#f59e0b");
-        const rawType = ((ov && ov.type) ? ov.type : (p.extSpool.type || "PLA")).toUpperCase();
-        const rawName = (ov && ov.name) ? ov.name : p.extSpool.name;
+        const isUnavailable = Boolean(p.extSpool.empty || p.extSpool.name === "Empty");
+        const rawColor = p.extSpool.color || "#f59e0b";
+        const rawType = (p.extSpool.type || "PLA").toUpperCase();
+        const rawName = p.extSpool.name;
         const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
         const trimmedRaw = String(rawName || "").trim();
         const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
         const displayTitle = isUnavailable
           ? colorInfo.displayName
           : (isGeneric ? (colorInfo.colorName + " • " + rawType) : rawName);
-        const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : null;
-        const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
 
         spools.push({
-          ovKey,
           printerSerial: p.serial || "",
           printerName: p.name,
           printerPrefix: p.prefix,
@@ -2546,8 +2517,8 @@
           colorFamily: colorInfo.family,
           type: rawType,
           color: colorInfo.hex,
-          remain: remainVal,
-          weightGrams,
+          remain: null,
+          weightGrams: null,
           humidityPct: null,
           humidityIndex: "—",
           isWet: false,
@@ -2848,7 +2819,10 @@
   function buildAutomationBlueprint(blueprintId, printer, notifyService, extraOpts = {}) {
     const pref = printer.prefix;
     const pName = printer.name;
-    const svc = notifyService || "notify.persistent_notification";
+    const cleanNotify = (notifyService && notifyService !== "notify.send_message" && notifyService !== "notify.notify")
+      ? notifyService
+      : "notify.mobile_app_jims_iphone";
+    const svc = cleanNotify || "notify.persistent_notification";
     const [svcDomain, svcName] = svc.includes(".") ? svc.split(".", 2) : ["notify", svc];
     const isPersistent = svcName === "persistent_notification";
     const isMobileApp = svcName.startsWith("mobile_app");
@@ -2866,6 +2840,14 @@
             platform: "state",
             entity_id: "sensor." + pref + "_print_status",
             to: "finish"
+          },
+          {
+            platform: "event",
+            event_type: "bambu_fleet_studio_printer_event",
+            event_data: {
+              prefix: pref,
+              event_type: "print_complete"
+            }
           }
         ],
         condition: [],
@@ -2885,8 +2867,10 @@
                       title: "✅ " + pName + " — Print Complete!",
                       message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g",
                       data: {
-                        entity_id: "camera." + pref + "_camera",
-                        image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}"
+                        push: {
+                          sound: "default",
+                          "interruption-level": "time-sensitive"
+                        }
                       }
                     }
                   : {
@@ -2917,6 +2901,14 @@
             platform: "state",
             entity_id: "binary_sensor." + pref + "_print_error",
             to: "on"
+          },
+          {
+            platform: "event",
+            event_type: "bambu_fleet_studio_printer_event",
+            event_data: {
+              prefix: pref,
+              event_type: "hms_error"
+            }
           }
         ],
         condition: [],
@@ -2936,10 +2928,12 @@
                       title: "🚨 " + pName + " — HMS / Print Error!",
                       message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}",
                       data: {
-                        entity_id: "camera." + pref + "_camera",
-                        image: "{{ state_attr('camera." + pref + "_camera', 'entity_picture') }}",
                         importance: "high",
-                        priority: "high"
+                        priority: "high",
+                        push: {
+                          sound: "default",
+                          "interruption-level": "critical"
+                        }
                       }
                     }
                   : {
@@ -2953,48 +2947,119 @@
     }
 
     if (blueprintId === "rgb_light_sync") {
-      const lightEnt = extraOpts.rgb_light_entity || "light.workshop_status_led";
+      const lightEnt = extraOpts.rgb_light_entity || "light.wled";
+      const isWled = lightEnt.toLowerCase().includes("wled");
+      const wledSlug = lightEnt.includes(".") ? lightEnt.split(".", 2)[1] : "wled";
       const id = "bambu_fleet_rgb_sync_" + pref;
-      const alias = "Bambu Fleet Studio — " + pName + " RGB Status Light Sync";
-      const config = {
-        id,
-        alias,
-        description: "Syncs " + lightEnt + " RGB color to " + pName + " status (Amber=Prepare, Cyan=Printing, Green=Finished, Red=Fault).",
-        mode: "restart",
-        trigger: [
-          {
-            platform: "state",
-            entity_id: "sensor." + pref + "_print_status"
-          }
-        ],
-        condition: [],
-        action: [
-          {
-            choose: [
+      const alias = isWled
+        ? ("Bambu Fleet Studio — " + pName + " WLED Print Progress Bar & Completion Sync")
+        : ("Bambu Fleet Studio — " + pName + " RGB Status Light Sync");
+      const config = isWled
+        ? {
+            id,
+            alias,
+            description: "Operates " + lightEnt + " as a live 0%→100% print progress bar for " + pName + ". At 100% completion, flashes 3 times, holds 100% solid green, and auto-shuts off after 5 minutes.",
+            mode: "restart",
+            trigger: [
               {
-                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "prepare" }],
-                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [245, 158, 11], brightness_pct: 85 } }]
-              },
-              {
-                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "running" }],
-                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [56, 189, 248], brightness_pct: 90 } }]
-              },
-              {
-                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "finish" }],
-                sequence: [
-                  { service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [16, 185, 129], brightness_pct: 100 } },
-                  { delay: { hours: 0, minutes: 15, seconds: 0 } },
-                  { service: "light.turn_off", target: { entity_id: lightEnt } }
+                platform: "state",
+                entity_id: [
+                  "sensor." + pref + "_print_status",
+                  "sensor." + pref + "_print_progress"
                 ]
-              },
+              }
+            ],
+            condition: [],
+            action: [
               {
-                conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: ["pause", "failed"] }],
-                sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [239, 68, 68], brightness_pct: 100 } }]
+                choose: [
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "prepare" }],
+                    sequence: [
+                      { service: "number.set_value", target: { entity_id: "number." + wledSlug + "_intensity" }, data: { value: 8 } },
+                      { service: "light.turn_on", target: { entity_id: lightEnt }, data: { effect: "Percent", rgb_color: [245, 158, 11], brightness_pct: 85 } }
+                    ]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "running" }],
+                    sequence: [
+                      {
+                        service: "number.set_value",
+                        target: { entity_id: "number." + wledSlug + "_intensity" },
+                        data: { value: "{{ [1, [100, states('sensor." + pref + "_print_progress') | int(5)] | min] | max }}" }
+                      },
+                      { service: "light.turn_on", target: { entity_id: lightEnt }, data: { effect: "Percent", rgb_color: [56, 189, 248], brightness_pct: 90 } }
+                    ]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "finish" }],
+                    sequence: [
+                      { service: "number.set_value", target: { entity_id: "number." + wledSlug + "_intensity" }, data: { value: 100 } },
+                      {
+                        repeat: {
+                          count: 3,
+                          sequence: [
+                            { service: "light.turn_on", target: { entity_id: lightEnt }, data: { effect: "Solid", rgb_color: [16, 185, 129], brightness_pct: 100 } },
+                            { delay: { hours: 0, minutes: 0, seconds: 0, milliseconds: 350 } },
+                            { service: "light.turn_off", target: { entity_id: lightEnt } },
+                            { delay: { hours: 0, minutes: 0, seconds: 0, milliseconds: 250 } }
+                          ]
+                        }
+                      },
+                      { service: "light.turn_on", target: { entity_id: lightEnt }, data: { effect: "Solid", rgb_color: [16, 185, 129], brightness_pct: 100 } },
+                      { delay: { hours: 0, minutes: 5, seconds: 0 } },
+                      { service: "light.turn_off", target: { entity_id: lightEnt } }
+                    ]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: ["pause", "failed"] }],
+                    sequence: [
+                      { service: "light.turn_on", target: { entity_id: lightEnt }, data: { effect: "Solid", rgb_color: [239, 68, 68], brightness_pct: 100 } }
+                    ]
+                  }
+                ]
               }
             ]
           }
-        ]
-      };
+        : {
+            id,
+            alias,
+            description: "Syncs " + lightEnt + " RGB color to " + pName + " status (Amber=Prepare, Cyan=Printing, Green=Finished + 5m Auto-Off, Red=Fault).",
+            mode: "restart",
+            trigger: [
+              {
+                platform: "state",
+                entity_id: "sensor." + pref + "_print_status"
+              }
+            ],
+            condition: [],
+            action: [
+              {
+                choose: [
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "prepare" }],
+                    sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [245, 158, 11], brightness_pct: 85 } }]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "running" }],
+                    sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [56, 189, 248], brightness_pct: 90 } }]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: "finish" }],
+                    sequence: [
+                      { service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [16, 185, 129], brightness_pct: 100 } },
+                      { delay: { hours: 0, minutes: 5, seconds: 0 } },
+                      { service: "light.turn_off", target: { entity_id: lightEnt } }
+                    ]
+                  },
+                  {
+                    conditions: [{ condition: "state", entity_id: "sensor." + pref + "_print_status", state: ["pause", "failed"] }],
+                    sequence: [{ service: "light.turn_on", target: { entity_id: lightEnt }, data: { rgb_color: [239, 68, 68], brightness_pct: 100 } }]
+                  }
+                ]
+              }
+            ]
+          };
       return { id, alias, config };
     }
 
@@ -3792,9 +3857,17 @@
       const notifySvcs = [];
       if (hass.services && hass.services.notify) {
         for (const k of Object.keys(hass.services.notify)) {
+          if (k === "send_message" || k === "notify") continue;
           notifySvcs.push("notify." + k);
         }
       }
+      // Sort mobile_app_* services first, prioritizing jims_iphone
+      notifySvcs.sort((a, b) => {
+        const aJim = a.includes("jims_iphone") ? 0 : (a.startsWith("notify.mobile_app_") ? 1 : 2);
+        const bJim = b.includes("jims_iphone") ? 0 : (b.startsWith("notify.mobile_app_") ? 1 : 2);
+        if (aJim !== bJim) return aJim - bJim;
+        return a.localeCompare(b);
+      });
       if (!notifySvcs.includes("notify.persistent_notification")) {
         notifySvcs.push("notify.persistent_notification");
       }
@@ -3815,17 +3888,36 @@
           }
         }
       }
-      lightEntities.sort((a, b) => a.label.localeCompare(b.label));
+      lightEntities.sort((a, b) => {
+        const aWled = a.id.includes("wled") ? 0 : 1;
+        const bWled = b.id.includes("wled") ? 0 : 1;
+        if (aWled !== bWled) return aWled - bWled;
+        return a.label.localeCompare(b.label);
+      });
       mediaPlayerEntities.sort((a, b) => a.label.localeCompare(b.label));
       switchEntities.sort((a, b) => a.label.localeCompare(b.label));
 
       const savedPrefs = loadNotifyPrefs();
-      const preferredMobileApp = notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
+      const preferredMobileApp = notifySvcs.find(s => s.includes("jims_iphone")) || notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
       const initialNotifySvc = (savedPrefs.notify_service && notifySvcs.includes(savedPrefs.notify_service))
         ? savedPrefs.notify_service
         : (preferredMobileApp || notifySvcs[0] || "notify.persistent_notification");
       const initialTargetPrinter = savedPrefs.target_printer || "__ALL__";
+      const defaultWledLight = (lightEntities.find(l => l.id === "light.wled") || lightEntities.find(l => l.id.includes("wled")) || {}).id || "";
+      const initialRgbLight = savedPrefs.rgb_light_entity || defaultWledLight;
       let isCurrentlySaved = Boolean(savedPrefs.saved && savedPrefs.notify_service === initialNotifySvc);
+
+      const formatNotifyOptionLabel = (svc) => {
+        if (svc === "notify.mobile_app_jims_iphone") return "📱 Jim's iPhone (" + svc + ")";
+        if (svc.startsWith("notify.mobile_app_")) {
+          const slug = svc.replace("notify.mobile_app_", "");
+          const entSt = hass.states && hass.states["notify." + slug];
+          const friendly = entSt && entSt.attributes && entSt.attributes.friendly_name;
+          return "📱 " + (friendly || slug) + " (" + svc + ")";
+        }
+        if (svc === "notify.persistent_notification") return "🖥️ Home Assistant Sidebar (" + svc + ")";
+        return svc;
+      };
 
       shadow.innerHTML = `
         <style>
@@ -3910,11 +4002,11 @@
                 </div>
                 <div style="display:flex;gap:8px;align-items:stretch;">
                   <select id="autoNotifySel" style="flex:1;">
-                    ${notifySvcs.map(s => `<option value="${s}" ${s === initialNotifySvc ? "selected" : ""}>${s}</option>`).join("")}
+                    ${notifySvcs.map(s => `<option value="${s}" ${s === initialNotifySvc ? "selected" : ""}>${formatNotifyOptionLabel(s)}</option>`).join("")}
                   </select>
                   <button class="btn btn-green" id="saveNotifyInlineBtn" style="padding:8px 14px;white-space:nowrap;font-size:12px;">💾 Save</button>
                 </div>
-                <div class="sub-hint">Select your Home Assistant Mobile App or notification channel and click Save</div>
+                <div class="sub-hint">Select your Home Assistant Mobile App (e.g., Jim's iPhone) and click Save</div>
               </div>
             </div>
 
@@ -3929,7 +4021,7 @@
                   Triggers when <code>print_status</code> transitions to <code>finish</code>. Sends job name, filament weight, and a live camera snapshot to your phone.
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="print_complete" data-act="deploy">${savedPrefs.saved && savedPrefs.print_complete !== false ? "✓ Active (Re-Install)" : "⚡ 1-Click Install"}</button>
+                  <button class="bp-btn deploy" data-bp="print_complete" data-act="deploy">${savedPrefs.saved && savedPrefs.print_complete !== false ? "✓ Active (Re-Install & Test)" : "⚡ 1-Click Install"}</button>
                   <button class="bp-btn" data-bp="print_complete" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -3944,7 +4036,7 @@
                   Triggers immediately when <code>hms_errors</code> or <code>print_error</code> turns <code>on</code> (filament runout, tangled spool, nozzle clog) with a live camera snapshot.
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="hms_error" data-act="deploy">${savedPrefs.saved && savedPrefs.hms_error !== false ? "✓ Active (Re-Install)" : "⚡ 1-Click Install"}</button>
+                  <button class="bp-btn deploy" data-bp="hms_error" data-act="deploy">${savedPrefs.saved && savedPrefs.hms_error !== false ? "✓ Active (Re-Install & Test)" : "⚡ 1-Click Install"}</button>
                   <button class="bp-btn" data-bp="hms_error" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -3966,37 +4058,37 @@
             </div>
 
             <div class="bp-sec-hdr">
-              <span>⚡ Smart Home, Voice, Thermal Cooldown & Spool Inventory 1-Click Automations</span>
+              <span>⚡ Smart Home, WLED Print Progress Bar, Voice, Cooldown & Spool 1-Click Automations</span>
               <span style="color:#38bdf8;font-size:10px;">ZERO YAML REQUIRED</span>
             </div>
 
             <div class="bp-grid" style="grid-template-columns:repeat(auto-fit,minmax(360px,1fr));">
-              <!-- 4. RGB Status Light Sync -->
+              <!-- 4. RGB Status Light Sync / WLED Print Progress Bar -->
               <div class="bp-card">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span style="font-size:22px;">🌈</span>
-                  <span style="font-size:10px;font-weight:800;color:#c084fc;background:rgba(192,132,252,0.15);padding:3px 8px;border-radius:999px;">SMART RGB LIGHT SYNC</span>
+                  <span style="font-size:10px;font-weight:800;color:#c084fc;background:rgba(192,132,252,0.15);padding:3px 8px;border-radius:999px;">WLED PROGRESS BAR + RGB SYNC</span>
                 </div>
-                <div class="bp-title">RGB Status Light Sync (WLED / Hue / Govee / Zigbee)</div>
+                <div class="bp-title">WLED Print Progress Bar &amp; RGB Status Sync</div>
                 <div class="bp-desc">
-                  Automatically changes any smart RGB bulb or LED strip color to match live printer status, then turns off 15 minutes after completion.
+                  When WLED is selected, operates the strip as a live <strong>0% &rarr; 100% print progress bar</strong> that grows in length as the print advances, <strong>flashes 3&times; at 100%</strong>, goes <strong>solid green across all 100%</strong>, and auto-shuts off after <strong>5 minutes</strong>.
                 </div>
                 <div class="bp-color-legend">
                   <span class="bp-color-Chip" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);">🟠 Amber: Prepare</span>
-                  <span class="bp-color-Chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);">🔵 Cyan: Printing</span>
-                  <span class="bp-color-Chip" style="background:rgba(16,185,129,0.16);color:#10b981;border:1px solid rgba(16,185,129,0.35);">🟢 Green: Finished</span>
+                  <span class="bp-color-Chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);">📊 Cyan Bar (0%→100%): Printing</span>
+                  <span class="bp-color-Chip" style="background:rgba(16,185,129,0.16);color:#10b981;border:1px solid rgba(16,185,129,0.35);">⚡🟢 3× Flash → 100% Green (5m Off)</span>
                   <span class="bp-color-Chip" style="background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.35);">🔴 Red: HMS / Pause</span>
                 </div>
                 <div class="bp-cfg-row">
-                  <span class="bp-cfg-lbl">Select Smart RGB Light Entity (<code>light.*</code>)</span>
+                  <span class="bp-cfg-lbl">Select WLED Strip or Smart RGB Light (<code>light.*</code>)</span>
                   <select id="rgbLightEntitySel" class="bp-cfg-select">
-                    <option value="">— Select a Smart RGB Light / Strip —</option>
-                    ${lightEntities.map(l => `<option value="${l.id}" ${savedPrefs.rgb_light_entity === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
+                    <option value="">— Select a WLED Strip or Smart RGB Light —</option>
+                    ${lightEntities.map(l => `<option value="${l.id}" ${initialRgbLight === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
                   </select>
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="rgb_light_sync" data-act="deploy">${savedPrefs.rgb_light_sync && savedPrefs.rgb_light_entity ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
-                  <button class="bp-btn" id="testRgbLightBtn" type="button">🎨 Test Light</button>
+                  <button class="bp-btn deploy" data-bp="rgb_light_sync" data-act="deploy">${savedPrefs.rgb_light_sync && initialRgbLight ? "✓ Active (Update & Sync)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn" id="testRgbLightBtn" type="button">📊 Test WLED Bar / Light</button>
                   <button class="bp-btn" data-bp="rgb_light_sync" data-act="yaml">📋 YAML</button>
                 </div>
               </div>
@@ -4084,7 +4176,7 @@
                   </select>
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="low_spool_alert" data-act="deploy">${savedPrefs.saved && savedPrefs.low_spool_alert !== false ? "✓ Active (Update)" : "⚡ 1-Click Enable"}</button>
+                  <button class="bp-btn deploy" data-bp="low_spool_alert" data-act="deploy">${savedPrefs.saved && savedPrefs.low_spool_alert !== false ? "✓ Active (Update & Test)" : "⚡ 1-Click Enable"}</button>
                   <button class="bp-btn" data-bp="low_spool_alert" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -4095,7 +4187,7 @@
             <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Notification & Automation Settings</button>
-                <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Snapshot Alert Now</button>
+                <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Alert to Phone Now</button>
               </div>
               <button class="btn btn-ghost" id="closeBtn">Close</button>
             </div>
@@ -4211,20 +4303,28 @@
           const rgbEnt = rgbLightEntitySel ? rgbLightEntitySel.value : "";
           if (!rgbEnt) {
             alertBox.className = "alert err";
-            alertBox.textContent = "Select a Smart RGB Light (light.*) from the dropdown first.";
+            alertBox.textContent = "Select a WLED strip or Smart RGB Light (light.*) from the dropdown first.";
             return;
           }
+          const isWled = rgbEnt.toLowerCase().includes("wled");
           testRgbBtn.disabled = true;
-          testRgbBtn.textContent = "Testing...";
+          testRgbBtn.textContent = isWled ? "Animating WLED Bar..." : "Testing...";
           try {
-            await persistNotifySettings({ rgb_light_entity: rgbEnt, rgb_light_sync: true, test_rgb: true, rgb_test_state: "finish" }, false);
+            await persistNotifySettings({
+              rgb_light_entity: rgbEnt,
+              rgb_light_sync: true,
+              test_rgb: true,
+              rgb_test_state: isWled ? "test_wled_bar" : "finish"
+            }, false);
             alertBox.className = "alert ok";
-            alertBox.textContent = "✓ Saved & set " + rgbEnt + " to Print Complete Emerald Green!";
+            alertBox.textContent = isWled
+              ? ("✓ WLED Progress Bar Demo running on " + rgbEnt + " (25% → 60% → 90% → 100% → 3× Flash → 100% Solid Green + 5m Auto-Off)!")
+              : ("✓ Saved & set " + rgbEnt + " to Print Complete Emerald Green (5m Auto-Off)!");
           } catch (e) {
             alertBox.className = "alert err";
             alertBox.textContent = "RGB Light test failed: " + (e.message || e);
           } finally {
-            testRgbBtn.textContent = "🎨 Test Light";
+            testRgbBtn.textContent = "📊 Test WLED Bar / Light";
             testRgbBtn.disabled = false;
           }
         };
@@ -4258,31 +4358,32 @@
       shadow.getElementById("testAlertBtn").onclick = async () => {
         const selPref = autoPrinterSel.value;
         const notifySvc = autoNotifySel.value;
-        const targetPrinter = selPref === "__ALL__" ? printers[0] : printers.find(p => p.prefix === selPref);
+        const targetPrinter = selPref === "__ALL__"
+          ? (printers.find(p => p.online) || printers[0])
+          : (printers.find(p => p.prefix === selPref) || printers[0]);
         if (!targetPrinter) return;
 
-        // Also save the chosen target service automatically when sending a test alert
-        await persistNotifySettings({}, false);
+        const testBtn = shadow.getElementById("testAlertBtn");
+        testBtn.disabled = true;
+        testBtn.textContent = "Sending Push Alert...";
+        const titleStr = "🖨️ Bambu Fleet Studio — Live Alert (" + targetPrinter.name + ")";
+        const msgStr = "Status: " + String(targetPrinter.printStatus || "idle").toUpperCase()
+          + " • Nozzle: " + (targetPrinter.nozzleTemp || "—") + "°C • Bed: " + (targetPrinter.bedTemp || "—") + "°C";
 
         try {
-          const [dom, svc] = notifySvc.split(".", 2);
-          if (svc === "persistent_notification") {
-            await hass.callService("persistent_notification", "create", {
-              title: "🖨️ Bambu Fleet Studio — Test Alert (" + targetPrinter.name + ")",
-              message: "Status: " + targetPrinter.printStatus.toUpperCase() + " • Nozzle: " + targetPrinter.nozzleTemp + "°C • Bed: " + targetPrinter.bedTemp + "°C"
-            });
-          } else {
-            await hass.callService(dom, svc, {
-              title: "🖨️ Bambu Fleet Studio — Test Alert (" + targetPrinter.name + ")",
-              message: "Status: " + targetPrinter.printStatus.toUpperCase() + " • Nozzle: " + targetPrinter.nozzleTemp + "°C",
-              data: targetPrinter.cameraPic ? { image: targetPrinter.cameraPic } : {}
-            });
-          }
+          await persistNotifySettings({
+            test: true,
+            test_title: titleStr,
+            test_message: msgStr
+          }, false);
           alertBox.className = "alert ok";
-          alertBox.textContent = "✓ Saved target & sent live test notification for " + targetPrinter.name + " via " + notifySvc + "!";
+          alertBox.textContent = "✓ Saved target & delivered live push notification for " + targetPrinter.name + " to " + notifySvc + "!";
         } catch (err) {
           alertBox.className = "alert err";
           alertBox.textContent = "Test alert error: " + (err.message || JSON.stringify(err));
+        } finally {
+          testBtn.textContent = "📲 Send Test Alert to Phone Now";
+          testBtn.disabled = false;
         }
       };
 
@@ -4311,7 +4412,7 @@
 
           if (bpType === "rgb_light_sync" && !extraOpts.rgb_light_entity) {
             alertBox.className = "alert err";
-            alertBox.textContent = "Please select a Smart RGB Light (light.*) from the dropdown before enabling RGB Status Light Sync.";
+            alertBox.textContent = "Please select a WLED strip or Smart RGB Light (light.*) from the dropdown before enabling RGB Status Light Sync.";
             return;
           }
           if (bpType === "tts_voice_alert" && !extraOpts.tts_media_player) {
@@ -4324,7 +4425,33 @@
           const origTxt = btn.textContent;
           btn.textContent = "Saving & Activating...";
           try {
-            await persistNotifySettings({ [bpType]: true }, false);
+            const isNotifyBp = bpType === "print_complete" || bpType === "hms_error" || bpType === "low_spool_alert";
+            const isRgbBp = bpType === "rgb_light_sync";
+            const activeTarget = targets.find(p => p.online && p.printStatus === "running") || targets.find(p => p.online) || targets[0];
+            const patch = { [bpType]: true };
+            if (isNotifyBp) {
+              const bpNames = {
+                print_complete: "Print Complete Push + Snapshot",
+                hms_error: "HMS Error & Runout Alert",
+                low_spool_alert: "Low Spool Filament Alert"
+              };
+              patch.test = true;
+              patch.test_title = "✅ 1-Click Enabled: " + (bpNames[bpType] || bpType);
+              patch.test_message = "Active for " + (selPref === "__ALL__" ? ("All " + targets.length + " Fleet Printers") : (activeTarget ? activeTarget.name : selPref))
+                + " → " + notifySvc;
+            }
+            if (isRgbBp) {
+              patch.test_rgb = true;
+              const isWled = String(extraOpts.rgb_light_entity || "").toLowerCase().includes("wled");
+              if (activeTarget && activeTarget.printStatus === "running") {
+                patch.rgb_test_state = "running";
+                patch.progress_pct = Number(activeTarget.progress) || 25;
+              } else {
+                patch.rgb_test_state = isWled ? "test_wled_bar" : "finish";
+              }
+            }
+
+            await persistNotifySettings(patch, false);
             for (const p of targets) {
               const bp = buildAutomationBlueprint(bpType, p, notifySvc, extraOpts);
               try {
@@ -4337,7 +4464,11 @@
               await hass.callService("automation", "reload", {});
             } catch (e) {}
             alertBox.className = "alert ok";
-            alertBox.textContent = "✓ Saved & activated '" + bpType + "' automation for " + targets.length + " printer(s)!";
+            alertBox.textContent = isNotifyBp
+              ? ("✓ Activated '" + bpType + "' & sent confirmation push notification to " + notifySvc + "!")
+              : (isRgbBp
+                ? ("✓ Activated WLED Progress Bar & RGB Status Sync on " + extraOpts.rgb_light_entity + "!")
+                : ("✓ Saved & activated '" + bpType + "' automation for " + targets.length + " printer(s)!"));
             btn.textContent = "✓ Active & Saved";
             btn.disabled = false;
           } catch (err) {
@@ -5257,187 +5388,6 @@
           btn.textContent = "💾 Save Changes";
         }
       };
-    } else if (mode === "spool") {
-      const s = printerData.spool || {};
-      const p = printerData.printer || {};
-      const curColor = (s.color && s.color.startsWith("#") && s.color.length >= 7) ? s.color.slice(0, 7) : "#10b981";
-      const curType = (s.type && s.type !== "—") ? s.type : "PLA";
-      const curName = s.customLabel || (s.empty ? "" : s.name) || "";
-      const curRem = (s.remain !== null && s.remain !== undefined) ? s.remain : 100;
-      const amsId = s.slotBadge === "EXT" ? 255 : Math.max(0, (s.unitNum || 1) - 1);
-      const trayId = s.slotBadge === "EXT" ? 254 : Math.max(0, (s.slotNum || 1) - 1);
-
-      const matOptions = ["PLA", "PLA-CF", "PETG", "PETG-HF", "ABS", "ASA", "TPU", "PA-CF", "PC", "PVA", "Empty"];
-      const presetColors = [
-        { hex: "#00AE42", label: "Bambu Green" },
-        { hex: "#F8FAFC", label: "Jade White" },
-        { hex: "#1E293B", label: "Charcoal Black" },
-        { hex: "#F97316", label: "Mandarin Orange" },
-        { hex: "#EF4444", label: "Crimson Red" },
-        { hex: "#38BDF8", label: "Ice / Sky Blue" },
-        { hex: "#2563EB", label: "Cobalt Blue" },
-        { hex: "#EC4899", label: "Sakura Pink" },
-        { hex: "#EAB308", label: "Lemon Yellow" },
-        { hex: "#9333EA", label: "Royal Purple" },
-        { hex: "#94A3B8", label: "Ash Gray" },
-        { hex: "#78350F", label: "Cocoa Brown" }
-      ];
-
-      backdrop.innerHTML = `
-        <div class="m-card" style="max-width:540px;">
-          <div class="m-hdr">
-            <div>
-              <h3>🎨 Spool Studio & Live AMS Programmer</h3>
-              <p>${s.printerName || p.name || "Bambu Printer"} • <strong>${s.location || ("Slot " + (s.slotBadge || "A1"))}</strong> (${s.slotBadge || "A1"})</p>
-            </div>
-            <button class="m-close" id="mClose">✕</button>
-          </div>
-          <div class="m-body">
-            <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;">
-              <input type="color" id="spColorPicker" value="${curColor}" style="width:48px;height:48px;border:none;border-radius:12px;background:transparent;cursor:pointer;padding:0;flex-shrink:0;" title="Choose Filament Hex Color" />
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;font-weight:800;color:#38bdf8;text-transform:uppercase;">Live AMS Slot Telemetry & Override</div>
-                <div id="spPreviewTitle" style="font-size:15px;font-weight:800;color:#f8fafc;margin-top:2px;">${s.name || "Loaded Spool"}</div>
-                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Pushes filament type, color & nozzle temp range directly to printer over Local LAN MQTT (Port 8883)</div>
-              </div>
-            </div>
-
-            <div class="f-group">
-              <label>Quick Bambu Filament Color Swatches</label>
-              <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:6px;">
-                ${presetColors.map(pc => `
-                  <button type="button" class="sp-preset-swatch" data-hex="${pc.hex}" data-label="${pc.label}" title="${pc.label} (${pc.hex})" style="display:flex;align-items:center;gap:5px;padding:6px 7px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);color:#e2e8f0;font-size:10px;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
-                    <span style="width:13px;height:13px;border-radius:50%;background:${pc.hex};border:1px solid rgba(255,255,255,0.4);flex-shrink:0;"></span>
-                    <span style="overflow:hidden;text-overflow:ellipsis;">${pc.label.split(" ")[0]}</span>
-                  </button>
-                `).join("")}
-              </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div class="f-group">
-                <label>Filament Material Type</label>
-                <select id="spTypeSel">
-                  ${matOptions.map(m => `<option value="${m}" ${curType.toUpperCase() === m.toUpperCase() ? "selected" : ""}>${m}</option>`).join("")}
-                </select>
-              </div>
-              <div class="f-group">
-                <label>Remaining Spool (% / ~1kg)</label>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <input id="spRemainInp" type="number" min="0" max="100" step="5" value="${curRem}" style="flex:1;" />
-                  <span id="spGramsHint" style="font-size:12px;font-weight:800;color:#10b981;min-width:56px;">~${Math.round(curRem * 10)}g</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="f-group">
-              <label>Custom Brand / Spool Label (Optional — Auto-Resolves Color Name if Blank)</label>
-              <input id="spNameInp" type="text" value="${curName}" placeholder="e.g. Bambu PLA Basic • Bambu Green, eSUN PLA+ Fire Engine Red" />
-            </div>
-
-            <div id="mAlert" class="alert"></div>
-          </div>
-          <div class="m-ftr" style="justify-content:space-between;">
-            <button class="btn ghost" id="mResetOv" title="Clear local label override and use printer's raw AMS telemetry">↺ Reset Override</button>
-            <div style="display:flex;gap:8px;">
-              <button class="btn ghost" id="mCancel">Cancel</button>
-              <button class="btn primary" id="mSubmit">📡 Push to Printer AMS & Save</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(backdrop);
-      backdrop.querySelector("#mClose").onclick = close;
-      backdrop.querySelector("#mCancel").onclick = close;
-
-      const colorPicker = backdrop.querySelector("#spColorPicker");
-      const typeSel = backdrop.querySelector("#spTypeSel");
-      const nameInp = backdrop.querySelector("#spNameInp");
-      const remInp = backdrop.querySelector("#spRemainInp");
-      const gramsHint = backdrop.querySelector("#spGramsHint");
-      const previewTitle = backdrop.querySelector("#spPreviewTitle");
-
-      const updateLivePreview = () => {
-        const hex = colorPicker.value;
-        const mat = typeSel.value === "Empty" ? "—" : typeSel.value;
-        const rem = Math.max(0, Math.min(100, parseInt(remInp.value || "0", 10) || 0));
-        gramsHint.textContent = "~" + Math.round(rem * 10) + "g";
-        const resolved = resolveSpoolColorInfo(hex, nameInp.value.trim() || mat, mat, typeSel.value === "Empty");
-        previewTitle.textContent = nameInp.value.trim() || resolved.displayName;
-      };
-
-      colorPicker.oninput = updateLivePreview;
-      typeSel.onchange = updateLivePreview;
-      nameInp.oninput = updateLivePreview;
-      remInp.oninput = updateLivePreview;
-
-      backdrop.querySelectorAll(".sp-preset-swatch").forEach(btn => {
-        btn.onclick = () => {
-          const hex = btn.getAttribute("data-hex");
-          const lbl = btn.getAttribute("data-label");
-          colorPicker.value = hex;
-          const curMat = typeSel.value === "Empty" ? "PLA" : typeSel.value;
-          if (typeSel.value === "Empty") typeSel.value = "PLA";
-          nameInp.value = `${lbl} • ${curMat}`;
-          updateLivePreview();
-        };
-      });
-
-      backdrop.querySelector("#mResetOv").onclick = () => {
-        if (s.ovKey) saveSpoolOverride(s.ovKey, null);
-        close();
-        if (onComplete) onComplete();
-      };
-
-      backdrop.querySelector("#mSubmit").onclick = async () => {
-        const btn = backdrop.querySelector("#mSubmit");
-        const alertBox = backdrop.querySelector("#mAlert");
-        const hex = colorPicker.value;
-        const mat = typeSel.value === "Empty" ? "" : typeSel.value;
-        const customName = nameInp.value.trim();
-        const remVal = Math.max(0, Math.min(100, parseInt(remInp.value || "100", 10) || 0));
-
-        btn.disabled = true;
-        btn.textContent = "⏳ Pushing to AMS...";
-        alertBox.className = "alert";
-
-        try {
-          if (s.ovKey) {
-            saveSpoolOverride(s.ovKey, {
-              color: hex,
-              type: mat || "—",
-              name: customName,
-              remain: remVal
-            });
-          }
-
-          const serial = p.serial || "";
-          const prefix = s.printerPrefix || p.prefix || "";
-          if (serial || prefix) {
-            try {
-              await hass.callApi("POST", "bambu_fleet_studio/command", {
-                serial,
-                prefix,
-                action: "ams_filament_setting",
-                ams_id: amsId,
-                tray_id: trayId,
-                tray_type: mat,
-                tray_color: hex.replace("#", "") + "FF"
-              });
-              fetchStandaloneFleet(hass, null, true);
-            } catch (mqttErr) {}
-          }
-
-          alertBox.className = "alert ok";
-          alertBox.textContent = "AMS slot updated via Local LAN MQTT & saved!";
-          setTimeout(() => { close(); if (onComplete) onComplete(); }, 450);
-        } catch (err) {
-          alertBox.className = "alert err";
-          alertBox.textContent = "Error: " + (err.message || JSON.stringify(err));
-          btn.disabled = false;
-          btn.textContent = "📡 Push to Printer AMS & Save";
-        }
-      };
     }
   }
 
@@ -5540,7 +5490,6 @@
 
     // Strictly render AMS deck(s) ONLY when printer has an attached AMS unit (supports multi-AMS daisy-chain!)
     let filamentHtml = "";
-    const spoolOverrides = loadSpoolOverrides();
     const unitsToRender = (p.hasAms && Array.isArray(p.amsUnits) && p.amsUnits.length > 0)
       ? p.amsUnits
       : (p.hasAms && p.amsInfo ? [p.amsInfo] : []);
@@ -5581,16 +5530,14 @@
             <div class="ams-slots-grid">
               ${ams.trays.map(tr => {
                 const slotCode = tr.slotCode || ("A" + tr.slot);
-                const ovKey = (p.serial || p.prefix) + ":" + slotCode;
-                const ov = spoolOverrides[ovKey] || {};
-                const effColor = ov.color || tr.color || "#334155";
-                const effType = ov.type || tr.type || "PLA";
-                const effRemain = ov.remain !== undefined && ov.remain !== "" ? Number(ov.remain) : tr.remain;
-                const isEmpty = ov.type ? (ov.type === "—") : tr.empty;
-                const colorInfo = resolveSpoolColorInfo(effColor, ov.name || tr.name, effType, isEmpty, activeLang);
-                const effName = ov.name || colorInfo.displayName;
+                const effColor = tr.color || "#334155";
+                const effType = tr.type || "PLA";
+                const effRemain = tr.remain;
+                const isEmpty = Boolean(tr.empty);
+                const colorInfo = resolveSpoolColorInfo(effColor, tr.name, effType, isEmpty, activeLang);
+                const effName = colorInfo.displayName;
                 return `
-                <div class="spool-card ${tr.active ? 'active-spool' : ''}" data-spool-edit="${ovKey}" title="Click to edit ${slotCode} filament color, material & label (${effName})" style="cursor:pointer;">
+                <div class="spool-card ${tr.active ? 'active-spool' : ''}" title="${slotCode} • ${effName}">
                   <div class="spool-top">
                     <span class="slot-num">${slotCode}</span>
                     <span class="spool-type">${effType}</span>
@@ -5612,15 +5559,13 @@
         `;
       }).join("");
     } else {
-      const ovKey = (p.serial || p.prefix) + ":EXT";
-      const ov = spoolOverrides[ovKey] || {};
-      const effColor = ov.color || p.extSpool.color || "#f59e0b";
-      const effType = ov.type || p.extSpool.type || "—";
-      const isEmpty = ov.type ? (ov.type === "—") : p.extSpool.empty;
-      const colorInfo = resolveSpoolColorInfo(effColor, ov.name || p.extSpool.name, effType, isEmpty, activeLang);
-      const effName = ov.name || colorInfo.displayName;
+      const effColor = p.extSpool.color || "#f59e0b";
+      const effType = p.extSpool.type || "—";
+      const isEmpty = Boolean(p.extSpool.empty);
+      const colorInfo = resolveSpoolColorInfo(effColor, p.extSpool.name, effType, isEmpty, activeLang);
+      const effName = colorInfo.displayName;
       filamentHtml = `
-        <div class="ext-spool-deck" data-spool-edit="${ovKey}" title="Click to configure External Spool holder (${effName})" style="cursor:pointer;">
+        <div class="ext-spool-deck" title="${t('ext_spool_title', activeLang)} (${effName})">
           <div class="ext-spool-left">
             <span class="spool-ring" style="background:${effColor};"></span>
             <div>
@@ -5778,7 +5723,6 @@
           <div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <span class="wt-badge">${t("ff_badge", activeLang)}</span>
-              <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);padding:2px 8px;border-radius:999px;">${t("ff_live_lan_badge", activeLang)}</span>
             </div>
             <div class="wt-title">${t("ff_title", activeLang)}</div>
           </div>
@@ -5847,7 +5791,7 @@
                 ? `${s.remain}%${s.weightGrams !== null ? ' (~' + s.weightGrams + 'g)' : ''}`
                 : "";
               return `
-                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-edit="${s.ovKey}" title="Click to open Spool Studio & configure ${s.printerName} ${s.slotBadge}">
+                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-locate="${s.printerPrefix}" title="${t('ff_click_highlight', activeLang)} ${s.printerName} (${s.slotBadge})">
                   <div class="ff-swatch" style="background:${s.color};width:38px;height:38px;"></div>
                   <div class="ff-info">
                     <div class="ff-top-row" style="flex-wrap:wrap;">
@@ -5865,7 +5809,6 @@
                       </span>
                       <span style="display:inline-flex;gap:4px;flex-shrink:0;">
                         <button type="button" class="ff-mini-btn" data-ff-locate="${s.printerPrefix}" title="Scroll to & highlight ${s.printerName}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
-                        <button type="button" class="ff-mini-btn" data-ff-edit-btn="${s.ovKey}" title="Edit filament color, type & custom label via LAN MQTT" style="background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);color:#fde68a;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">${t("ff_edit_btn", activeLang)}</button>
                       </span>
                     </div>
                   </div>
@@ -8047,17 +7990,6 @@
       setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang), 180);
       setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang), 600);
 
-      const openSpoolEditorByKey = (ovKey) => {
-        if (!ovKey) return;
-        const spool = allSpools.find(x => x.ovKey === ovKey);
-        if (!spool) return;
-        const printer = allPrinters.find(x => x.prefix === spool.printerPrefix) || {};
-        openStudioModal(this._hass, "spool", { spool, printer }, () => {
-          this._lastSig = "";
-          this._render();
-        });
-      };
-
       const langSelectBtn = this.shadowRoot.getElementById("langSelectBtn");
       if (langSelectBtn) {
         langSelectBtn.onchange = (e) => {
@@ -8176,23 +8108,6 @@
               this._render();
             }
           }, 2600);
-        };
-      });
-      this.shadowRoot.querySelectorAll("[data-ff-edit]").forEach(card => {
-        card.onclick = () => {
-          openSpoolEditorByKey(card.getAttribute("data-ff-edit"));
-        };
-      });
-      this.shadowRoot.querySelectorAll("[data-ff-edit-btn]").forEach(btn => {
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          openSpoolEditorByKey(btn.getAttribute("data-ff-edit-btn"));
-        };
-      });
-      this.shadowRoot.querySelectorAll("[data-spool-edit]").forEach(el => {
-        el.onclick = (e) => {
-          e.stopPropagation();
-          openSpoolEditorByKey(el.getAttribute("data-spool-edit"));
         };
       });
 
