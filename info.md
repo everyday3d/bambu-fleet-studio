@@ -1,6 +1,6 @@
-# 🖨️ Bambu Lab Fleet Studio `v1.3.0`
+# 🖨️ Bambu Lab Fleet Studio `v1.3.1`
 
-[![Release v1.3.0](https://img.shields.io/badge/Release-v1.3.0%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![Release v1.3.1](https://img.shields.io/badge/Release-v1.3.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 
 > **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm finally ready to release it to the community.
 >
