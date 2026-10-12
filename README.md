@@ -20,20 +20,24 @@
 
 Default Home Assistant entity lists clutter your screen with dozens of ungrouped sensors and render empty AMS filament slots even on printers that do not have an AMS attached. **Bambu Lab Fleet Studio** replaces walls of text and scattered entities with a sleek, dark-glass industrial command center:
 
+- **🔌 100% Standalone Local LAN Engine (`Zero External Dependencies`)**: Includes its own built-in Home Assistant backend (`custom_components/bambu_fleet_studio/`) that connects **directly** to your Bambu Lab printers over your local network—**no `ha-bambulab` or third-party integration required**!
+  - **Direct Port `8883` TLS MQTT Client**: Connects directly (`username: bblp`, `password: <8-char Access Code>`) to `device/<serial>/report` and `device/<serial>/request` for real-time temperatures, print progress, layer counters, ETA, AMS/AMS Lite/AMS 2 Pro/AMS HT spools, HMS error codes, chamber lights, speed profiles, and print job controls (`pause`, `resume`, `stop`, `pushall`).
+  - **Direct Port `6000` TLS & Port `322` RTSPS Camera Engine**: Streams live JPEG/MJPEG camera feeds directly from Port `6000` TLS (`A1`, `A1 Mini`, `P1P`, `P1S`) and decodes 1080p H.264 RTSPS video from Port `322` (`P2S`, `X1C`, `X1E`, `H2D`, `H2C`, `H2S`, `R1`) with zero external camera proxy dependencies.
+  - **Automatic Legacy Migration**: If you previously configured printers in Home Assistant, Fleet Studio automatically imports their IP address, Serial Number, and Access Code into `.storage/bambu_fleet_studio.printers` on first startup.
 - **🖼️ Complete 14-Model Printer & R1 Laser Photography**: Built-in, embedded high-resolution studio renders for every Bambu Lab series—**`A1`**, **`A1 Mini`**, **`A2L`**, **`P1S`**, **`P1P`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, and the **`R1` (55W CO2 Laser Cutter & Engraver)**—automatically matched to each device's model (with a per-device **Hardware Model & Artwork** selector in the Edit modal).
 - **🎨 Embedded Studio Artwork for AMS Lite, AMS HT, AMS 2 Pro & AMS**: Includes dedicated high-resolution studio renders for **`AMS Lite`** (4-spool open rotary feeder), **`AMS HT`** (85°C High-Temperature active engineering dryer), **`AMS 2 Pro`** (4-slot active drying unit), and standard **`AMS`**, displayed directly inside each printer's **AMS & Filament System** header, the **Edit Device** modal, and the **Supported Hardware Lineup** gallery.
-- **🎨 Smart Conditional Multi-AMS Detection, Live `% RH` & Automatic `°F` → `°C` Normalization**: Automatically inspects Home Assistant's Device Registry and `tray_1`–`tray_4` entities across single or daisy-chained AMS units (`AMS #1`, `AMS #2`, etc., including area-prefixed entities). Normalizes any Imperial (`°F`) printer/AMS temperature sensors to 3D-printing Celsius (`°C`), renders **`🌬️ Open-Air Rotary`** on sensorless `AMS Lite` feeders, displays real relative humidity (`% RH`) with amber/red wet-filament highlighting (`>= 45% RH`), plus inline **Chamber Temp (`°C`)**, **Aux/Chamber Fan `%`**, **Door Open/Closed**, and **Exact Finish Clock Time (`1h 12m • 7:42 PM`)** inside existing tiles with zero layout bloat.
+- **🎨 Smart Conditional Multi-AMS Detection, Live `% RH` & Automatic `°F` → `°C` Normalization**: Automatically inspects live MQTT `print.ams.ams[]` payloads across single or daisy-chained AMS units (`AMS #1`, `AMS #2`, etc.). Normalizes any Imperial (`°F`) printer/AMS temperature sensors to 3D-printing Celsius (`°C`), renders **`🌬️ Open-Air Rotary`** on sensorless `AMS Lite` feeders, displays real relative humidity (`% RH`) with amber/red wet-filament highlighting (`>= 45% RH`), plus inline **Chamber Temp (`°C`)**, **Aux/Chamber Fan `%`**, **Door Open/Closed**, and **Exact Finish Clock Time (`1h 12m • 7:42 PM`)** inside existing tiles with zero layout bloat.
 - **📡 Built-In LAN Network Auto-Discovery & 15-Char Serial Lookup**: Opening the **`➕ Add Printer`** modal automatically sweeps your local `/24` subnet on Port `8883` TLS in ~1.2s, validates `BBL CA` certificates, extracts each printer's **15-character Serial Number**, and infers the hardware model (`22E` → `P2S`, `039` → `A1`, `030` → `A1 Mini`, `01P` → `P1S`, `00M` → `X1C`, `094` → `H2D`). Click any discovered printer card to populate **Model, IPv4 Address, Serial Number, and Name** in one click! Also includes a **`📡 Find IP on LAN`** button in the **Edit Device** modal if DHCP changes a printer's IP.
 - **🎨 Cross-Fleet Filament Finder ("Which Printer Has My Spool?")**: Collapsible spool inventory drawer in the Command Bar aggregating every loaded AMS slot (`A1`–`A4`, `B1`–`B4`, etc.) and External Spool across the entire fleet with material filter pills (`All`, `PLA`, `PETG`, `ASA`, `TPU`, etc.), instant search, and click-to-highlight printer navigation.
-- **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when `hms_errors`, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
+- **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when HMS faults, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
 - **⚡ Safety-Locked Smart Plug Power Toggle & Live Wattage (`W`)**: Bind any Home Assistant `switch.*` and `sensor.*_power` entity per printer in the **Edit Printer** modal. Displays live power draw (`W`) and a mains toggle button that **automatically locks (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep extruder jams.
 - **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Auto-discovers your Home Assistant `notify.*` devices and installs 3 ready-made automations in 1 click (*Print Complete Push + Live Camera Snapshot*, *HMS Error & Filament Runout Alert*, and *Auto-Off Chamber Light after 5m*).
-- **📹 1080p RTSPS & MJPEG Live Camera Viewport + P2S Liveview Assistant**: Side-by-side model artwork and flicker-free live camera feed with double-buffered 1920×1080 RTSPS stream decoding for `P2S`, `H2`, `X1`, and `R1` (bypassing Home Assistant's 320×240 red-exclamation fallback), native MJPEG streaming for `A1`, `A1 Mini`, `P1S`, and `P1P`, DOM-preserved `<img>` viewports with scroll-anchored card controls, and an interactive **Enable LAN Only Liveview** setup helper when a P2S camera stream is disabled on the printer touchscreen.
-- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers (LAN Mode or Bambu Cloud) with 1-click LAN Auto-Discovery, customize printer & AMS hardware artwork, reload `bambu_lab` config entries, or remove devices directly from the dashboard UI.
+- **📹 1080p RTSPS & MJPEG Live Camera Viewport + P2S Liveview Assistant**: Side-by-side model artwork and flicker-free live camera feed with double-buffered 1920×1080 RTSPS stream decoding for `P2S`, `H2`, `X1`, and `R1`, native Port `6000` TLS streaming for `A1`, `A1 Mini`, `P1S`, and `P1P`, DOM-preserved `<img>` viewports with scroll-anchored card controls, and an interactive **Enable LAN Only Liveview** setup helper when a P2S camera stream is disabled on the printer touchscreen.
+- **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers directly via the standalone LAN engine (`/api/bambu_fleet_studio/printers`) with 1-click LAN Auto-Discovery, customize printer & AMS hardware artwork, reconnect streams, or remove devices directly from the dashboard UI.
 - **📖 4-Card Visual Onboarding Walkthrough & Clickable Hardware Lineup**: Interactive 4-step card grid with 6 series tabs (`A1 / Mini / A2L`, `P1S / P1P / P2S`, `X1C / X1E / X2D`, `H2C / H2D / H2S`, `🔥 R1 CO2 Laser`, `🎨 AMS Lite / AMS HT`) plus a clickable 17-tile **Supported Hardware Lineup** gallery.
 - **🌐 10-Language Internationalization (`i18n`)**: Built-in support for **English (`en`)**, **Deutsch (`de`)**, **Français (`fr`)**, **Español (`es`)**, **Italiano (`it`)**, **Nederlands (`nl`)**, **Polski (`pl`)**, **Português (`pt`)**, **简体中文 (`zh`)**, and **日本語 (`ja`)**. Automatically detects your Home Assistant profile language (`hass.language`), supports `language:` in card YAML / visual editor, and includes an instant **`🌐`** language selector right in the Command Bar.
 - **📱 Mobile & Home Assistant Companion App Optimized**: Built with modern CSS `@container` size queries, dynamic viewport (`dvh`) bottom-sheet modals, 2×2 touch-friendly Command Bar & AMS Spool grids on narrow viewports, swipeable filter pills, and 16px mobile inputs (preventing unwanted iOS Safari auto-zoom).
-- **🔒 100% Self-Contained & Privacy-First**: Zero external CDN dependencies, zero hardcoded tokens or IP addresses, and native integration with Home Assistant's [`hass-bambulab`](https://github.com/greghesp/ha-bambulab) device registry.
+- **🔒 100% Self-Contained, Standalone & Privacy-First**: Zero third-party integration dependencies (`ha-bambulab` is **not** required), zero external CDN dependencies, and zero hardcoded tokens or IP addresses.
 
 ---
 
@@ -43,8 +47,8 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 ![Bambu Lab Fleet Studio Overview](docs/screenshots/01_fleet_studio_overview.png)
 
 **What You See in the Fleet Studio Overview:**
-- **Top Command Header**: Real-time fleet KPI pills (**Total Printers**, **Online**, **Active Prints**, **AMS Units**, **Loaded Spools**) paired with instant action triggers (`🎨 Filament Finder`, `🔔 Alerts & Automations`, `+ Add Printer`, `Walkthrough`, `Manage`).
-- **Hero Visual Split**: Each printer card pairs its model-accurate studio photograph on the left with a live `camera.*` stream viewport on the right.
+- **Top Command Header**: Real-time fleet KPI pills (**Total Printers**, **Online**, **AMS Units**, **Print Hours / Alerts**) paired with instant action triggers (`🌐 Language`, `🎨 Filament Finder`, `🔔 Automations`, `📖 Setup Guide`, `➕ Add Printer`).
+- **Hero Visual Split**: Each printer card pairs its model-accurate studio photograph on the left with a live camera stream viewport on the right.
 - **Print Job & Layer Telemetry Bar**: Displays active `.3mf` / `.gcode` job name, completion percentage, glowing progress bar, current/total layer counter (`Layer 194 / 285`), and live remaining ETA.
 - **4-Tile Hardware Telemetry Grid**: Scannable cards for **Nozzle Temp** (actual vs. target), **Bed Temp** (actual vs. target), **Speed Profile & Chamber Temp**, and **Cooling Fans & Wi-Fi RSSI**.
 
@@ -54,18 +58,18 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 ![Smart Conditional AMS Detection Spotlight](docs/screenshots/02_conditional_ams_spotlight.png)
 
 **How Conditional AMS Detection Works:**
-- **AMS-Equipped Printers (Left — Bambu A1 + AMS Lite / Bambu P1S + AMS 2 Pro)**: Automatically detects child AMS devices in Home Assistant (`via_device_id`) and active `tray_1..tray_4` entities. Renders all 4 filament slots with live RFID hex color swatches, material type (`PLA`, `PETG`, `ASA`, `PLA-CF`, `TPU`), active slot glow border, and AMS humidity/temperature badges.
+- **AMS-Equipped Printers (Left — Bambu A1 + AMS Lite / Bambu P1S + AMS 2 Pro)**: Automatically detects attached AMS units and active `tray_1..tray_4` slots. Renders all 4 filament slots with live RFID hex color swatches, material type (`PLA`, `PETG`, `ASA`, `PLA-CF`, `TPU`), active slot glow border, and AMS humidity/temperature badges.
 - **Direct-Spool Printers (Right — Bambu A1 Mini without AMS)**: Detects that no AMS hardware is attached and **automatically omits the 4-slot AMS deck**, rendering a clean **Direct External Spool Holder** card instead.
 
 ---
 
-### 3. Built-In Printer Fleet Manager (Add, Edit, Reload & Delete)
+### 3. Built-In Standalone Printer Fleet Manager (Add, Edit, Reload & Delete)
 ![Add Edit Printer Manager Spotlight](docs/screenshots/03_add_edit_printer_manager.png)
 
-**In-Dashboard Fleet Administration:**
-- **Interactive Model Selector & Preview**: Preview **Bambu A1**, **Bambu A1 Mini**, **Bambu P1S**, or **Bambu X1C** hardware capabilities before pairing.
-- **Direct Config Flow Launcher**: Launch Home Assistant's native `bambu_lab` configuration flow in 1 click for either **Local LAN Mode** (Direct MQTT port `8883` + RTSP stream) or **Bambu Cloud**.
-- **Per-Printer Lifecycle Actions**: Reload stuck integration config entries (`homeassistant/config_entries/reload`), open the native HA Device Registry page, or delete a printer config entry (`DELETE /api/config/config_entries/entry/<id>`) with confirmation.
+**In-Dashboard Standalone Fleet Administration:**
+- **Interactive Model Selector & Preview**: Preview **Bambu A1**, **Bambu A1 Mini**, **Bambu P1S**, **Bambu P2S**, **Bambu X1C**, **Bambu H2D**, or **Bambu R1 Laser** hardware capabilities before pairing.
+- **Direct Standalone LAN Pairing (`Port 8883 TLS`)**: Pair any Bambu Lab printer directly from the dashboard using its **Local IPv4 Address**, **8-Character Access Code**, and **auto-detected 15-Character Serial Number**—no external integration setup needed.
+- **Per-Printer Lifecycle Actions**: Reconnect live MQTT/Camera threads (`🔄`), edit IP/Access Code/AMS artwork/Smart Plug bindings (`✏️`), or remove a printer (`🗑️`) directly from the card header.
 
 ---
 
@@ -73,7 +77,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 ![4-Step Visual Walkthrough Cards](docs/screenshots/04_walkthrough_step_cards.png)
 
 **Zero Walls of Text:**
-- Clicking **Walkthrough** in the Command Bar (or navigating to the `Setup Guide` view tab) reveals a 4-card visual onboarding grid covering **Step 01 (LAN Mode & Access Code)**, **Step 02 (15-Char Serial Number)**, **Step 03 (Fleet Studio Modal Pairing)**, and **Step 04 (Auto-Discovery & Smart AMS)**.
+- Clicking **Setup Guide** in the Command Bar reveals a 4-card visual onboarding grid covering **Step 01 (LAN Mode & Access Code)**, **Step 02 (15-Char Serial Number)**, **Step 03 (Fleet Studio Modal Pairing)**, and **Step 04 (Auto-Discovery & Smart AMS)**.
 
 ---
 
@@ -81,42 +85,39 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 ![Advanced Fleet Intelligence Spotlight](docs/screenshots/05_filament_hms_smartplug_automations.png)
 
 **Built-In Power Features for Multi-Printer Workshops:**
-- **🎨 Cross-Fleet Filament Finder**: Click `🎨 Filament Finder (N)` in the Command Bar to search across every loaded AMS slot and External Spool in your shop by material (`PLA`, `PETG`, `ASA`, `TPU`) or color name. Clicking any spool card smoothly scrolls to and highlights that printer card.
-- **🚨 Conditional HMS Error & Print Pause Banner**: Takes up `0px` when your printer is healthy, and automatically expands into a high-visibility diagnostic banner whenever `binary_sensor.<prefix>_hms_errors` or `binary_sensor.<prefix>_print_error` triggers—complete with a direct **Bambu Wiki ↗** button.
+- **🎨 Cross-Fleet Filament Finder**: Click `🎨 Filament Finder` in the Command Bar to search across every loaded AMS slot and External Spool in your shop by material (`PLA`, `PETG`, `ASA`, `TPU`) or color name. Clicking any spool card smoothly scrolls to and highlights that printer card.
+- **🚨 Conditional HMS Error & Print Pause Banner**: Takes up `0px` when your printer is healthy, and automatically expands into a high-visibility diagnostic banner whenever an HMS error code or `print_error` triggers—complete with a direct **Bambu Wiki ↗** button.
 - **⚡ Safety-Locked Smart Plug & Live Wattage (`W`)**: Optional per-printer smart plug binding (`switch.*` + `sensor.*_power`) configurable in the **Edit Printer** modal. Displays live power consumption in the card header and **blocks accidental power-off (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep filament jams.
 - **🔔 1-Click Notification & Camera Snapshot Automation Builder**: Deploy native Home Assistant automations in 1 click (or copy the generated YAML) for **Print Complete Push + Camera Snapshot**, **HMS Error & Filament Runout Alert**, and **Auto-Off Chamber Light (5m Delay)**.
 
 ---
 
-## 📦 Installation
+## 📦 Installation (100% Standalone — Zero Third-Party Dependencies)
 
 ### Prerequisites
 1. **Home Assistant** `2024.6.0` or newer.
-2. **[ha-bambulab](https://github.com/greghesp/ha-bambulab)** custom integration installed via HACS and configured with at least one Bambu Lab printer (or use Fleet Studio's `+ Add Printer` button to set up your first printer).
+2. **No other Bambu Lab integration required!** Bambu Lab Fleet Studio includes its own standalone local LAN MQTT + Camera backend (`custom_components/bambu_fleet_studio/`) and frontend Lovelace card bundle (`bambu-fleet-cards.js`). *(If you already have `ha-bambulab` installed, Fleet Studio will automatically import your existing printer credentials and coexist seamlessly.)*
 
 ---
 
-### Option A: Install via HACS (Recommended)
+### Step 1: Install the Standalone Backend & Card Bundle
 
+#### Option A: Install via HACS
 1. Open **HACS** in your Home Assistant sidebar.
 2. Click the **three-dot menu (`⋮`)** in the top-right corner and select **Custom repositories**.
 3. Enter the repository URL:
    ```text
    https://github.com/everyday3d/bambu-fleet-studio
    ```
-4. Select category **Dashboard** (or **Plugin** in older HACS versions) and click **Add**.
-5. Find **Bambu Lab Fleet Studio** in HACS and click **Download**.
-6. HACS will automatically register `/hacsfiles/bambu-fleet-studio/bambu-fleet-cards.js` in your Lovelace resources.
+4. Select category **Dashboard** (or copy `custom_components/bambu_fleet_studio` into `/config/custom_components/bambu_fleet_studio`) and click **Download**.
 
----
-
-### Option B: Manual Installation
-
-1. Download [`bambu-fleet-cards.js`](https://github.com/everyday3d/bambu-fleet-studio/releases/latest/download/bambu-fleet-cards.js) from the [Latest Release](https://github.com/everyday3d/bambu-fleet-studio/releases/latest).
-2. Copy `bambu-fleet-cards.js` into your Home Assistant `config/www/` directory (`/homeassistant/www/bambu-fleet-cards.js`).
+#### Option B: Direct Copy Installation
+1. Copy the `custom_components/bambu_fleet_studio/` folder into your Home Assistant `/config/custom_components/bambu_fleet_studio/` directory and add `bambu_fleet_studio:` to your `configuration.yaml` (or add **Bambu Lab Fleet Studio** under **Settings → Devices & Services → Add Integration**).
+2. Copy [`bambu-fleet-cards.js`](https://github.com/everyday3d/bambu-fleet-studio/releases/latest/download/bambu-fleet-cards.js) into `/config/www/bambu-fleet-cards.js`.
 3. In Home Assistant, go to **Settings → Dashboards → `⋮` (top right) → Resources → Add Resource**:
    - **URL**: `/local/bambu-fleet-cards.js`
    - **Resource type**: `JavaScript Module`
+4. Restart Home Assistant Core once to activate the standalone `/api/bambu_fleet_studio/*` engine, then click **`➕ Add Printer`** on your dashboard to auto-discover and pair your printers on Port `8883` TLS!
 
 ---
 
@@ -184,9 +185,10 @@ cards:
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `prefix` | `string` | Optional | Entity object ID prefix created by `ha-bambulab` (e.g. `a1_03900a100000001` or `p1s_01p00b200000002`). |
+| `prefix` | `string` | Optional | Printer identifier prefix (`<model>_<serial>`, e.g. `a1_03900a100000001` or `p2s_22e8aj5c2800735`). |
 | `name` | `string` | Auto-detected | Display name shown in the card header (e.g. `Bambu A1`, `Bambu P2S`, `Bambu R1 Laser`). |
 | `printer_model` | `string` | `auto` | Hardware model filter / artwork selector: `A1`, `A1MINI`, `A2L`, `P1S`, `P1P`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2DPRO`, `H2S`, or `R1`. |
+| `language` | `string` | `auto` | UI language override (`auto`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `zh`, `ja`). |
 | `ams_mode` | `string` | `auto` | AMS display behavior: `auto` (shows AMS deck **only** if AMS hardware is detected), `show` (force show), or `hide` (force hide). |
 
 ---
@@ -195,7 +197,12 @@ cards:
 
 ```text
 bambu-fleet-studio/
-├── bambu-fleet-cards.js              # Self-contained HACS Lovelace bundle (Custom Cards + Embedded Model Art)
+├── bambu-fleet-cards.js              # Self-contained HACS Lovelace bundle (Custom Cards + Embedded Model Art + 10-Language i18n)
+├── custom_components/
+│   └── bambu_fleet_studio/           # 100% Standalone Home Assistant Local LAN Backend (Zero External Dependencies)
+│       ├── __init__.py               # Direct Port 8883 TLS MQTT client, Port 6000 TLS & Port 322 RTSPS camera engine, LAN scanner
+│       ├── config_flow.py            # Home Assistant UI integration config flow
+│       └── manifest.json             # Standalone Home Assistant component manifest
 ├── hacs.json                         # HACS manifest configuration
 ├── info.md                           # HACS store overview & quick-start guide
 ├── README.md                         # Full documentation & Dashboard Spotlight

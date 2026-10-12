@@ -989,13 +989,254 @@
     return "";
   }
 
+  const STANDALONE_FLEET_STATE = {
+    printers: [],
+    active: false,
+    inFlight: false,
+    lastFetch: 0,
+    lastJson: ""
+  };
+
+  async function fetchStandaloneFleet(hass, onUpdated) {
+    if (!hass || STANDALONE_FLEET_STATE.inFlight) return;
+    STANDALONE_FLEET_STATE.inFlight = true;
+    try {
+      const res = await hass.callApi("GET", "bambu_fleet_studio/status");
+      if (res && Array.isArray(res.printers)) {
+        STANDALONE_FLEET_STATE.active = true;
+        STANDALONE_FLEET_STATE.lastFetch = Date.now();
+        const nextJson = JSON.stringify(res.printers);
+        if (nextJson !== STANDALONE_FLEET_STATE.lastJson) {
+          STANDALONE_FLEET_STATE.lastJson = nextJson;
+          STANDALONE_FLEET_STATE.printers = res.printers;
+          if (typeof onUpdated === "function") onUpdated();
+        }
+      }
+    } catch (e) {
+      // Standalone backend not loaded yet or unreachable
+    } finally {
+      STANDALONE_FLEET_STATE.inFlight = false;
+    }
+  }
+
+  function hydrateStandalonePrinter(sp, hass, savedPlugs, modelOverrides, amsOverrides, activeLang) {
+    const serial = String(sp.serial || "").trim().toUpperCase();
+    const rawModelNorm = normalizeModel(sp.modelNorm || sp.model || inferModelFromSerial(serial));
+    const prefix = sp.prefix || (rawModelNorm.toLowerCase() + "_" + serial.toLowerCase());
+    const overrideMod = modelOverrides[prefix] || modelOverrides[serial] || "";
+    const displayModelNorm = overrideMod ? normalizeModel(overrideMod) : rawModelNorm;
+    const displayModelLabel = displayModelNorm === "R1" ? "R1 Laser" : (overrideMod || sp.model || displayModelNorm);
+
+    const online = Boolean(sp.online);
+    const printStatus = online ? String(sp.printStatus || "idle") : "offline";
+    const currentStage = online ? String(sp.currentStage || "idle") : "offline";
+    const progress = typeof sp.progress === "number" ? sp.progress : (parseFloat(sp.progress) || 0);
+    const remainingMins = String(sp.remainingMins || "0");
+    const remMinsNum = parseFloat(remainingMins);
+    const isJobActive = printStatus === "running" || printStatus === "pause" || printStatus === "prepare";
+
+    let etaDisplay = t("job_idle_done", activeLang);
+    if (!isNaN(remMinsNum) && remMinsNum > 0 && isJobActive) {
+      const hrs = Math.floor(remMinsNum / 60);
+      const mins = Math.round(remMinsNum % 60);
+      const durText = hrs > 0 ? (hrs + "h " + mins + "m") : (mins + "m");
+      const finishDate = new Date(Date.now() + remMinsNum * 60000);
+      const clockText = finishDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      etaDisplay = durText + " • " + clockText;
+    }
+
+    const rawTask = sp.taskName && sp.taskName !== "No active print job" ? sp.taskName : t("job_no_active", activeLang);
+    const nozzleTemp = String(sp.nozzleTemp || "—");
+
+    // Smart Plug resolution
+    const plugCfg = savedPlugs[prefix] || savedPlugs[serial] || sp.smartPlugCfg || null;
+    let smartPlug = null;
+    if (plugCfg && (plugCfg.switchEntity || plugCfg.powerEntity) && hass && hass.states) {
+      const swObj = plugCfg.switchEntity ? hass.states[plugCfg.switchEntity] : null;
+      const pwObj = plugCfg.powerEntity ? hass.states[plugCfg.powerEntity] : null;
+      const nozzleNum = parseFloat(nozzleTemp);
+      const isPrintingNow = printStatus === "running" || printStatus === "prepare" || printStatus === "pause";
+      const isHot = !isNaN(nozzleNum) && nozzleNum > 60;
+      const safetyLocked = isPrintingNow || isHot;
+      const lockReason = isPrintingNow
+        ? "Active print job in progress (" + printStatus.toUpperCase() + ")"
+        : (isHot ? ("Nozzle above 60°C (" + nozzleTemp + "°C — wait for heatbreak cooldown)") : "");
+      smartPlug = {
+        switchEntity: plugCfg.switchEntity || "",
+        powerEntity: plugCfg.powerEntity || "",
+        state: swObj ? swObj.state : "unknown",
+        isOn: swObj ? swObj.state === "on" : false,
+        powerVal: (pwObj && pwObj.state !== "unavailable" && pwObj.state !== "unknown") ? pwObj.state : null,
+        powerUnit: (pwObj && pwObj.attributes?.unit_of_measurement) || "W",
+        safetyLocked,
+        lockReason
+      };
+    }
+
+    // AMS units resolution
+    const amsOverride = amsOverrides[prefix] || amsOverrides[serial] || "AUTO";
+    const rawUnits = Array.isArray(sp.amsUnits) ? sp.amsUnits : [];
+    const hasAms = amsOverride === "NONE" ? false : (rawUnits.length > 0 || (amsOverride && amsOverride !== "AUTO"));
+    let amsUnits = [];
+    if (hasAms) {
+      const sourceUnits = rawUnits.length > 0 ? rawUnits : [{ unitNum: 1, bankLetter: "A", trays: [] }];
+      amsUnits = sourceUnits.map((u, idx) => {
+        const amsNum = u.unitNum || (idx + 1);
+        const bankLetter = u.bankLetter || ["A", "B", "C", "D"][idx] || "A";
+        const amsNorm = (amsOverride && amsOverride !== "AUTO")
+          ? amsOverride
+          : normalizeAmsModel(u.modelNorm || "", displayModelNorm);
+        const amsMeta = getAmsMeta(amsNorm, activeLang);
+        const isOpenAir = amsMeta.code === "AMSLITE" || Boolean(u.isOpenAir);
+        const trays = [1, 2, 3, 4].map(slotNum => {
+          const tRaw = (u.trays || []).find(x => x.slot === slotNum) || {};
+          const isEmpty = tRaw.empty !== false && (!tRaw.name || tRaw.name === "Empty");
+          return {
+            slot: slotNum,
+            slotCode: tRaw.slotCode || (bankLetter + slotNum),
+            entityId: "",
+            name: isEmpty ? t("ams_empty", activeLang) : (tRaw.name || t("ams_empty", activeLang)),
+            type: tRaw.type || "PLA",
+            color: tRaw.color || "#334155",
+            remain: typeof tRaw.remain === "number" ? tRaw.remain : null,
+            active: Boolean(tRaw.active),
+            empty: isEmpty
+          };
+        });
+        return {
+          id: u.id || ("ams_" + prefix + "_" + amsNum),
+          unitNum: amsNum,
+          bankLetter,
+          model: sourceUnits.length > 1 ? (amsMeta.label + " #" + amsNum) : amsMeta.label,
+          modelNorm: amsMeta.code,
+          subLabel: amsMeta.sub,
+          img: amsMeta.img,
+          isOpenAir,
+          humidityIndex: u.humidityIndex || "—",
+          humidityPct: typeof u.humidityPct === "number" ? u.humidityPct : null,
+          isWet: Boolean(u.isWet),
+          isVeryWet: Boolean(u.isVeryWet),
+          temperature: isOpenAir ? "—" : (u.temperature || "—"),
+          tempUnit: "°C",
+          drying: Boolean(u.drying),
+          trays
+        };
+      });
+    }
+
+    const extRaw = sp.extSpool || {};
+    const extEmpty = extRaw.empty !== false;
+    const extSpool = {
+      name: extEmpty ? t("ext_spool_title", activeLang) : (extRaw.name || t("ext_spool_title", activeLang)),
+      type: extRaw.type || "PLA",
+      color: extRaw.color || "#f59e0b",
+      active: Boolean(extRaw.active),
+      empty: extEmpty
+    };
+
+    const isRtspCam = Boolean(sp.isRtspCam);
+    const cameraPic = isRtspCam
+      ? (sp.cameraPic || ("/api/bambu_fleet_studio/camera/" + serial))
+      : (sp.cameraStreamUrl || ("/api/bambu_fleet_studio/camera_stream/" + serial));
+
+    // Enrich coverPic / totalUsage from HA states if available
+    const stCover = hass?.states?.["image." + prefix + "_cover_image"];
+    const stPick = hass?.states?.["image." + prefix + "_pick_image"];
+    const stUsage = hass?.states?.["sensor." + prefix + "_total_usage"];
+    const totalUsage = (stUsage && stUsage.state !== "unavailable" && stUsage.state !== "unknown")
+      ? stUsage.state
+      : (sp.totalUsage || "—");
+
+    return {
+      deviceId: sp.deviceId || "",
+      entryId: serial,
+      prefix,
+      name: sp.name || ("Bambu " + displayModelNorm),
+      model: displayModelLabel,
+      modelNorm: displayModelNorm,
+      rawModelNorm,
+      serial,
+      swVersion: sp.swVersion || "—",
+      online,
+      printStatus,
+      currentStage,
+      progress,
+      nozzleTemp,
+      nozzleTarget: String(sp.nozzleTarget || "0"),
+      bedTemp: String(sp.bedTemp || "—"),
+      bedTarget: String(sp.bedTarget || "0"),
+      chamberTemp: String(sp.chamberTemp || "—"),
+      currentLayer: String(sp.currentLayer || "0"),
+      totalLayers: String(sp.totalLayers || "0"),
+      remainingMins,
+      etaDisplay,
+      totalUsage,
+      taskName: rawTask,
+      printWeight: String(sp.printWeight || "—"),
+      printLength: String(sp.printLength || "—"),
+      bedType: String(sp.bedType || "Textured Plate"),
+      nozzleSize: String(sp.nozzleSize || "0.4"),
+      nozzleType: String(sp.nozzleType || "hardened steel"),
+      ipAddress: String(sp.ipAddress || "—"),
+      wifiSignal: String(sp.wifiSignal || "—"),
+      speedProfile: String(sp.speedProfile || "standard"),
+      coolingFan: String(sp.coolingFan || "0"),
+      heatbreakFan: String(sp.heatbreakFan || "0"),
+      auxFan: String(sp.auxFan || "—"),
+      chamberFan: String(sp.chamberFan || "—"),
+      airductMode: "",
+      hasDoorSensor: Boolean(sp.hasDoorSensor),
+      doorOpen: Boolean(sp.doorOpen),
+      hmsError: false,
+      printError: false,
+      alerts: [],
+      smartPlug,
+      lightEntityId: "light." + prefix + "_chamber_light",
+      lightOn: Boolean(sp.lightOn),
+      cameraEntityId: "camera." + prefix + "_camera",
+      cameraStateObj: null,
+      camAvailable: Boolean(sp.camAvailable),
+      isRtspCam,
+      cameraPic,
+      cameraSwitchEntityId: "",
+      cameraSwitchOn: true,
+      coverEntityId: "",
+      coverPic: stCover?.attributes?.entity_picture || "",
+      pickEntityId: "",
+      pickPic: stPick?.attributes?.entity_picture || "",
+      hasAms,
+      amsInfo: amsUnits[0] || null,
+      amsUnits,
+      extSpool,
+      standalone: true
+    };
+  }
+
   function resolveAllPrinters(hass, configPlugOverrides, lang) {
-    if (!hass || !hass.devices || !hass.states) return [];
+    if (!hass) return [];
     const activeLang = lang || resolveActiveLang(hass, "");
-    const allDevices = Object.values(hass.devices);
     const savedPlugs = { ...loadPlugBindings(), ...(configPlugOverrides || {}) };
     const modelOverrides = loadModelOverrides();
     const amsOverrides = loadAmsOverrides();
+
+    // 1. Standalone Local LAN Engine printers (/api/bambu_fleet_studio/status) take priority (Zero ha-bambulab dependency!)
+    const standaloneMap = new Map();
+    if (Array.isArray(STANDALONE_FLEET_STATE.printers) && STANDALONE_FLEET_STATE.printers.length > 0) {
+      for (const sp of STANDALONE_FLEET_STATE.printers) {
+        if (sp && sp.serial) {
+          const hydrated = hydrateStandalonePrinter(sp, hass, savedPlugs, modelOverrides, amsOverrides, activeLang);
+          standaloneMap.set(hydrated.serial, hydrated);
+        }
+      }
+    }
+
+    if (!hass.devices || !hass.states) {
+      const onlyStandalone = Array.from(standaloneMap.values());
+      onlyStandalone.sort((a, b) => (a.online !== b.online ? (a.online ? -1 : 1) : a.name.localeCompare(b.name)));
+      return onlyStandalone;
+    }
+
+    const allDevices = Object.values(hass.devices);
     const allStateKeys = Object.keys(hass.states);
 
     const printerDevices = allDevices.filter(d => {
@@ -1333,6 +1574,21 @@
         extSpool
       };
     });
+
+    // Merge any standalone printers that are not in hass.devices (or enrich existing ones when standalone is active)
+    const bySerial = new Map();
+    for (const p of result) {
+      if (p.serial) bySerial.set(p.serial, p);
+    }
+    for (const [sn, spHydrated] of standaloneMap.entries()) {
+      const existing = bySerial.get(sn);
+      if (!existing) {
+        result.push(spHydrated);
+      } else if (!existing.online && spHydrated.online) {
+        // Standalone engine is online while legacy entity is offline
+        Object.assign(existing, spHydrated);
+      }
+    }
 
     result.sort((a, b) => {
       if (a.online !== b.online) return a.online ? -1 : 1;
@@ -1980,7 +2236,11 @@
     `;
 
     if (mode === "camera") {
-      const mjpegUrl = payload.cameraPic ? payload.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/") : "";
+      const mjpegUrl = payload.cameraPic
+        ? (payload.cameraPic.includes("/api/camera_proxy/")
+            ? payload.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/")
+            : payload.cameraPic.replace("/api/bambu_fleet_studio/camera/", "/api/bambu_fleet_studio/camera_stream/"))
+        : "";
       const initialCamSrc = payload.cameraPic
         ? (payload.isRtspCam
             ? (payload.cameraPic + (payload.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
@@ -2126,7 +2386,16 @@
         camLightBtn.onclick = async () => {
           curLightState = !curLightState;
           camLightBtn.textContent = "💡 " + (curLightState ? "Turn Chamber Light OFF" : "Turn Chamber Light ON");
-          await hass.callService("light", "toggle", { entity_id: payload.lightEntityId });
+          try {
+            await hass.callApi("POST", "bambu_fleet_studio/command", {
+              serial: payload.serial,
+              prefix: payload.prefix,
+              action: curLightState ? "light_on" : "light_off"
+            });
+          } catch (e) {}
+          if (payload.lightEntityId && hass.states && hass.states[payload.lightEntityId]) {
+            await hass.callService("light", "toggle", { entity_id: payload.lightEntityId });
+          }
         };
       }
 
@@ -2137,17 +2406,23 @@
           camReconnectBtn.disabled = true;
           camReconnectBtn.textContent = "Reconnecting...";
           try {
-            if (payload.cameraSwitchEntityId && !payload.cameraSwitchOn) {
+            try {
+              await hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: payload.serial,
+                prefix: payload.prefix,
+                action: "reload"
+              });
+            } catch (e) {}
+            if (payload.cameraSwitchEntityId && !payload.cameraSwitchOn && hass.states && hass.states[payload.cameraSwitchEntityId]) {
               await hass.callService("switch", "turn_on", { entity_id: payload.cameraSwitchEntityId });
             }
-            try {
-              await hass.callService("button", "press", { entity_id: "button." + payload.prefix + "_force_refresh_data" });
-            } catch (e) {}
-            if (payload.entryId) {
-              await hass.callApi("POST", "config/config_entries/entry/" + payload.entryId + "/reload");
+            if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
+              try {
+                await hass.callApi("POST", "config/config_entries/entry/" + payload.entryId + "/reload");
+              } catch (e) {}
             }
             alertBox.className = "alert ok";
-            alertBox.textContent = "✓ Camera integration reloaded! Re-open Live Camera in 3 seconds once RTSP stream connects.";
+            alertBox.textContent = "✓ Camera stream reconnected! Re-open Live Camera in 3 seconds once stream connects.";
             camReconnectBtn.textContent = "✓ Reloaded";
             setTimeout(() => { close(); if (onComplete) onComplete(); }, 1800);
           } catch (err) {
@@ -2360,7 +2635,7 @@
               </div>
             </div>
             <div style="font-size:14px;color:#cbd5e1;line-height:1.5;">
-              Confirm removing <strong>${payload.name}</strong>? This deletes integration entry <code>${payload.entryId}</code> from Home Assistant.
+              Confirm removing <strong>${payload.name}</strong> (SN: <code>${payload.serial}</code>) from Bambu Lab Fleet Studio?
             </div>
             <div id="alertBox" class="alert"></div>
             <div class="ftr">
@@ -2378,9 +2653,17 @@
         btn.disabled = true;
         btn.textContent = "Deleting...";
         try {
-          await hass.callApi("DELETE", "config/config_entries/entry/" + payload.entryId);
+          try {
+            await hass.callApi("DELETE", "bambu_fleet_studio/printers?serial=" + encodeURIComponent(payload.serial));
+          } catch (e) {}
+          if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
+            try {
+              await hass.callApi("DELETE", "config/config_entries/entry/" + payload.entryId);
+            } catch (e) {}
+          }
           alertBox.className = "alert ok";
           alertBox.textContent = "Printer deleted.";
+          fetchStandaloneFleet(hass, null, true);
           setTimeout(() => { close(); if (onComplete) onComplete(); }, 500);
         } catch (err) {
           alertBox.className = "alert err";
@@ -2414,13 +2697,9 @@
                 <button type="button" class="net-scan-btn" id="scanLanBtn">🔄 Scan LAN</button>
               </div>
               <div class="net-scan-list" id="netScanList">
-                <div style="font-size:12px;color:#38bdf8;padding:8px 4px;">⏳ Probing local /24 network for Bambu Lab printers (Port 8883 TLS &amp; HA Registry)...</div>
+                <div style="font-size:12px;color:#38bdf8;padding:8px 4px;">⏳ Probing local /24 network for Bambu Lab printers (Port 8883 TLS)...</div>
               </div>
             </div>
-
-            <button class="cloud-banner" id="cloudBtn">
-              ☁️ Prefer Cloud Login? Launch Official HA Bambu Cloud Wizard ↗
-            </button>
 
             <div class="hero-strip">
               <img id="previewImg" src="${getPrinterImage(initialModel)}" />
@@ -2569,7 +2848,6 @@
           };
         });
 
-        // Auto-select first unconfigured (new) printer if hostInp is empty
         const firstNewIdx = items.findIndex(x => !x.configured && x.host);
         if (firstNewIdx >= 0 && !hostInp.value) {
           const cardEl = shadow.querySelector(`.disc-card[data-disc-idx="${firstNewIdx}"]`);
@@ -2584,9 +2862,13 @@
         try {
           let data = null;
           try {
-            data = await hass.callApi("GET", "bambu_lab/scan_network");
-          } catch (e1) {
-            data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+            data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
+          } catch (e0) {
+            try {
+              data = await hass.callApi("GET", "bambu_lab/scan_network");
+            } catch (e1) {
+              data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+            }
           }
           scanLanBtn.disabled = false;
           scanLanBtn.textContent = "🔄 Scan LAN";
@@ -2602,7 +2884,6 @@
           scanLanBtn.disabled = false;
           scanLanBtn.textContent = "🔄 Scan LAN";
         }
-        // Fallback to local HA states if backend scan endpoint isn't installed yet
         const fallbackList = existingPrinters.map(p => ({
           serial: p.serial,
           model: p.modelNorm,
@@ -2633,7 +2914,6 @@
         const ip = String(ipRaw || "").trim();
         if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return null;
 
-        // 1. Check already-loaded HA printer states first
         const localMatch = existingPrinters.find(p => p.ipAddress === ip && p.serial);
         if (localMatch) {
           applyDiscoveredModelAndSerial(localMatch.serial, localMatch.modelNorm);
@@ -2642,12 +2922,16 @@
           return localMatch;
         }
 
-        // 2. Probe live printer TLS certificate on Port 8883 via Home Assistant backend
         snDetectHint.style.color = "#38bdf8";
         snDetectHint.textContent = "⏳ Probing " + ip + ":8883 TLS certificate for Serial Number...";
         detectSnBtn.textContent = "⏳ Probing...";
         try {
-          const res = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(ip));
+          let res = null;
+          try {
+            res = await hass.callApi("GET", "bambu_fleet_studio/discover_serial?host=" + encodeURIComponent(ip));
+          } catch (e0) {
+            res = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(ip));
+          }
           detectSnBtn.textContent = "🔍 Auto-Detect";
           if (res && res.serial) {
             applyDiscoveredModelAndSerial(res.serial, res.model);
@@ -2684,11 +2968,6 @@
 
       shadow.getElementById("xBtn").onclick = close;
       shadow.getElementById("cancelBtn").onclick = close;
-      shadow.getElementById("cloudBtn").onclick = () => {
-        close();
-        window.history.pushState(null, "", "/config/integrations/dashboard/add?domain=bambu_lab");
-        window.dispatchEvent(new CustomEvent("location-changed"));
-      };
 
       shadow.getElementById("submitAddBtn").onclick = async () => {
         const hostVal = hostInp.value.trim();
@@ -2722,6 +3001,34 @@
         }
 
         try {
+          // 1. Primary: Standalone Bambu Fleet Studio Backend API (Zero external dependencies!)
+          let standaloneRes = null;
+          try {
+            standaloneRes = await hass.callApi("POST", "bambu_fleet_studio/printers", {
+              host: hostVal,
+              serial: serialVal || "AUTO",
+              access_code: codeVal,
+              model: chosenModel,
+              name: nameVal || ("Bambu Lab " + chosenModel),
+              usage_hours: String(hoursVal)
+            });
+          } catch (standaloneErr) {
+            standaloneRes = null;
+          }
+
+          if (standaloneRes && standaloneRes.ok) {
+            const finalSerial = String(standaloneRes.printer?.serial || serialVal || "").toUpperCase();
+            if (finalSerial) {
+              saveModelOverride(finalSerial, chosenModel);
+            }
+            fetchStandaloneFleet(hass, null, true);
+            alertBox.className = "alert ok";
+            alertBox.textContent = "✓ Device connected via Standalone LAN Engine (Port 8883 TLS)!";
+            setTimeout(() => { close(); if (onComplete) onComplete(); }, 650);
+            return;
+          }
+
+          // 2. Fallback: Legacy config_entries flow if standalone backend not active yet
           const f1 = await hass.callApi("POST", "config/config_entries/flow", {
             handler: "bambu_lab",
             show_advanced_options: true
@@ -2865,7 +3172,7 @@
               </div>
               <div class="fld">
                 <label>8-Char LAN Access Code</label>
-                <input id="codeInp" type="text" value="" placeholder="Loading saved Access Code..." />
+                <input id="codeInp" type="text" value="${payload.accessCode || ''}" placeholder="Loading saved Access Code..." />
               </div>
             </div>
 
@@ -2936,9 +3243,13 @@
           try {
             let data = null;
             try {
-              data = await hass.callApi("GET", "bambu_lab/scan_network");
-            } catch (e1) {
-              data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+              data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
+            } catch (e0) {
+              try {
+                data = await hass.callApi("GET", "bambu_lab/scan_network");
+              } catch (e1) {
+                data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
+              }
             }
             findIpLanBtn.disabled = false;
             findIpLanBtn.textContent = "📡 Find IP on LAN";
@@ -2981,25 +3292,39 @@
 
       (async () => {
         try {
-          const o1 = await hass.callApi("POST", "config/config_entries/options/flow", {
-            handler: payload.entryId
-          });
-          activeOptionsFlowId = o1.flow_id;
-          const o2 = await hass.callApi("POST", "config/config_entries/options/flow/" + o1.flow_id, {
-            printer_mode: "lan"
-          });
-          activeOptionsFlowId = o2.flow_id;
-          if (o2 && Array.isArray(o2.data_schema)) {
-            for (const f of o2.data_schema) {
-              if (f.name === "host" && f.default) shadow.getElementById("hostInp").value = f.default;
-              if (f.name === "access_code" && f.default) shadow.getElementById("codeInp").value = f.default;
-              if (f.name === "usage_hours" && f.default !== undefined) shadow.getElementById("hoursInp").value = f.default;
-              if (f.name === "print_cache_count" && f.default !== undefined) shadow.getElementById("cacheInp").value = f.default;
+          // 1. Check standalone backend printer config first
+          try {
+            const stList = await hass.callApi("GET", "bambu_fleet_studio/printers");
+            const match = (stList?.printers || []).find(x => String(x.serial || "").toUpperCase() === String(payload.serial || "").toUpperCase());
+            if (match) {
+              if (match.host) shadow.getElementById("hostInp").value = match.host;
+              if (match.access_code) shadow.getElementById("codeInp").value = match.access_code;
+              if (match.usage_hours !== undefined) shadow.getElementById("hoursInp").value = match.usage_hours;
+            }
+          } catch (e0) {}
+
+          // 2. Fallback: Legacy options flow if entryId is a config_entry
+          if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
+            const o1 = await hass.callApi("POST", "config/config_entries/options/flow", {
+              handler: payload.entryId
+            });
+            activeOptionsFlowId = o1.flow_id;
+            const o2 = await hass.callApi("POST", "config/config_entries/options/flow/" + o1.flow_id, {
+              printer_mode: "lan"
+            });
+            activeOptionsFlowId = o2.flow_id;
+            if (o2 && Array.isArray(o2.data_schema)) {
+              for (const f of o2.data_schema) {
+                if (f.name === "host" && f.default && !shadow.getElementById("hostInp").value) shadow.getElementById("hostInp").value = f.default;
+                if (f.name === "access_code" && f.default && !shadow.getElementById("codeInp").value) shadow.getElementById("codeInp").value = f.default;
+                if (f.name === "usage_hours" && f.default !== undefined) shadow.getElementById("hoursInp").value = f.default;
+                if (f.name === "print_cache_count" && f.default !== undefined) shadow.getElementById("cacheInp").value = f.default;
+              }
             }
           }
           if (!editSerialInp.value && shadow.getElementById("hostInp").value) {
             try {
-              const disc = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(shadow.getElementById("hostInp").value));
+              const disc = await hass.callApi("GET", "bambu_fleet_studio/discover_serial?host=" + encodeURIComponent(shadow.getElementById("hostInp").value));
               if (disc && disc.serial) editSerialInp.value = disc.serial;
             } catch (e) {}
           }
@@ -3038,34 +3363,46 @@
         });
 
         try {
-          if (payload.deviceId && newName) {
-            await hass.callWS({
-              type: "config/device_registry/update",
-              device_id: payload.deviceId,
-              name_by_user: newName
+          // 1. Update Standalone Bambu Fleet Studio Backend
+          try {
+            await hass.callApi("POST", "bambu_fleet_studio/printers", {
+              serial: payload.serial,
+              host: hostVal,
+              access_code: codeVal || payload.accessCode || "",
+              name: newName || payload.name,
+              model: chosenModel,
+              ams_override: chosenAms,
+              usage_hours: String(hoursVal)
             });
+            fetchStandaloneFleet(hass, null, true);
+          } catch (stErr) {}
+
+          // 2. Also update legacy device_registry / options flow if present
+          if (payload.deviceId && newName) {
+            try {
+              await hass.callWS({
+                type: "config/device_registry/update",
+                device_id: payload.deviceId,
+                name_by_user: newName
+              });
+            } catch (e) {}
           }
 
           if (activeOptionsFlowId && hostVal && codeVal) {
-            const res = await hass.callApi("POST", "config/config_entries/options/flow/" + activeOptionsFlowId, {
-              host: hostVal,
-              access_code: codeVal,
-              print_cache_count: String(cacheVal),
-              timelapse_cache_count: "1",
-              usage_hours: String(hoursVal),
-              advanced: {
-                disable_ssl_verify: false,
-                enable_firmware_update: false
-              }
-            });
+            try {
+              await hass.callApi("POST", "config/config_entries/options/flow/" + activeOptionsFlowId, {
+                host: hostVal,
+                access_code: codeVal,
+                print_cache_count: String(cacheVal),
+                timelapse_cache_count: "1",
+                usage_hours: String(hoursVal),
+                advanced: {
+                  disable_ssl_verify: false,
+                  enable_firmware_update: false
+                }
+              });
+            } catch (e) {}
             activeOptionsFlowId = null;
-            if (res.errors && Object.keys(res.errors).length > 0) {
-              alertBox.className = "alert err";
-              alertBox.textContent = "Model & smart plug saved, but printer LAN handshake returned: " + JSON.stringify(res.errors);
-              btn.disabled = false;
-              btn.textContent = "💾 Save Changes";
-              return;
-            }
           }
 
           alertBox.className = "alert ok";
@@ -3139,8 +3476,10 @@
         </div>
       `;
     } else {
+      const isStandaloneCam = Boolean(p.cameraPic && p.cameraPic.includes("/api/bambu_fleet_studio/camera/"));
+      const useFrameLoop = Boolean(p.isRtspCam || isStandaloneCam);
       const camFeedUrl = (p.camAvailable && p.cameraPic)
-        ? (p.isRtspCam
+        ? (useFrameLoop
             ? (p.cameraPic + (p.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
             : p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/"))
         : "";
@@ -3148,7 +3487,7 @@
       if (p.online && camFeedUrl) {
         stageRightHtml = `
           <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to open live camera player">
-            <img class="stage-media-img" data-cam-key="${p.prefix}" ${p.isRtspCam ? `data-rtsp-proxy="${p.cameraPic}"` : ''} src="${camFeedUrl}" alt="Live Cam" />
+            <img class="stage-media-img" data-cam-key="${p.prefix}" ${useFrameLoop ? `data-rtsp-proxy="${p.cameraPic}"` : ''} src="${camFeedUrl}" alt="Live Cam" />
             <span class="live-tag">${t("cam_live", activeLang)}</span>
             <span class="expand-tag">⛶</span>
           </div>
@@ -4930,11 +5269,13 @@
       this._lastSig = "";
       this._lastInteractedPrefix = "";
       this._rtspFrameTimer = null;
+      this._standalonePollTimer = null;
       this._rtspInFlight = {};
     }
 
     connectedCallback() {
       this._startRtspFrameLoop();
+      this._startStandalonePollLoop();
     }
 
     disconnectedCallback() {
@@ -4942,6 +5283,20 @@
         clearInterval(this._rtspFrameTimer);
         this._rtspFrameTimer = null;
       }
+      if (this._standalonePollTimer) {
+        clearInterval(this._standalonePollTimer);
+        this._standalonePollTimer = null;
+      }
+    }
+
+    _startStandalonePollLoop() {
+      if (this._standalonePollTimer) return;
+      this._standalonePollTimer = setInterval(() => {
+        if (!this._hass || document.hidden) return;
+        fetchStandaloneFleet(this._hass, () => {
+          if (this._hass) this.hass = this._hass;
+        });
+      }, 2500);
     }
 
     _startRtspFrameLoop() {
@@ -5056,6 +5411,12 @@
 
     set hass(hass) {
       this._hass = hass;
+      this._startStandalonePollLoop();
+      if (STANDALONE_FLEET_STATE.lastFetchTs === 0) {
+        fetchStandaloneFleet(hass, () => {
+          if (this._hass) this.hass = this._hass;
+        });
+      }
       const activeLang = resolveActiveLang(hass, this._config.language);
       const printers = resolveAllPrinters(hass, this._config.smart_plugs, activeLang);
       const sig = activeLang + "|" + JSON.stringify(printers.map(p => [
@@ -5351,20 +5712,41 @@
             }
           } else if (act === "light") {
             btn.classList.toggle("lit-on");
+            const isLit = btn.classList.contains("lit-on");
             const cardEl = this.shadowRoot.getElementById("printer-card-" + pref);
             if (cardEl) {
               const qLight = cardEl.querySelector(".q-btn[data-ctrl='light']");
               if (qLight) {
-                const isLit = btn.classList.contains("lit-on");
                 qLight.classList.toggle("active-lit", isLit);
                 qLight.innerHTML = isLit ? t("ctrl_light_on", lang) : t("ctrl_light_off", lang);
               }
             }
-            this._hass.callService("light", "toggle", { entity_id: p.lightEntityId });
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: isLit ? "light_on" : "light_off"
+              });
+            } catch (err) {}
+            if (p.lightEntityId && this._hass.states && this._hass.states[p.lightEntityId]) {
+              this._hass.callService("light", "toggle", { entity_id: p.lightEntityId });
+            }
           } else if (act === "reload") {
             btn.textContent = "⏳";
             try {
-              await this._hass.callApi("POST", "config/config_entries/entry/" + p.entryId + "/reload");
+              try {
+                await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                  serial: p.serial,
+                  prefix: p.prefix,
+                  action: "reload"
+                });
+              } catch (e0) {}
+              if (p.entryId && !String(p.entryId).startsWith("standalone_")) {
+                try {
+                  await this._hass.callApi("POST", "config/config_entries/entry/" + p.entryId + "/reload");
+                } catch (e1) {}
+              }
+              fetchStandaloneFleet(this._hass, null, true);
               btn.textContent = "✓";
               setTimeout(() => { this._lastSig = ""; this._render(); }, 900);
             } catch (err) {
@@ -5379,7 +5761,7 @@
       });
 
       this.shadowRoot.querySelectorAll(".q-btn").forEach(btn => {
-        btn.onclick = (e) => {
+        btn.onclick = async (e) => {
           e.preventDefault();
           e.stopPropagation();
           btn.blur();
@@ -5387,6 +5769,7 @@
           const pref = btn.getAttribute("data-prefix");
           this._lastInteractedPrefix = pref;
           const p = allPrinters.find(x => x.prefix === pref);
+          if (!p) return;
           if (ctrl === "light") {
             const isLit = !btn.classList.contains("active-lit");
             btn.classList.toggle("active-lit", isLit);
@@ -5396,18 +5779,78 @@
               const iconLight = cardEl.querySelector(".icon-btn[data-act='light']");
               if (iconLight) iconLight.classList.toggle("lit-on", isLit);
             }
-            const lightId = (p && p.lightEntityId) ? p.lightEntityId : ("light." + pref + "_chamber_light");
-            this._hass.callService("light", "toggle", { entity_id: lightId });
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: isLit ? "light_on" : "light_off"
+              });
+            } catch (err) {}
+            const lightId = p.lightEntityId || ("light." + pref + "_chamber_light");
+            if (this._hass.states && this._hass.states[lightId]) {
+              this._hass.callService("light", "toggle", { entity_id: lightId });
+            }
           } else if (ctrl === "refresh") {
-            this._hass.callService("button", "press", { entity_id: "button." + pref + "_force_refresh_data" });
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: "refresh"
+              });
+              fetchStandaloneFleet(this._hass, null, true);
+            } catch (err) {}
+            if (this._hass.states && this._hass.states["button." + pref + "_force_refresh_data"]) {
+              this._hass.callService("button", "press", { entity_id: "button." + pref + "_force_refresh_data" });
+            }
           } else if (ctrl === "pause") {
-            this._hass.callService("button", "press", { entity_id: "button." + pref + "_pause_printing" });
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: "pause"
+              });
+            } catch (err) {}
+            if (this._hass.states && this._hass.states["button." + pref + "_pause_printing"]) {
+              this._hass.callService("button", "press", { entity_id: "button." + pref + "_pause_printing" });
+            }
           } else if (ctrl === "resume") {
-            this._hass.callService("button", "press", { entity_id: "button." + pref + "_resume_printing" });
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: "resume"
+              });
+            } catch (err) {}
+            if (this._hass.states && this._hass.states["button." + pref + "_resume_printing"]) {
+              this._hass.callService("button", "press", { entity_id: "button." + pref + "_resume_printing" });
+            }
           } else if (ctrl === "stop") {
             if (confirm(t("stop_job_confirm", lang))) {
-              this._hass.callService("button", "press", { entity_id: "button." + pref + "_stop_printing" });
+              try {
+                await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                  serial: p.serial,
+                  prefix: p.prefix,
+                  action: "stop"
+                });
+              } catch (err) {}
+              if (this._hass.states && this._hass.states["button." + pref + "_stop_printing"]) {
+                this._hass.callService("button", "press", { entity_id: "button." + pref + "_stop_printing" });
+              }
             }
+          } else if (ctrl === "speed") {
+            const order = ["silent", "standard", "sport", "ludicrous"];
+            const curIdx = order.indexOf(String(p.speedProfile || "standard").toLowerCase());
+            const nextSpeed = order[(curIdx + 1) % order.length];
+            btn.innerHTML = "⚡ " + nextSpeed.charAt(0).toUpperCase() + nextSpeed.slice(1);
+            try {
+              await this._hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial: p.serial,
+                prefix: p.prefix,
+                action: "speed",
+                value: nextSpeed
+              });
+              fetchStandaloneFleet(this._hass, null, true);
+            } catch (err) {}
           }
         };
       });

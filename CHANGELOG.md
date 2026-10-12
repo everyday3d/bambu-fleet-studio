@@ -5,14 +5,15 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.3] - 2026-10-11
+## [1.2.3] - 2026-10-12
 
 ### Added
+- **100% Standalone Local LAN MQTT & Camera Engine — Zero `ha-bambulab` Dependency (`#15`)**: Added bundled self-contained Home Assistant backend integration (`custom_components/bambu_fleet_studio/`) and standalone frontend telemetry/command runtime in `bambu-fleet-cards.js`. Connects directly to Bambu Lab printers and lasers over **Local LAN MQTT TLS (`Port 8883`, `bblp` + 8-Char Access Code)** and streams live video directly via **Port 6000 TLS JPEG** (`A1`, `A1 Mini`, `A2L`, `P1P`, `P1S`) and **Port 322 RTSPS TLS-to-RTSP Digest Auth Bridge** (`P2S`, `X1C`, `X1E`, `X2D`, `H2` series, `R1`) without requiring `greghesp/ha-bambulab` or any external custom component. Includes persistent storage (`.storage/bambu_fleet_studio.printers`), automatic one-time migration of existing printer IP/Serial/Access Code credentials, `/24` LAN Port 8883 TLS auto-discovery scanner, and native HTTP endpoints (`/api/bambu_fleet_studio/{status,printers,command,camera,camera_stream,discover_serial,scan_network}`).
 - **10-Language `i18n` Localization (`en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `zh`, `ja`) (`#14`)**: Added built-in multi-language translation dictionary with automatic detection from `hass.language` / `navigator.language`, optional card YAML `language:` configuration (plus visual card editor dropdown), and an instant **`🌐 Auto / Language`** switcher dropdown in the Command Bar (`localStorage` persisted). Localizes Command Bar KPIs and buttons, printer status badges (`PRINTING`, `IDLE`, `PAUSED`, `PREPARE`, `FINISH`, `FAILED`, `OFFLINE`), viewport tabs (`Cam`, `3MF`, `Ctrl`), quick control buttons, job progress & layer pills, 4-tile thermal/cooling telemetry labels, AMS & external spool headers/states (`Empty`, `Offline`, `Drying`, `Open-Air Rotary`), Cross-Fleet Filament Finder, and the 4-Step Setup Walkthrough.
 
 ### Fixed
 - **Automatic Fahrenheit (`°F`) → Celsius (`°C`) Temperature Normalization (`#12`)**: Fixed an issue on Home Assistant systems configured with Imperial/US units where printer temperature sensors (`nozzle_temperature`, `nozzle_target_temperature`, `bed_temperature`, `bed_target_temperature`, `chamber_temperature`, and `ams_*_temperature`) reported in `°F` (e.g. `73.4°` nozzle / `75.2°` bed / `Target 32.0°` when idle at room temperature, and falsely triggered the `> 60°C` Smart Plug thermal safety lock). All printer and AMS temperature sensors now automatically inspect `attributes.unit_of_measurement` and normalize `°F` values to 3D-printing Celsius (`°C`) with explicit `°C` unit labels.
-- **AMS Lite Open-Air Sensor Handling (`#12`)**: Because the Bambu `AMS Lite` is an open-air rotary feeder with no enclosure temperature or humidity sensor (`ha-bambulab` reports `0°C` / `32.0°F` and `0%` humidity), `AMS Lite` decks now display a clean **`🌬️ Open-Air Rotary`** hardware badge instead of dummy `🌡️ 0°C` / `💧 Idx 1` enclosure chips.
+- **AMS Lite Open-Air Sensor Handling (`#12`)**: Because the Bambu `AMS Lite` is an open-air rotary feeder with no enclosure temperature or humidity sensor (`0°C` / `32.0°F` and `0%` humidity), `AMS Lite` decks now display a clean **`🌬️ Open-Air Rotary`** hardware badge instead of dummy `🌡️ 0°C` / `💧 Idx 1` enclosure chips.
 
 ## [1.2.2] - 2026-10-11
 
