@@ -5,12 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.3] - 2026-10-12
+## [1.3.0] - 2026-10-12
 
 ### Added
 - **Live Bambu Lab Fleet Studio Integration Version Badge & GitHub Release Update Indicator (`⬆`) (`#37`)**:
-  - Added a clickable `.cmd-version-pill` integration version badge (`v1.1.3 ✓`) in the top Fleet Studio Command Center header next to `LAN • TLS` that displays the installed **Bambu Lab Fleet Studio** integration version and automatically checks `everyday3d/bambu-fleet-studio/releases/latest` (via both `/api/bambu_fleet_studio/status` backend cache and browser fallback).
-  - When a newer release of **Bambu Lab Fleet Studio** is available on GitHub, the badge highlights in glowing amber/emerald with an animated up arrow (**`v1.1.3 ⬆ vX.Y.Z`**) and links directly to the latest GitHub Release download & changelog page.
+  - Added a clickable `.cmd-version-pill` integration version badge (`v1.3.0 ✓`) in the top Fleet Studio Command Center header next to `LAN • TLS` that displays the installed **Bambu Lab Fleet Studio** integration version and automatically checks `everyday3d/bambu-fleet-studio/releases/latest` (via both `/api/bambu_fleet_studio/status` backend cache and browser fallback).
+  - When a newer release of **Bambu Lab Fleet Studio** is available on GitHub, the badge highlights in glowing amber/emerald with an animated up arrow (**`v1.3.0 ⬆ vX.Y.Z`**) and links directly to the latest GitHub Release download & changelog page.
 - **Deep-Linked Camera Snapshot Push Notifications Directly to Target Printer Card + Exact Filament Grams (`g`) & Meters (`m`) Used (`#36`)**:
   - Upgraded Print Complete, HMS Fault, Low Spool, Safe Cooldown, and Test push notifications (`notify.mobile_app_*`) so tapping the notification or its actionable buttons (**`🎯 <Printer Name> Card`** and **`📹 Live Camera`**) deep-links directly to `/bambu-fleet/fleet-overview?printer=<serial>&prefix=<prefix>#printer-card-<prefix>`, automatically scrolls the target printer's card into the center of the viewport inside `BambuFleetStudio.shadowRoot`, highlights it with a glowing focus border, and optionally opens the live camera modal (`&camera=1`).
   - Added `BambuPrinterRuntime.get_job_filament_usage()` (`⚖️ Filament Used: <weight>g (<length>m)`) to Print Complete and Test notifications, with automatic fallback calculation from job/RFID odometer extrusion deltas when `.3mf` `print_weight` is `"0"` or `"—"`.

@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.1.3";
+  const CARD_VERSION = "1.3.0";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -1671,6 +1671,8 @@
       meters: m,
       grams: Math.round(grams),
       spools: Math.round(spools * 10) / 10,
+      primary: metersDisplay,
+      kg: kgDisplay,
       metersDisplay,
       kgDisplay,
       spoolsDisplay

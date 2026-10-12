@@ -37,7 +37,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.1.3"
+VERSION = "1.3.0"
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
 STORAGE_KEY = "bambu_fleet_studio.printers"
