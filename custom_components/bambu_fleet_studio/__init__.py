@@ -588,6 +588,76 @@ class BambuPrinterRuntime:
                     "param": lvl,
                 }
             })
+        if act in ("ams_filament_setting", "set_filament") and isinstance(value, dict):
+            is_ext = bool(value.get("is_ext") or str(value.get("slot_code") or "").upper() == "EXT")
+            unit_num = int(value.get("unit_num", 1) or 1)
+            slot_num = int(value.get("slot", 1) or 1)
+            ams_id = 255 if is_ext else max(0, unit_num - 1)
+            tray_id = 254 if is_ext else max(0, slot_num - 1)
+            raw_hex = str(value.get("color") or "#00AE42").strip().lstrip("#").upper()
+            if len(raw_hex) == 6:
+                rgba_hex = raw_hex + "FF"
+            elif len(raw_hex) == 8:
+                rgba_hex = raw_hex
+            else:
+                rgba_hex = "00AE42FF"
+            fil_type = str(value.get("type") or "PLA").strip().upper()
+            idx_map = {
+                "PLA": ("GFL99", 190, 240),
+                "PLA+": ("GFL99", 195, 240),
+                "PLA-CF": ("GFL98", 200, 240),
+                "PETG": ("GFG99", 220, 260),
+                "ABS": ("GFB99", 240, 280),
+                "ASA": ("GFB98", 240, 280),
+                "TPU": ("GFU99", 200, 240),
+                "PA": ("GFN99", 260, 300),
+                "PA-CF": ("GFN98", 260, 300),
+                "PC": ("GFC99", 260, 290),
+            }
+            default_idx, default_min, default_max = idx_map.get(fil_type, ("GFL99", 190, 240))
+            tray_info_idx = str(value.get("tray_info_idx") or default_idx)
+            temp_min = int(value.get("nozzle_temp_min") or default_min)
+            temp_max = int(value.get("nozzle_temp_max") or default_max)
+            custom_name = str(value.get("name") or fil_type).strip()
+
+            # Optimistically update in-memory tray state
+            css_hex = "#" + rgba_hex[:6]
+            if is_ext:
+                self.ext_spool = {
+                    "name": custom_name,
+                    "type": fil_type,
+                    "color": css_hex,
+                    "active": bool(self.ext_spool.get("active")),
+                    "empty": False,
+                }
+            else:
+                for u in self.ams_units:
+                    if int(u.get("unitNum", 1)) == unit_num:
+                        for tr in u.get("trays", []):
+                            if int(tr.get("slot", 0)) == slot_num:
+                                tr["name"] = custom_name
+                                tr["type"] = fil_type
+                                tr["color"] = css_hex
+                                tr["empty"] = False
+                                if value.get("remain") is not None:
+                                    try:
+                                        tr["remain"] = max(0, min(100, int(value["remain"])))
+                                    except Exception:
+                                        pass
+
+            return self.publish_command({
+                "print": {
+                    "sequence_id": self._next_seq(),
+                    "command": "ams_filament_setting",
+                    "ams_id": ams_id,
+                    "tray_id": tray_id,
+                    "tray_info_idx": tray_info_idx,
+                    "tray_color": rgba_hex,
+                    "nozzle_temp_min": temp_min,
+                    "nozzle_temp_max": temp_max,
+                    "tray_type": fil_type,
+                }
+            })
         return False
 
     def _mqtt_loop(self) -> None:

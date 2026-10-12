@@ -11,7 +11,19 @@ views:
     cards:
       - type: custom:bambu-fleet-studio
         title: Bambu Lab Fleet Studio
+        show_filament_finder: true
         show_walkthrough: true
+
+  - type: panel
+    title: Filament Studio
+    path: filament-studio
+    icon: mdi:palette-swatch-variant
+    cards:
+      - type: custom:bambu-fleet-studio
+        title: Cross-Fleet Filament & Spool Studio
+        mode: filament_only
+        show_filament_finder: true
+        show_walkthrough: false
 
   - type: panel
     title: Bambu A1

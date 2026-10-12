@@ -1806,47 +1806,198 @@
     return result;
   }
 
+  const STORAGE_SPOOL_OVERRIDES_KEY = "bambu_fleet_studio_spool_overrides_v1";
+
+  function loadSpoolOverrides() {
+    try {
+      const raw = localStorage.getItem(STORAGE_SPOOL_OVERRIDES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveSpoolOverride(key, data) {
+    try {
+      const cur = loadSpoolOverrides();
+      if (!data) {
+        delete cur[key];
+      } else {
+        cur[key] = data;
+      }
+      localStorage.setItem(STORAGE_SPOOL_OVERRIDES_KEY, JSON.stringify(cur));
+    } catch (e) {}
+  }
+
+  const BAMBU_COLOR_PALETTE = [
+    { hex: "#FFFFFF", name: "Jade White", family: "WHITE" },
+    { hex: "#F5F5F0", name: "Ivory / Bone White", family: "WHITE" },
+    { hex: "#161616", name: "Charcoal Black", family: "BLACK_GRAY" },
+    { hex: "#000000", name: "Matte Black", family: "BLACK_GRAY" },
+    { hex: "#DCDCDC", name: "Ash / Light Gray", family: "BLACK_GRAY" },
+    { hex: "#8E9089", name: "Silver / Slate Gray", family: "BLACK_GRAY" },
+    { hex: "#545454", name: "Dark Titanium Gray", family: "BLACK_GRAY" },
+    { hex: "#00AE42", name: "Bambu Green", family: "GREEN" },
+    { hex: "#68724D", name: "Olive / Army Green", family: "GREEN" },
+    { hex: "#BECF00", name: "Mistletoe / Lime Green", family: "GREEN" },
+    { hex: "#004731", name: "Forest Green", family: "GREEN" },
+    { hex: "#9D2235", name: "Crimson / Scarlet Red", family: "RED_PINK" },
+    { hex: "#C12E1F", name: "Fire Engine Red", family: "RED_PINK" },
+    { hex: "#F65973", name: "Sakura / Coral Pink", family: "RED_PINK" },
+    { hex: "#E8AFCF", name: "Pastel Rose Pink", family: "RED_PINK" },
+    { hex: "#F98C36", name: "Mandarin Orange", family: "ORANGE_YELLOW" },
+    { hex: "#FF6A13", name: "Pumpkin Orange", family: "ORANGE_YELLOW" },
+    { hex: "#F4EE2A", name: "Sunflower Yellow", family: "ORANGE_YELLOW" },
+    { hex: "#E4BD68", name: "Silk Gold", family: "ORANGE_YELLOW" },
+    { hex: "#A4DAE6", name: "Ice / Sky Blue", family: "BLUE_CYAN" },
+    { hex: "#0086D6", name: "Cyan / Ocean Blue", family: "BLUE_CYAN" },
+    { hex: "#0A2989", name: "Cobalt / Navy Blue", family: "BLUE_CYAN" },
+    { hex: "#5E43B7", name: "Indigo Purple", family: "PURPLE_BROWN" },
+    { hex: "#A36AE5", name: "Lilac / Lavender", family: "PURPLE_BROWN" },
+    { hex: "#7D6556", name: "Latte / Desert Tan", family: "PURPLE_BROWN" },
+    { hex: "#4D3324", name: "Espresso Brown", family: "PURPLE_BROWN" }
+  ];
+
+  function resolveSpoolColorInfo(hexStr, isEmpty = false) {
+    if (isEmpty) {
+      return { colorName: "Empty Slot", family: "EMPTY", hex: "#334155" };
+    }
+    const clean = String(hexStr || "#334155").trim().replace(/^#/, "");
+    if (clean.length < 6) {
+      return { colorName: "Custom Color", family: "BLACK_GRAY", hex: "#334155" };
+    }
+    const r = parseInt(clean.slice(0, 2), 16) || 0;
+    const g = parseInt(clean.slice(2, 4), 16) || 0;
+    const b = parseInt(clean.slice(4, 6), 16) || 0;
+
+    let best = BAMBU_COLOR_PALETTE[0];
+    let bestDist = Infinity;
+    for (const item of BAMBU_COLOR_PALETTE) {
+      const ch = item.hex.slice(1);
+      const cr = parseInt(ch.slice(0, 2), 16);
+      const cg = parseInt(ch.slice(2, 4), 16);
+      const cb = parseInt(ch.slice(4, 6), 16);
+      const dist = (r - cr) * (r - cr) * 0.3 + (g - cg) * (g - cg) * 0.59 + (b - cb) * (b - cb) * 0.11;
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = item;
+      }
+    }
+    return {
+      colorName: best.name,
+      family: best.family,
+      hex: "#" + clean.slice(0, 6).toUpperCase()
+    };
+  }
+
   // Feature 2: Collect all loaded spools across the fleet for the Cross-Fleet Filament Finder
   function collectFleetSpools(allPrinters) {
     const spools = [];
+    const overrides = loadSpoolOverrides();
+    const genericNames = new Set(["PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL"]);
+
     for (const p of allPrinters) {
+      const isReadyNow = Boolean(p.online && (p.printStatus === "idle" || p.printStatus === "finish"));
       const units = (p.hasAms && Array.isArray(p.amsUnits) && p.amsUnits.length > 0)
         ? p.amsUnits
         : (p.hasAms && p.amsInfo ? [p.amsInfo] : []);
       if (units.length > 0) {
         for (const unit of units) {
-          for (const t of (unit.trays || [])) {
-            const isUnavailable = t.name === "Offline" || t.empty;
-            const slotBadge = t.slotCode || ("A" + t.slot);
+          for (const tr of (unit.trays || [])) {
+            const slotBadge = tr.slotCode || ("A" + tr.slot);
+            const ovKey = (p.serial || p.prefix) + ":" + slotBadge;
+            const ov = overrides[ovKey] || null;
+            const isUnavailable = ov ? false : (tr.name === "Offline" || tr.empty);
+            const rawColor = (ov && ov.color) ? ov.color : (tr.color || "#334155");
+            const rawType = ((ov && ov.type) ? ov.type : (tr.type || (isUnavailable ? "—" : "PLA"))).toUpperCase();
+            const rawName = (ov && ov.name) ? ov.name : (tr.name || rawType);
+            const colorInfo = resolveSpoolColorInfo(rawColor, isUnavailable);
+            const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
+            const displayTitle = isUnavailable
+              ? rawName
+              : (isGeneric ? (colorInfo.colorName + " • " + rawName) : rawName);
+            const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : tr.remain;
+            const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
+
             spools.push({
+              ovKey,
+              printerSerial: p.serial || "",
               printerName: p.name,
               printerPrefix: p.prefix,
               printerModel: p.model,
               online: p.online,
+              isReadyNow,
+              printStatus: p.printStatus,
+              etaDisplay: p.etaDisplay,
+              unitNum: unit.unitNum || 1,
+              slotNum: tr.slot || 1,
+              isExt: false,
               location: unit.model + " • Slot " + slotBadge,
               slotBadge,
-              name: t.name,
-              type: (t.type || (isUnavailable ? "—" : "PLA")).toUpperCase(),
-              color: t.color || "#334155",
-              remain: t.remain,
-              active: t.active,
+              name: displayTitle,
+              rawName,
+              colorName: colorInfo.colorName,
+              colorFamily: colorInfo.family,
+              type: rawType,
+              color: colorInfo.hex,
+              remain: remainVal,
+              weightGrams,
+              humidityPct: unit.humidityPct,
+              humidityIndex: unit.humidityIndex,
+              isWet: Boolean(unit.isWet),
+              isVeryWet: Boolean(unit.isVeryWet),
+              isOpenAir: Boolean(unit.isOpenAir),
+              amsTemp: unit.temperature || "—",
+              active: tr.active,
               empty: isUnavailable
             });
           }
         }
       } else if (p.extSpool) {
-        const isUnavailable = p.extSpool.empty || p.extSpool.name === "Empty";
+        const slotBadge = "EXT";
+        const ovKey = (p.serial || p.prefix) + ":EXT";
+        const ov = overrides[ovKey] || null;
+        const isUnavailable = ov ? false : (p.extSpool.empty || p.extSpool.name === "Empty");
+        const rawColor = (ov && ov.color) ? ov.color : (p.extSpool.color || "#f59e0b");
+        const rawType = ((ov && ov.type) ? ov.type : (p.extSpool.type || "PLA")).toUpperCase();
+        const rawName = (ov && ov.name) ? ov.name : p.extSpool.name;
+        const colorInfo = resolveSpoolColorInfo(rawColor, isUnavailable);
+        const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
+        const displayTitle = isUnavailable
+          ? rawName
+          : (isGeneric ? (colorInfo.colorName + " • " + rawType) : rawName);
+        const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : null;
+        const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
+
         spools.push({
+          ovKey,
+          printerSerial: p.serial || "",
           printerName: p.name,
           printerPrefix: p.prefix,
           printerModel: p.model,
           online: p.online,
+          isReadyNow,
+          printStatus: p.printStatus,
+          etaDisplay: p.etaDisplay,
+          unitNum: 255,
+          slotNum: 254,
+          isExt: true,
           location: "Direct External Spool",
           slotBadge: "EXT",
-          name: p.extSpool.name,
-          type: (p.extSpool.type || "PLA").toUpperCase(),
-          color: p.extSpool.color || "#f59e0b",
-          remain: null,
+          name: displayTitle,
+          rawName,
+          colorName: colorInfo.colorName,
+          colorFamily: colorInfo.family,
+          type: rawType,
+          color: colorInfo.hex,
+          remain: remainVal,
+          weightGrams,
+          humidityPct: null,
+          humidityIndex: "—",
+          isWet: false,
+          isVeryWet: false,
+          isOpenAir: true,
+          amsTemp: "—",
           active: p.extSpool.active,
           empty: isUnavailable
         });
@@ -3633,6 +3784,187 @@
           btn.textContent = "💾 Save Changes";
         }
       };
+    } else if (mode === "spool") {
+      const s = printerData.spool || {};
+      const p = printerData.printer || {};
+      const curColor = (s.color && s.color.startsWith("#") && s.color.length >= 7) ? s.color.slice(0, 7) : "#10b981";
+      const curType = (s.type && s.type !== "—") ? s.type : "PLA";
+      const curName = s.customLabel || (s.empty ? "" : s.name) || "";
+      const curRem = (s.remain !== null && s.remain !== undefined) ? s.remain : 100;
+      const amsId = s.slotBadge === "EXT" ? 255 : Math.max(0, (s.unitNum || 1) - 1);
+      const trayId = s.slotBadge === "EXT" ? 254 : Math.max(0, (s.slotNum || 1) - 1);
+
+      const matOptions = ["PLA", "PLA-CF", "PETG", "PETG-HF", "ABS", "ASA", "TPU", "PA-CF", "PC", "PVA", "Empty"];
+      const presetColors = [
+        { hex: "#00AE42", label: "Bambu Green" },
+        { hex: "#F8FAFC", label: "Jade White" },
+        { hex: "#1E293B", label: "Charcoal Black" },
+        { hex: "#F97316", label: "Mandarin Orange" },
+        { hex: "#EF4444", label: "Crimson Red" },
+        { hex: "#38BDF8", label: "Ice / Sky Blue" },
+        { hex: "#2563EB", label: "Cobalt Blue" },
+        { hex: "#EC4899", label: "Sakura Pink" },
+        { hex: "#EAB308", label: "Lemon Yellow" },
+        { hex: "#9333EA", label: "Royal Purple" },
+        { hex: "#94A3B8", label: "Ash Gray" },
+        { hex: "#78350F", label: "Cocoa Brown" }
+      ];
+
+      backdrop.innerHTML = `
+        <div class="m-card" style="max-width:540px;">
+          <div class="m-hdr">
+            <div>
+              <h3>🎨 Spool Studio & Live AMS Programmer</h3>
+              <p>${s.printerName || p.name || "Bambu Printer"} • <strong>${s.location || ("Slot " + (s.slotBadge || "A1"))}</strong> (${s.slotBadge || "A1"})</p>
+            </div>
+            <button class="m-close" id="mClose">✕</button>
+          </div>
+          <div class="m-body">
+            <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;">
+              <input type="color" id="spColorPicker" value="${curColor}" style="width:48px;height:48px;border:none;border-radius:12px;background:transparent;cursor:pointer;padding:0;flex-shrink:0;" title="Choose Filament Hex Color" />
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:800;color:#38bdf8;text-transform:uppercase;">Live AMS Slot Telemetry & Override</div>
+                <div id="spPreviewTitle" style="font-size:15px;font-weight:800;color:#f8fafc;margin-top:2px;">${s.name || "Loaded Spool"}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Pushes filament type, color & nozzle temp range directly to printer over Local LAN MQTT (Port 8883)</div>
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label>Quick Bambu Filament Color Swatches</label>
+              <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:6px;">
+                ${presetColors.map(pc => `
+                  <button type="button" class="sp-preset-swatch" data-hex="${pc.hex}" data-label="${pc.label}" title="${pc.label} (${pc.hex})" style="display:flex;align-items:center;gap:5px;padding:6px 7px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);color:#e2e8f0;font-size:10px;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+                    <span style="width:13px;height:13px;border-radius:50%;background:${pc.hex};border:1px solid rgba(255,255,255,0.4);flex-shrink:0;"></span>
+                    <span style="overflow:hidden;text-overflow:ellipsis;">${pc.label.split(" ")[0]}</span>
+                  </button>
+                `).join("")}
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="f-group">
+                <label>Filament Material Type</label>
+                <select id="spTypeSel">
+                  ${matOptions.map(m => `<option value="${m}" ${curType.toUpperCase() === m.toUpperCase() ? "selected" : ""}>${m}</option>`).join("")}
+                </select>
+              </div>
+              <div class="f-group">
+                <label>Remaining Spool (% / ~1kg)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="spRemainInp" type="number" min="0" max="100" step="5" value="${curRem}" style="flex:1;" />
+                  <span id="spGramsHint" style="font-size:12px;font-weight:800;color:#10b981;min-width:56px;">~${Math.round(curRem * 10)}g</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label>Custom Brand / Spool Label (Optional — Auto-Resolves Color Name if Blank)</label>
+              <input id="spNameInp" type="text" value="${curName}" placeholder="e.g. Bambu PLA Basic • Bambu Green, eSUN PLA+ Fire Engine Red" />
+            </div>
+
+            <div id="mAlert" class="alert"></div>
+          </div>
+          <div class="m-ftr" style="justify-content:space-between;">
+            <button class="btn ghost" id="mResetOv" title="Clear local label override and use printer's raw AMS telemetry">↺ Reset Override</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn ghost" id="mCancel">Cancel</button>
+              <button class="btn primary" id="mSubmit">📡 Push to Printer AMS & Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(backdrop);
+      backdrop.querySelector("#mClose").onclick = close;
+      backdrop.querySelector("#mCancel").onclick = close;
+
+      const colorPicker = backdrop.querySelector("#spColorPicker");
+      const typeSel = backdrop.querySelector("#spTypeSel");
+      const nameInp = backdrop.querySelector("#spNameInp");
+      const remInp = backdrop.querySelector("#spRemainInp");
+      const gramsHint = backdrop.querySelector("#spGramsHint");
+      const previewTitle = backdrop.querySelector("#spPreviewTitle");
+
+      const updateLivePreview = () => {
+        const hex = colorPicker.value;
+        const mat = typeSel.value === "Empty" ? "—" : typeSel.value;
+        const rem = Math.max(0, Math.min(100, parseInt(remInp.value || "0", 10) || 0));
+        gramsHint.textContent = "~" + Math.round(rem * 10) + "g";
+        const resolved = resolveSpoolColorInfo(hex, nameInp.value.trim() || mat, mat, typeSel.value === "Empty");
+        previewTitle.textContent = nameInp.value.trim() || resolved.displayName;
+      };
+
+      colorPicker.oninput = updateLivePreview;
+      typeSel.onchange = updateLivePreview;
+      nameInp.oninput = updateLivePreview;
+      remInp.oninput = updateLivePreview;
+
+      backdrop.querySelectorAll(".sp-preset-swatch").forEach(btn => {
+        btn.onclick = () => {
+          const hex = btn.getAttribute("data-hex");
+          const lbl = btn.getAttribute("data-label");
+          colorPicker.value = hex;
+          const curMat = typeSel.value === "Empty" ? "PLA" : typeSel.value;
+          if (typeSel.value === "Empty") typeSel.value = "PLA";
+          nameInp.value = `${lbl} • ${curMat}`;
+          updateLivePreview();
+        };
+      });
+
+      backdrop.querySelector("#mResetOv").onclick = () => {
+        if (s.ovKey) saveSpoolOverride(s.ovKey, null);
+        close();
+        if (onComplete) onComplete();
+      };
+
+      backdrop.querySelector("#mSubmit").onclick = async () => {
+        const btn = backdrop.querySelector("#mSubmit");
+        const alertBox = backdrop.querySelector("#mAlert");
+        const hex = colorPicker.value;
+        const mat = typeSel.value === "Empty" ? "" : typeSel.value;
+        const customName = nameInp.value.trim();
+        const remVal = Math.max(0, Math.min(100, parseInt(remInp.value || "100", 10) || 0));
+
+        btn.disabled = true;
+        btn.textContent = "⏳ Pushing to AMS...";
+        alertBox.className = "alert";
+
+        try {
+          if (s.ovKey) {
+            saveSpoolOverride(s.ovKey, {
+              color: hex,
+              type: mat || "—",
+              name: customName,
+              remain: remVal
+            });
+          }
+
+          const serial = p.serial || "";
+          const prefix = s.printerPrefix || p.prefix || "";
+          if (serial || prefix) {
+            try {
+              await hass.callApi("POST", "bambu_fleet_studio/command", {
+                serial,
+                prefix,
+                action: "ams_filament_setting",
+                ams_id: amsId,
+                tray_id: trayId,
+                tray_type: mat,
+                tray_color: hex.replace("#", "") + "FF"
+              });
+              fetchStandaloneFleet(hass, null, true);
+            } catch (mqttErr) {}
+          }
+
+          alertBox.className = "alert ok";
+          alertBox.textContent = "AMS slot updated via Local LAN MQTT & saved!";
+          setTimeout(() => { close(); if (onComplete) onComplete(); }, 450);
+        } catch (err) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "Error: " + (err.message || JSON.stringify(err));
+          btn.disabled = false;
+          btn.textContent = "📡 Push to Printer AMS & Save";
+        }
+      };
     }
   }
 
@@ -3734,6 +4066,7 @@
 
     // Strictly render AMS deck(s) ONLY when printer has an attached AMS unit (supports multi-AMS daisy-chain!)
     let filamentHtml = "";
+    const spoolOverrides = loadSpoolOverrides();
     const unitsToRender = (p.hasAms && Array.isArray(p.amsUnits) && p.amsUnits.length > 0)
       ? p.amsUnits
       : (p.hasAms && p.amsInfo ? [p.amsInfo] : []);
@@ -3772,38 +4105,56 @@
               </div>
             </div>
             <div class="ams-slots-grid">
-              ${ams.trays.map(tr => `
-                <div class="spool-card ${tr.active ? 'active-spool' : ''}">
+              ${ams.trays.map(tr => {
+                const slotCode = tr.slotCode || ("A" + tr.slot);
+                const ovKey = p.prefix + ":" + slotCode;
+                const ov = spoolOverrides[ovKey] || {};
+                const effColor = ov.color || tr.color || "#334155";
+                const effType = ov.type || tr.type || "PLA";
+                const effRemain = ov.remain !== undefined && ov.remain !== "" ? Number(ov.remain) : tr.remain;
+                const isEmpty = ov.type ? (ov.type === "—") : tr.empty;
+                const colorInfo = resolveSpoolColorInfo(effColor, ov.name || tr.name, effType, isEmpty);
+                const effName = ov.name || colorInfo.displayName;
+                return `
+                <div class="spool-card ${tr.active ? 'active-spool' : ''}" data-spool-edit="${ovKey}" title="Click to edit ${slotCode} filament color, material & label (${effName})" style="cursor:pointer;">
                   <div class="spool-top">
-                    <span class="slot-num">${tr.slotCode || ('A' + tr.slot)}</span>
-                    <span class="spool-type">${tr.type || 'PLA'}</span>
+                    <span class="slot-num">${slotCode}</span>
+                    <span class="spool-type">${effType}</span>
                   </div>
                   <div class="spool-swatch-row">
-                    <span class="spool-ring" style="background:${tr.color};"></span>
-                    <div class="spool-name" title="${tr.name}">${tr.name}</div>
+                    <span class="spool-ring" style="background:${effColor};"></span>
+                    <div class="spool-name" title="${effName}">${effName}</div>
                   </div>
-                  ${tr.remain !== null ? `
+                  ${effRemain !== null && effRemain !== undefined ? `
                     <div class="spool-Mini-bar">
-                      <div class="spool-Mini-fill" style="width:${tr.remain}%;background:${tr.color};"></div>
+                      <div class="spool-Mini-fill" style="width:${effRemain}%;background:${effColor};"></div>
                     </div>
                   ` : ''}
                 </div>
-              `).join("")}
+                `;
+              }).join("")}
             </div>
           </div>
         `;
       }).join("");
     } else {
+      const ovKey = p.prefix + ":EXT";
+      const ov = spoolOverrides[ovKey] || {};
+      const effColor = ov.color || p.extSpool.color || "#f59e0b";
+      const effType = ov.type || p.extSpool.type || "—";
+      const isEmpty = ov.type ? (ov.type === "—") : p.extSpool.empty;
+      const colorInfo = resolveSpoolColorInfo(effColor, ov.name || p.extSpool.name, effType, isEmpty);
+      const effName = ov.name || colorInfo.displayName;
       filamentHtml = `
-        <div class="ext-spool-deck">
+        <div class="ext-spool-deck" data-spool-edit="${ovKey}" title="Click to configure External Spool holder (${effName})" style="cursor:pointer;">
           <div class="ext-spool-left">
-            <span class="spool-ring" style="background:${p.extSpool.color};"></span>
+            <span class="spool-ring" style="background:${effColor};"></span>
             <div>
               <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">${t("ext_spool_title", activeLang)}</div>
-              <div style="font-size:13px;font-weight:700;color:#f8fafc;">${p.extSpool.name}</div>
+              <div style="font-size:13px;font-weight:700;color:#f8fafc;">${effName}</div>
             </div>
           </div>
-          <span class="ext-badge">${t("ext_spool_badge", activeLang)}</span>
+          <span class="ext-badge">🎨 ${t("ext_spool_badge", activeLang)}</span>
         </div>
       `;
     }
@@ -3906,60 +4257,149 @@
     `;
   }
 
-  // Feature 2: Build Cross-Fleet Filament Finder Deck HTML
-  function buildFilamentFinderHtml(allPrinters, activeMatFilter, searchQuery, lang) {
+  // Feature 2: Build Cross-Fleet Filament Studio & Spool Inventory Area HTML
+  function buildFilamentFinderHtml(allPrinters, activeMatFilter, searchQuery, lang, opts) {
     const activeLang = lang || "en";
+    const options = opts || {};
+    const curColorFam = options.colorFamily || "ALL";
+    const readyOnly = Boolean(options.readyOnly);
+    const hideEmpty = options.hideEmpty !== false;
+
     const allSpools = collectFleetSpools(allPrinters);
-    const matTypes = Array.from(new Set(allSpools.filter(s => !s.empty && s.type !== "—").map(s => s.type))).sort();
+    const loadedSpools = allSpools.filter(s => !s.empty);
+    const readySpools = loadedSpools.filter(s => s.isReadyNow);
+    const emptySlots = allSpools.filter(s => s.empty);
+    const wetSpools = loadedSpools.filter(s => s.isWet);
+
+    const matTypes = Array.from(new Set(loadedSpools.filter(s => s.type !== "—").map(s => s.type))).sort();
     const curMat = activeMatFilter || "ALL";
     const q = (searchQuery || "").trim().toLowerCase();
 
+    const colorFamilies = [
+      { id: "ALL", label: "🎨 All Colors", dot: "linear-gradient(135deg,#ef4444,#f59e0b,#10b981,#38bdf8,#a855f7)" },
+      { id: "GREEN", label: "Green", dot: "#00AE42" },
+      { id: "BLUE_CYAN", label: "Blue / Cyan", dot: "#38BDF8" },
+      { id: "RED_PINK", label: "Red / Pink", dot: "#EC4899" },
+      { id: "ORANGE_YELLOW", label: "Orange / Gold", dot: "#F97316" },
+      { id: "BLACK_GRAY", label: "Black / Gray", dot: "#334155" },
+      { id: "WHITE", label: "White", dot: "#F8FAFC" },
+      { id: "PURPLE_BROWN", label: "Purple / Brown", dot: "#9333EA" }
+    ];
+
     const filtered = allSpools.filter(s => {
+      if (hideEmpty && s.empty) return false;
+      if (readyOnly && !s.isReadyNow) return false;
       if (curMat !== "ALL" && s.type !== curMat) return false;
+      if (curColorFam !== "ALL" && s.colorFamily !== curColorFam) return false;
       if (q) {
-        const hay = (s.name + " " + s.type + " " + s.printerName + " " + s.location + " " + s.color).toLowerCase();
+        const hay = (s.name + " " + s.colorName + " " + s.type + " " + s.printerName + " " + s.location + " " + s.slotBadge + " " + s.color).toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
 
     return `
-      <div class="ff-section">
-        <div class="ff-hdr">
+      <div class="ff-section" id="filamentStudioArea">
+        <div class="ff-hdr" style="margin-bottom:12px;">
           <div>
-            <span class="wt-badge">${t("ff_badge", activeLang)}</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="wt-badge">${t("ff_badge", activeLang)}</span>
+              <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);padding:2px 8px;border-radius:999px;">📡 LIVE LAN MQTT AMS PROGRAMMER</span>
+            </div>
             <div class="wt-title">${t("ff_title", activeLang)}</div>
           </div>
-          <div class="ff-controls">
-            <input id="ffSearchInp" class="ff-search" type="text" placeholder="${t("ff_search_placeholder", activeLang)}" value="${searchQuery || ''}" />
-            <div class="wt-pills">
-              <button class="wt-pill ff-mat-pill ${curMat === 'ALL' ? 'active' : ''}" data-mat="ALL">${t("ff_all", activeLang)} (${allSpools.length})</button>
-              ${matTypes.map(m => `
-                <button class="wt-pill ff-mat-pill ${curMat === m ? 'active' : ''}" data-mat="${m}">${m}</button>
-              `).join("")}
+
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;font-weight:800;color:#f8fafc;">${loadedSpools.length}</span>
+              <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Loaded Spools</span>
             </div>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.28);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;font-weight:800;color:#10b981;">${readySpools.length}</span>
+              <span style="font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;">Ready Now</span>
+            </div>
+            ${wetSpools.length > 0 ? `
+              <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;" title="Spools in AMS units with >50% RH humidity">
+                <span style="font-size:14px;font-weight:800;color:#f59e0b;">💧 ${wetSpools.length}</span>
+                <span style="font-size:10px;font-weight:700;color:#fde68a;text-transform:uppercase;">Humid AMS</span>
+              </div>
+            ` : ''}
           </div>
         </div>
 
-        <div class="ff-grid">
-          ${filtered.map(s => `
-            <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-jump="${s.printerPrefix}" title="${t("ff_click_highlight", activeLang)} ${s.printerName}">
-              <div class="ff-swatch" style="background:${s.color};"></div>
-              <div class="ff-info">
-                <div class="ff-top-row">
-                  <span class="ff-mat-badge">${s.type}</span>
-                  <span class="ff-slot-badge">${s.slotBadge}</span>
-                  ${s.remain !== null ? `<span class="ff-rem">${s.remain}%</span>` : ''}
-                </div>
-                <div class="ff-name">${s.name}</div>
-                <div class="ff-printer">
-                  <span class="p-dot" style="background:${s.online ? '#10b981' : '#64748b'};display:inline-block;"></span>
-                  <strong>${s.printerName}</strong> • ${s.location}
-                </div>
-              </div>
-            </div>
+        <div class="ff-controls" style="margin-bottom:10px;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;">
+            <input id="ffSearchInp" class="ff-search" type="text" placeholder="🔍 Search color (Green, Pink, Blue, Red, Black), PLA/PETG, or printer..." value="${searchQuery || ''}" style="flex:1;min-width:220px;" />
+            <button type="button" class="wt-pill ${readyOnly ? 'active' : ''}" id="ffReadyOnlyBtn" title="Show only spools loaded in online, idle printers ready to start a job immediately">
+              🟢 Ready to Print Now (${readySpools.length})
+            </button>
+            <button type="button" class="wt-pill ${!hideEmpty ? 'active' : ''}" id="ffToggleEmptyBtn" title="Show or hide empty AMS slots (${emptySlots.length} empty)">
+              ${hideEmpty ? `👁️ Show Empty Slots (${emptySlots.length})` : `🙈 Hide Empty Slots`}
+            </button>
+          </div>
+          <div class="wt-pills">
+            <button type="button" class="wt-pill ff-mat-pill ${curMat === 'ALL' ? 'active' : ''}" data-mat="ALL">${t("ff_all", activeLang)} (${hideEmpty ? loadedSpools.length : allSpools.length})</button>
+            ${matTypes.map(m => `
+              <button type="button" class="wt-pill ff-mat-pill ${curMat === m ? 'active' : ''}" data-mat="${m}">${m}</button>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="wt-pills" style="margin-bottom:14px;">
+          ${colorFamilies.map(cf => `
+            <button type="button" class="wt-pill ff-color-pill ${curColorFam === cf.id ? 'active' : ''}" data-cf="${cf.id}" style="display:inline-flex;align-items:center;gap:6px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:${cf.dot};border:1px solid rgba(255,255,255,0.45);display:inline-block;"></span>
+              <span>${cf.label}</span>
+            </button>
           `).join("")}
         </div>
+
+        ${filtered.length === 0 ? `
+          <div style="text-align:center;padding:26px 16px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.12);border-radius:14px;color:#94a3b8;font-size:13px;">
+            No spools match your current filter. Try clearing the search or clicking <strong>🎨 All Colors</strong>.
+          </div>
+        ` : `
+          <div class="ff-grid" style="grid-template-columns:repeat(auto-fill, minmax(min(100%, 255px), 1fr));">
+            ${filtered.map(s => {
+              const statusPill = !s.online
+                ? `<span style="font-size:9px;font-weight:800;color:#94a3b8;background:rgba(148,163,184,0.14);padding:2px 6px;border-radius:999px;">💤 Offline</span>`
+                : (s.printStatus === "running" || s.printStatus === "prepare" || s.printStatus === "pause"
+                    ? `<span style="font-size:9px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.16);padding:2px 6px;border-radius:999px;">🖨️ Printing</span>`
+                    : `<span style="font-size:9px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);padding:2px 6px;border-radius:999px;">🟢 Ready</span>`);
+              const humBadge = s.humidityPct !== null
+                ? `<span style="font-size:9px;font-weight:800;color:${s.isWet ? '#fde68a' : '#94a3b8'};background:${s.isWet ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)'};padding:2px 6px;border-radius:999px;" title="AMS Relative Humidity">💧 ${s.humidityPct}%</span>`
+                : "";
+              const remLabel = s.remain !== null && s.remain !== undefined
+                ? `${s.remain}%${s.weightGrams !== null ? ' (~' + s.weightGrams + 'g)' : ''}`
+                : "";
+              return `
+                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-edit="${s.ovKey}" title="Click to open Spool Studio & configure ${s.printerName} ${s.slotBadge}">
+                  <div class="ff-swatch" style="background:${s.color};width:38px;height:38px;"></div>
+                  <div class="ff-info">
+                    <div class="ff-top-row" style="flex-wrap:wrap;">
+                      <span class="ff-mat-badge">${s.type}</span>
+                      <span class="ff-slot-badge">${s.slotBadge}</span>
+                      ${statusPill}
+                      ${humBadge}
+                      ${remLabel ? `<span class="ff-rem">${remLabel}</span>` : ''}
+                    </div>
+                    <div class="ff-name" title="${s.name}">${s.name}</div>
+                    <div class="ff-printer" style="justify-content:space-between;margin-top:4px;">
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <span class="p-dot" style="background:${s.online ? '#10b981' : '#64748b'};display:inline-block;"></span>
+                        <strong>${s.printerName}</strong> • ${s.location}
+                      </span>
+                      <span style="display:inline-flex;gap:4px;flex-shrink:0;">
+                        <button type="button" class="ff-mini-btn" data-ff-locate="${s.printerPrefix}" title="Scroll to & highlight ${s.printerName}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
+                        <button type="button" class="ff-mini-btn" data-ff-edit-btn="${s.ovKey}" title="Edit filament color, type & custom label via LAN MQTT" style="background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);color:#fde68a;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎨 Edit</button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `}
       </div>
     `;
   }
@@ -5667,7 +6107,7 @@
       if (!this.shadowRoot) return;
       const title = this._config.title || "Bambu Lab Fleet Studio";
       const showWt = this._config.show_walkthrough !== false;
-      const showFf = this._config.show_filament_finder === true;
+      const showFf = this._config.show_filament_finder !== false;
       const filterModel = this._config.printer_model || "";
       const cfgLang = this._config.language || "auto";
 
@@ -5696,7 +6136,7 @@
           </div>
           <div class="chk-row">
             <input id="ffChk" type="checkbox" ${showFf ? "checked" : ""} />
-            <label style="margin:0;">Open Cross-Fleet Filament Finder by Default</label>
+            <label style="margin:0;">Show Dedicated Cross-Fleet Filament Studio Area</label>
           </div>
           <div class="chk-row">
             <input id="wtChk" type="checkbox" ${showWt ? "checked" : ""} />
@@ -5742,6 +6182,7 @@
     static getStubConfig() {
       return {
         title: "Bambu Lab Fleet Studio",
+        show_filament_finder: true,
         show_walkthrough: true
       };
     }
@@ -5754,8 +6195,11 @@
       this._viewModes = {};
       this._walkthroughSeries = "a1";
       this._showWalkthrough = true;
-      this._showFilamentFinder = false;
+      this._showFilamentFinder = true;
       this._filamentMatFilter = "ALL";
+      this._filamentColorFamily = "ALL";
+      this._filamentReadyOnly = false;
+      this._filamentHideEmpty = true;
       this._filamentSearch = "";
       this._kpiFilter = "all";
       this._highlightedPrefix = "";
@@ -5897,7 +6341,7 @@
     setConfig(config) {
       this._config = config || {};
       this._showWalkthrough = config.show_walkthrough !== false;
-      this._showFilamentFinder = config.show_filament_finder === true;
+      this._showFilamentFinder = config.show_filament_finder !== false;
       this._lastSig = "";
       this._render();
     }
@@ -5948,6 +6392,7 @@
       const scrollCtx = this._captureScrollContext(this._lastInteractedPrefix);
 
       const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs, lang);
+      const allSpools = collectFleetSpools(allPrinters);
       const filterPrefix = this._config.printer_prefix || this._config.prefix || "";
       const filterModel = (this._config.printer_model || "").toUpperCase().replace(/\s+/g, "");
 
@@ -5967,7 +6412,7 @@
       const printingPrinters = allPrinters.filter(p => p.online && (p.printStatus === "running" || p.printStatus === "prepare" || p.printStatus === "pause"));
       const amsCount = allPrinters.reduce((acc, p) => acc + (p.amsUnits && p.amsUnits.length > 0 ? p.amsUnits.length : (p.hasAms ? 1 : 0)), 0);
       const alertCount = allPrinters.reduce((acc, p) => acc + (p.alerts ? p.alerts.length : 0), 0);
-      const loadedSpoolCount = collectFleetSpools(allPrinters).filter(s => !s.empty).length;
+      const loadedSpoolCount = allSpools.filter(s => !s.empty).length;
       const totalHrs = allPrinters.reduce((acc, p) => {
         const v = parseFloat(p.totalUsage);
         return acc + (isNaN(v) ? 0 : v);
@@ -5994,9 +6439,16 @@
         : t("cmd_subtitle", lang);
 
       const onlyWalkthrough = this._config.mode === "walkthrough_only" || this._config.default_tab === "walkthrough";
-      const onlySinglePrinter = Boolean((filterPrefix || filterModel) && !onlyWalkthrough);
+      const onlyFilament = this._config.mode === "filament_only" || this._config.default_tab === "filament";
+      const onlySinglePrinter = Boolean((filterPrefix || filterModel) && !onlyWalkthrough && !onlyFilament);
       const studioTitle = this._config.title || "Bambu Lab Fleet Studio";
       const expectedModelNorm = normalizeModel(filterModel || (filterPrefix ? filterPrefix.split("_")[0] : "P1S"));
+
+      const ffOpts = {
+        colorFamily: this._filamentColorFamily,
+        readyOnly: this._filamentReadyOnly,
+        hideEmpty: this._filamentHideEmpty
+      };
 
       this.shadowRoot.innerHTML = `
         <style>${STUDIO_STYLES}</style>
@@ -6046,7 +6498,7 @@
                 </button>
               </div>
               <div class="cmd-actions">
-                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">
+                <button type="button" class="cmd-btn ${(this._showFilamentFinder || onlyFilament) ? 'active' : ''}" id="toggleFinderBtn">
                   <span>${t("btn_filament_finder", lang)}</span>
                   ${loadedSpoolCount > 0 ? `<span class="cmd-pill-badge">${loadedSpoolCount}</span>` : ''}
                 </button>
@@ -6057,12 +6509,12 @@
             </div>
           ` : ''}
 
-          ${this._showFilamentFinder && !onlySinglePrinter && !onlyWalkthrough
-            ? buildFilamentFinderHtml(allPrinters, this._filamentMatFilter, this._filamentSearch, lang)
+          ${(this._showFilamentFinder || onlyFilament) && !onlySinglePrinter && !onlyWalkthrough
+            ? buildFilamentFinderHtml(allPrinters, this._filamentMatFilter, this._filamentSearch, lang, ffOpts)
             : ''
           }
 
-          ${!onlyWalkthrough ? `
+          ${!onlyWalkthrough && !onlyFilament ? `
             <div class="printers-grid">
               ${printers.length > 0
                 ? printers.map(p => buildPrinterCardHtml(p, this._viewModes[p.prefix] || "cam", this._highlightedPrefix === p.prefix, lang)).join("")
@@ -6082,7 +6534,7 @@
             </div>
           ` : ''}
 
-          ${(this._showWalkthrough || onlyWalkthrough) && !onlySinglePrinter ? buildWalkthroughDeckHtml(this._walkthroughSeries, lang) : ''}
+          ${(this._showWalkthrough || onlyWalkthrough) && !onlySinglePrinter && !onlyFilament ? buildWalkthroughDeckHtml(this._walkthroughSeries, lang) : ''}
         </div>
       `;
 
@@ -6101,6 +6553,17 @@
 
       this._restoreScrollContext(scrollCtx);
 
+      const openSpoolEditorByKey = (ovKey) => {
+        if (!ovKey) return;
+        const spool = allSpools.find(x => x.ovKey === ovKey);
+        if (!spool) return;
+        const printer = allPrinters.find(x => x.prefix === spool.printerPrefix) || {};
+        openStudioModal(this._hass, "spool", { spool, printer }, () => {
+          this._lastSig = "";
+          this._render();
+        });
+      };
+
       const langSelectBtn = this.shadowRoot.getElementById("langSelectBtn");
       if (langSelectBtn) {
         langSelectBtn.onchange = (e) => {
@@ -6111,6 +6574,7 @@
       }
       this.shadowRoot.querySelectorAll(".kpi-pill[data-kpi-filter]").forEach(pill => {
         pill.onclick = () => {
+          this._lastInteractedPrefix = "";
           const targetFilter = pill.getAttribute("data-kpi-filter") || "all";
           this._kpiFilter = (this._kpiFilter === targetFilter) ? "all" : targetFilter;
           this._render();
@@ -6130,8 +6594,16 @@
       const toggleFinder = this.shadowRoot.getElementById("toggleFinderBtn");
       if (toggleFinder) {
         toggleFinder.onclick = () => {
-          this._showFilamentFinder = !this._showFilamentFinder;
-          this._render();
+          this._lastInteractedPrefix = "";
+          if (!this._showFilamentFinder) {
+            this._showFilamentFinder = true;
+            this._render();
+            const ffArea = this.shadowRoot.getElementById("filamentStudioArea");
+            if (ffArea) ffArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } else {
+            this._showFilamentFinder = false;
+            this._render();
+          }
         };
       }
       const openAutomations = this.shadowRoot.getElementById("openAutomationsBtn");
@@ -6143,15 +6615,17 @@
       const toggleGuide = this.shadowRoot.getElementById("toggleGuideBtn");
       if (toggleGuide) {
         toggleGuide.onclick = () => {
+          this._lastInteractedPrefix = "";
           this._showWalkthrough = !this._showWalkthrough;
           this._render();
         };
       }
 
-      // Filament Finder interactions
+      // Filament Studio interactions
       const ffSearchInp = this.shadowRoot.getElementById("ffSearchInp");
       if (ffSearchInp) {
         ffSearchInp.oninput = (e) => {
+          this._lastInteractedPrefix = "";
           this._filamentSearch = e.target.value;
           this._render();
           const newInp = this.shadowRoot.getElementById("ffSearchInp");
@@ -6161,15 +6635,41 @@
           }
         };
       }
+      const ffReadyOnlyBtn = this.shadowRoot.getElementById("ffReadyOnlyBtn");
+      if (ffReadyOnlyBtn) {
+        ffReadyOnlyBtn.onclick = () => {
+          this._lastInteractedPrefix = "";
+          this._filamentReadyOnly = !this._filamentReadyOnly;
+          this._render();
+        };
+      }
+      const ffToggleEmptyBtn = this.shadowRoot.getElementById("ffToggleEmptyBtn");
+      if (ffToggleEmptyBtn) {
+        ffToggleEmptyBtn.onclick = () => {
+          this._lastInteractedPrefix = "";
+          this._filamentHideEmpty = !this._filamentHideEmpty;
+          this._render();
+        };
+      }
       this.shadowRoot.querySelectorAll(".ff-mat-pill").forEach(btn => {
         btn.onclick = () => {
+          this._lastInteractedPrefix = "";
           this._filamentMatFilter = btn.getAttribute("data-mat");
           this._render();
         };
       });
-      this.shadowRoot.querySelectorAll(".ff-card").forEach(card => {
-        card.onclick = () => {
-          const pref = card.getAttribute("data-jump");
+      this.shadowRoot.querySelectorAll(".ff-color-pill").forEach(btn => {
+        btn.onclick = () => {
+          this._lastInteractedPrefix = "";
+          this._filamentColorFamily = btn.getAttribute("data-cf") || "ALL";
+          this._render();
+        };
+      });
+      this.shadowRoot.querySelectorAll("[data-ff-locate]").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const pref = btn.getAttribute("data-ff-locate");
+          this._lastInteractedPrefix = "";
           this._highlightedPrefix = pref;
           this._render();
           const targetEl = this.shadowRoot.getElementById("printer-card-" + pref);
@@ -6182,6 +6682,23 @@
               this._render();
             }
           }, 2600);
+        };
+      });
+      this.shadowRoot.querySelectorAll("[data-ff-edit]").forEach(card => {
+        card.onclick = () => {
+          openSpoolEditorByKey(card.getAttribute("data-ff-edit"));
+        };
+      });
+      this.shadowRoot.querySelectorAll("[data-ff-edit-btn]").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          openSpoolEditorByKey(btn.getAttribute("data-ff-edit-btn"));
+        };
+      });
+      this.shadowRoot.querySelectorAll("[data-spool-edit]").forEach(el => {
+        el.onclick = (e) => {
+          e.stopPropagation();
+          openSpoolEditorByKey(el.getAttribute("data-spool-edit"));
         };
       });
 
