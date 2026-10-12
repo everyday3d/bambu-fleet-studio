@@ -2031,15 +2031,19 @@ class BambuFleetStudioManager:
             data["ttl"] = 0
             data["priority"] = "high"
             data["importance"] = "high"
-        if include_snapshot:
+        # Note: Do not attach relative /api/... image URLs when Home Assistant external_url is unset or stale
+        # Nabu Casa cloudhooks exist, as iOS NotificationServiceExtension resolves relative paths against
+        # https://hooks.nabu.casa/api/... and displays an HTTP 404 attachment error banner.
+        # Users can tap the notification or '📹 Live Camera' action button to open the live stream directly.
+        if include_snapshot and self.notifications.get("attach_snapshot_url") and getattr(self.hass.config, "external_url", None):
             if rt._last_jpeg is None and rt.online:
                 try:
                     await self.hass.async_add_executor_job(rt.get_camera_jpeg)
                 except Exception:
                     pass
             if rt._last_jpeg is not None:
-                snap_path = f"/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
-                data["image"] = snap_path
+                ext_base = str(self.hass.config.external_url).rstrip("/")
+                data["image"] = f"{ext_base}/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
         return data
 
     async def async_handle_printer_event(

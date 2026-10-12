@@ -1407,9 +1407,12 @@
         const vi = STANDALONE_FLEET_STATE.versionInfo;
         const srvCur = String(res.version_info.current_version || res.version || CARD_VERSION).replace(/^[vV]+/, "");
         const srvLatest = String(res.version_info.latest_version || vi.latestVersion || srvCur).replace(/^[vV]+/, "");
-        vi.currentVersion = srvCur || CARD_VERSION;
+        vi.currentVersion = isNewerSemver(CARD_VERSION, srvCur) ? CARD_VERSION : (srvCur || CARD_VERSION);
         if (isNewerSemver(srvLatest, vi.latestVersion)) {
           vi.latestVersion = srvLatest;
+        }
+        if (isNewerSemver(vi.currentVersion, vi.latestVersion)) {
+          vi.latestVersion = vi.currentVersion;
         }
         vi.updateAvailable = isNewerSemver(vi.latestVersion, vi.currentVersion);
         if (res.version_info.release_url) {
@@ -2962,7 +2965,6 @@
                       data: {
                         url: cardUrl,
                         clickAction: cardUrl,
-                        image: snapImgUrl,
                         group: "bambu-fleet-" + pref,
                         actions: [
                           { action: "URI", title: "🎯 " + pName + " Card", uri: cardUrl },
@@ -2990,7 +2992,7 @@
       const config = {
         id,
         alias,
-        description: "Sends an immediate alert with camera snapshot and deep-link to " + pName + "'s card when an HMS hardware warning, filament runout, or print error occurs.",
+        description: "Sends an immediate alert with camera action button and deep-link to " + pName + "'s card when an HMS hardware warning, filament runout, or print error occurs.",
         mode: "single",
         trigger: [
           {
@@ -3023,7 +3025,6 @@
                       data: {
                         url: cardUrl,
                         clickAction: cardUrl,
-                        image: snapImgUrl,
                         group: "bambu-fleet-" + pref,
                         importance: "high",
                         priority: "high",
