@@ -1263,6 +1263,7 @@
 
   const STANDALONE_FLEET_STATE = {
     printers: [],
+    notifications: null,
     active: false,
     inFlight: false,
     lastFetch: 0,
@@ -1271,11 +1272,50 @@
     lastLanScan: 0
   };
 
+  const STORAGE_NOTIFY_PREFS_KEY = "bambu_fleet_studio_notify_prefs_v1";
+
+  function loadNotifyPrefs() {
+    let local = {};
+    try {
+      const raw = localStorage.getItem(STORAGE_NOTIFY_PREFS_KEY);
+      if (raw) local = JSON.parse(raw) || {};
+    } catch (e) {}
+    const server = STANDALONE_FLEET_STATE.notifications || {};
+    return {
+      notify_service: server.notify_service || local.notify_service || "",
+      target_printer: server.target_printer || local.target_printer || "__ALL__",
+      print_complete: server.print_complete !== undefined ? Boolean(server.print_complete) : (local.print_complete !== undefined ? Boolean(local.print_complete) : true),
+      hms_error: server.hms_error !== undefined ? Boolean(server.hms_error) : (local.hms_error !== undefined ? Boolean(local.hms_error) : true),
+      auto_light_off: server.auto_light_off !== undefined ? Boolean(server.auto_light_off) : (local.auto_light_off !== undefined ? Boolean(local.auto_light_off) : true),
+      saved: Boolean(server.notify_service || local.notify_service)
+    };
+  }
+
+  function saveNotifyPrefsLocal(prefs) {
+    const merged = {
+      ...loadNotifyPrefs(),
+      ...prefs,
+      saved: true,
+      updatedAt: Date.now()
+    };
+    STANDALONE_FLEET_STATE.notifications = merged;
+    try {
+      localStorage.setItem(STORAGE_NOTIFY_PREFS_KEY, JSON.stringify(merged));
+    } catch (e) {}
+    return merged;
+  }
+
   async function fetchStandaloneFleet(hass, onUpdated, force = false) {
     if (!hass || (STANDALONE_FLEET_STATE.inFlight && !force)) return;
     STANDALONE_FLEET_STATE.inFlight = true;
     try {
       const res = await hass.callApi("GET", "bambu_fleet_studio/status");
+      if (res && res.notifications && typeof res.notifications === "object") {
+        STANDALONE_FLEET_STATE.notifications = {
+          ...(STANDALONE_FLEET_STATE.notifications || {}),
+          ...res.notifications
+        };
+      }
       if (res && Array.isArray(res.printers)) {
         STANDALONE_FLEET_STATE.active = true;
         const now = Date.now();
@@ -3469,6 +3509,14 @@
         notifySvcs.push("notify.persistent_notification");
       }
 
+      const savedPrefs = loadNotifyPrefs();
+      const preferredMobileApp = notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
+      const initialNotifySvc = (savedPrefs.notify_service && notifySvcs.includes(savedPrefs.notify_service))
+        ? savedPrefs.notify_service
+        : (preferredMobileApp || notifySvcs[0] || "notify.persistent_notification");
+      const initialTargetPrinter = savedPrefs.target_printer || "__ALL__";
+      let isCurrentlySaved = Boolean(savedPrefs.saved && savedPrefs.notify_service === initialNotifySvc);
+
       shadow.innerHTML = `
         <style>${modalCss}</style>
         <div class="overlay" id="bgOverlay">
@@ -3482,17 +3530,25 @@
               <div class="fld">
                 <label>Target Bambu Lab Printer</label>
                 <select id="autoPrinterSel">
-                  <option value="__ALL__">All Fleet Printers (${printers.length} Printers)</option>
-                  ${printers.map(p => `<option value="${p.prefix}">${p.name} (${p.model} • ${p.serial})</option>`).join("")}
+                  <option value="__ALL__" ${initialTargetPrinter === "__ALL__" ? "selected" : ""}>All Fleet Printers (${printers.length} Printers)</option>
+                  ${printers.map(p => `<option value="${p.prefix}" ${(initialTargetPrinter === p.prefix || initialTargetPrinter === p.serial) ? "selected" : ""}>${p.name} (${p.model} • ${p.serial})</option>`).join("")}
                 </select>
                 <div class="sub-hint">Deploy automations for a single printer or your entire fleet at once</div>
               </div>
               <div class="fld">
-                <label>Notification Target Service</label>
-                <select id="autoNotifySel">
-                  ${notifySvcs.map(s => `<option value="${s}">${s}</option>`).join("")}
-                </select>
-                <div class="sub-hint">Select your Home Assistant Mobile App or notification channel</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                  <label style="margin:0;">Notification Target Service</label>
+                  <span id="notifySaveStatusBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;${isCurrentlySaved ? "color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.35);" : "color:#f59e0b;background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.35);"}">
+                    ${isCurrentlySaved ? "✓ Saved Target" : "● Unsaved — Click Save"}
+                  </span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:stretch;">
+                  <select id="autoNotifySel" style="flex:1;">
+                    ${notifySvcs.map(s => `<option value="${s}" ${s === initialNotifySvc ? "selected" : ""}>${s}</option>`).join("")}
+                  </select>
+                  <button class="btn btn-green" id="saveNotifyInlineBtn" style="padding:8px 14px;white-space:nowrap;font-size:12px;">💾 Save</button>
+                </div>
+                <div class="sub-hint">Select your Home Assistant Mobile App or notification channel and click Save</div>
               </div>
             </div>
 
@@ -3504,10 +3560,10 @@
                 </div>
                 <div class="bp-title">Print Complete Push + Snapshot</div>
                 <div class="bp-desc">
-                  Triggers when <code>print_status</code> transitions to <code>finish</code>. Sends job name, filament weight, and a live <code>camera.*</code> snapshot to your phone.
+                  Triggers when <code>print_status</code> transitions to <code>finish</code>. Sends job name, filament weight, and a live camera snapshot to your phone.
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="print_complete" data-act="deploy">⚡ 1-Click Install</button>
+                  <button class="bp-btn deploy" data-bp="print_complete" data-act="deploy">${savedPrefs.saved && savedPrefs.print_complete !== false ? "✓ Active (Re-Install)" : "⚡ 1-Click Install"}</button>
                   <button class="bp-btn" data-bp="print_complete" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -3522,7 +3578,7 @@
                   Triggers immediately when <code>hms_errors</code> or <code>print_error</code> turns <code>on</code> (filament runout, tangled spool, nozzle clog) with a live camera snapshot.
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="hms_error" data-act="deploy">⚡ 1-Click Install</button>
+                  <button class="bp-btn deploy" data-bp="hms_error" data-act="deploy">${savedPrefs.saved && savedPrefs.hms_error !== false ? "✓ Active (Re-Install)" : "⚡ 1-Click Install"}</button>
                   <button class="bp-btn" data-bp="hms_error" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -3534,10 +3590,10 @@
                 </div>
                 <div class="bp-title">Auto-Off Chamber Light (5m)</div>
                 <div class="bp-desc">
-                  Automatically turns off <code>light.*_chamber_light</code> 5 minutes after a print finishes so LEDs don't stay on overnight.
+                  Automatically turns off the printer chamber light 5 minutes after a print finishes so LEDs don't stay on overnight.
                 </div>
                 <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="auto_light_off" data-act="deploy">⚡ 1-Click Install</button>
+                  <button class="bp-btn deploy" data-bp="auto_light_off" data-act="deploy">${savedPrefs.saved && savedPrefs.auto_light_off !== false ? "✓ Active (Re-Install)" : "⚡ 1-Click Install"}</button>
                   <button class="bp-btn" data-bp="auto_light_off" data-act="yaml">📋 Copy YAML</button>
                 </div>
               </div>
@@ -3545,8 +3601,11 @@
 
             <div id="alertBox" class="alert"></div>
 
-            <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;">
-              <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Snapshot Alert Now</button>
+            <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Notification Settings</button>
+                <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Snapshot Alert Now</button>
+              </div>
               <button class="btn btn-ghost" id="closeBtn">Close</button>
             </div>
           </div>
@@ -3558,12 +3617,88 @@
       shadow.getElementById("bgOverlay").onclick = (e) => { if (e.target.id === "bgOverlay") close(); };
 
       const alertBox = shadow.getElementById("alertBox");
+      const autoPrinterSel = shadow.getElementById("autoPrinterSel");
+      const autoNotifySel = shadow.getElementById("autoNotifySel");
+      const saveStatusBadge = shadow.getElementById("notifySaveStatusBadge");
+      const saveInlineBtn = shadow.getElementById("saveNotifyInlineBtn");
+      const saveFooterBtn = shadow.getElementById("saveNotifyFooterBtn");
+
+      const updateBadgeState = (savedNow) => {
+        if (!saveStatusBadge) return;
+        if (savedNow) {
+          saveStatusBadge.textContent = "✓ Saved: " + autoNotifySel.value;
+          saveStatusBadge.style.color = "#10b981";
+          saveStatusBadge.style.background = "rgba(16,185,129,0.16)";
+          saveStatusBadge.style.border = "1px solid rgba(16,185,129,0.35)";
+        } else {
+          saveStatusBadge.textContent = "● Unsaved — Click Save";
+          saveStatusBadge.style.color = "#f59e0b";
+          saveStatusBadge.style.background = "rgba(245,158,11,0.16)";
+          saveStatusBadge.style.border = "1px solid rgba(245,158,11,0.35)";
+        }
+      };
+
+      autoNotifySel.onchange = () => updateBadgeState(false);
+      autoPrinterSel.onchange = () => updateBadgeState(false);
+
+      const persistNotifySettings = async (extraPatch = {}, showBanner = true) => {
+        const notifySvc = autoNotifySel.value;
+        const targetPrn = autoPrinterSel.value;
+        const payloadToSave = {
+          notify_service: notifySvc,
+          target_printer: targetPrn,
+          print_complete: true,
+          hms_error: true,
+          auto_light_off: true,
+          ...extraPatch
+        };
+        saveNotifyPrefsLocal(payloadToSave);
+        try {
+          await hass.callApi("POST", "bambu_fleet_studio/notifications", payloadToSave);
+        } catch (e) {}
+        updateBadgeState(true);
+        shadow.querySelectorAll('.bp-btn.deploy').forEach(b => {
+          b.textContent = "✓ Active (Re-Install)";
+        });
+        if (showBanner) {
+          const targetLabel = targetPrn === "__ALL__"
+            ? "All Fleet Printers (" + printers.length + ")"
+            : ((printers.find(p => p.prefix === targetPrn) || {}).name || targetPrn);
+          alertBox.className = "alert ok";
+          alertBox.textContent = "✓ Saved notification target (" + notifySvc + ") for " + targetLabel + "! Print Complete, HMS Error, and Auto-Off Chamber Light automations are active.";
+        }
+      };
+
+      saveInlineBtn.onclick = async () => {
+        saveInlineBtn.disabled = true;
+        saveInlineBtn.textContent = "Saving...";
+        await persistNotifySettings({}, true);
+        saveInlineBtn.textContent = "✓ Saved";
+        setTimeout(() => {
+          saveInlineBtn.textContent = "💾 Save";
+          saveInlineBtn.disabled = false;
+        }, 1600);
+      };
+
+      saveFooterBtn.onclick = async () => {
+        saveFooterBtn.disabled = true;
+        saveFooterBtn.textContent = "Saving...";
+        await persistNotifySettings({}, true);
+        saveFooterBtn.textContent = "✓ Settings Saved";
+        setTimeout(() => {
+          saveFooterBtn.textContent = "💾 Save Notification Settings";
+          saveFooterBtn.disabled = false;
+        }, 1600);
+      };
 
       shadow.getElementById("testAlertBtn").onclick = async () => {
-        const selPref = shadow.getElementById("autoPrinterSel").value;
-        const notifySvc = shadow.getElementById("autoNotifySel").value;
+        const selPref = autoPrinterSel.value;
+        const notifySvc = autoNotifySel.value;
         const targetPrinter = selPref === "__ALL__" ? printers[0] : printers.find(p => p.prefix === selPref);
         if (!targetPrinter) return;
+
+        // Also save the chosen target service automatically when sending a test alert
+        await persistNotifySettings({}, false);
 
         try {
           const [dom, svc] = notifySvc.split(".", 2);
@@ -3580,7 +3715,7 @@
             });
           }
           alertBox.className = "alert ok";
-          alertBox.textContent = "✓ Sent live test notification for " + targetPrinter.name + " via " + notifySvc + "!";
+          alertBox.textContent = "✓ Saved target & sent live test notification for " + targetPrinter.name + " via " + notifySvc + "!";
         } catch (err) {
           alertBox.className = "alert err";
           alertBox.textContent = "Test alert error: " + (err.message || JSON.stringify(err));
@@ -3591,8 +3726,8 @@
         btn.onclick = async () => {
           const bpType = btn.getAttribute("data-bp");
           const act = btn.getAttribute("data-act");
-          const selPref = shadow.getElementById("autoPrinterSel").value;
-          const notifySvc = shadow.getElementById("autoNotifySel").value;
+          const selPref = autoPrinterSel.value;
+          const notifySvc = autoNotifySel.value;
           const targets = selPref === "__ALL__" ? printers : printers.filter(p => p.prefix === selPref);
 
           if (act === "yaml") {
@@ -3611,21 +3746,27 @@
 
           btn.disabled = true;
           const origTxt = btn.textContent;
-          btn.textContent = "Installing...";
+          btn.textContent = "Saving & Installing...";
           try {
+            await persistNotifySettings({ [bpType]: true }, false);
             for (const p of targets) {
               const bp = buildAutomationBlueprint(bpType, p, notifySvc);
-              await hass.callApi("POST", "config/automation/config/" + bp.id, bp.config);
+              try {
+                await hass.callApi("POST", "config/automation/config/" + bp.id, bp.config);
+              } catch (haAutoErr) {
+                // Standalone runtime handles notification & auto_light_off natively even if HA automations.yaml is read-only
+              }
             }
             try {
               await hass.callService("automation", "reload", {});
             } catch (e) {}
             alertBox.className = "alert ok";
-            alertBox.textContent = "✓ Installed and reloaded '" + bpType + "' automation for " + targets.length + " printer(s) in Home Assistant!";
-            btn.textContent = "✓ Installed";
+            alertBox.textContent = "✓ Saved target (" + notifySvc + ") and activated '" + bpType + "' for " + targets.length + " printer(s)!";
+            btn.textContent = "✓ Installed & Saved";
+            btn.disabled = false;
           } catch (err) {
             alertBox.className = "alert err";
-            alertBox.textContent = "Failed to save automation via HA API: " + (err.message || JSON.stringify(err));
+            alertBox.textContent = "Failed to save automation: " + (err.message || JSON.stringify(err));
             btn.textContent = origTxt;
             btn.disabled = false;
           }

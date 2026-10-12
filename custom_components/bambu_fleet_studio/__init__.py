@@ -1034,6 +1034,8 @@ class BambuPrinterRuntime:
             if rtsp is not None:
                 self.rtsp_url = str(rtsp)
 
+        prev_hms_count = len(self.hms_errors)
+        prev_print_error = self.print_error
         if "hms" in p and isinstance(p["hms"], list):
             self.hms_errors = p["hms"]
         if "print_error" in p:
@@ -1173,6 +1175,27 @@ class BambuPrinterRuntime:
             time.time(),
             force_save=(prev_status == "running" and self.print_status in ("finish", "idle", "failed", "pause")),
         )
+
+        # Trigger standalone notification / automation hooks on status transitions or new HMS faults
+        if prev_status in ("running", "prepare", "pause") and self.print_status == "finish":
+            self._emit_runtime_event("print_complete")
+        elif (
+            (prev_status in ("running", "prepare", "pause") and self.print_status == "failed")
+            or (len(self.hms_errors) > prev_hms_count and len(self.hms_errors) > 0)
+            or (self.print_error != 0 and self.print_error != prev_print_error)
+        ):
+            self._emit_runtime_event("hms_error")
+
+    def _emit_runtime_event(self, event_type: str) -> None:
+        """Schedule a standalone notification or automation action on the Home Assistant event loop."""
+        try:
+            mgr = self.hass.data.get(DOMAIN, {}).get("manager")
+            if mgr and hasattr(mgr, "async_handle_printer_event"):
+                self.hass.loop.call_soon_threadsafe(
+                    lambda: self.hass.async_create_task(mgr.async_handle_printer_event(self, event_type))
+                )
+        except Exception as err:
+            LOGGER.debug("Failed to schedule runtime event %s for %s: %s", event_type, self.serial, err)
 
     def _port6000_cam_loop(self) -> None:
         """Background TCP Port 6000 TLS binary JPEG stream reader for A1, A1 Mini, P1P, P1S."""
@@ -1335,6 +1358,14 @@ class BambuFleetStudioManager:
         self.store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self.runtimes: dict[str, BambuPrinterRuntime] = {}
         self.configs: dict[str, dict[str, Any]] = {}
+        self.notifications: dict[str, Any] = {
+            "notify_service": "",
+            "target_printer": "__ALL__",
+            "print_complete": True,
+            "hms_error": True,
+            "auto_light_off": True,
+            "auto_light_off_delay_sec": 300,
+        }
 
     def _schedule_save_from_thread(self) -> None:
         """Schedule an async store save from a background runtime thread."""
@@ -1348,8 +1379,11 @@ class BambuFleetStudioManager:
     async def async_initialize(self) -> None:
         """Load saved printers (and auto-import any existing printer credentials on first run)."""
         stored = await self.store.async_load()
-        if isinstance(stored, dict) and isinstance(stored.get("printers"), dict):
-            self.configs = stored["printers"]
+        if isinstance(stored, dict):
+            if isinstance(stored.get("printers"), dict):
+                self.configs = stored["printers"]
+            if isinstance(stored.get("notifications"), dict):
+                self.notifications.update(stored["notifications"])
 
         # Auto-import any printer credentials from Home Assistant config_entries so existing printers work immediately
         imported = False
@@ -1405,8 +1439,97 @@ class BambuFleetStudioManager:
             await self.async_start_printer(sn, cfg)
 
     async def async_save(self) -> None:
-        """Persist printer configs to .storage/bambu_fleet_studio.printers."""
-        await self.store.async_save({"printers": self.configs})
+        """Persist printer configs and notification settings to .storage/bambu_fleet_studio.printers."""
+        await self.store.async_save({
+            "printers": self.configs,
+            "notifications": self.notifications,
+        })
+
+    async def async_update_notifications(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Update and persist standalone notification & automation preferences."""
+        if "notify_service" in payload:
+            self.notifications["notify_service"] = str(payload.get("notify_service") or "").strip()
+        if "target_printer" in payload:
+            self.notifications["target_printer"] = str(payload.get("target_printer") or "__ALL__").strip()
+        for bool_key in ("print_complete", "hms_error", "auto_light_off"):
+            if bool_key in payload:
+                self.notifications[bool_key] = bool(payload[bool_key])
+        if "auto_light_off_delay_sec" in payload:
+            try:
+                self.notifications["auto_light_off_delay_sec"] = max(10, int(payload["auto_light_off_delay_sec"]))
+            except Exception:
+                pass
+        await self.async_save()
+        return dict(self.notifications)
+
+    async def async_send_notification(
+        self,
+        title: str,
+        message: str,
+        extra_data: Optional[dict[str, Any]] = None,
+        service_override: str = "",
+    ) -> bool:
+        """Call the configured Home Assistant notify service."""
+        svc_full = (service_override or str(self.notifications.get("notify_service") or "")).strip()
+        if not svc_full:
+            return False
+        try:
+            if svc_full in ("notify.persistent_notification", "persistent_notification.create"):
+                await self.hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {"title": title, "message": message},
+                )
+                return True
+            domain, svc_name = svc_full.split(".", 1) if "." in svc_full else ("notify", svc_full)
+            svc_payload: dict[str, Any] = {"title": title, "message": message}
+            if extra_data:
+                svc_payload["data"] = extra_data
+            await self.hass.services.async_call(domain, svc_name, svc_payload)
+            return True
+        except Exception as err:
+            LOGGER.warning("Failed to call notification service %s: %s", svc_full, err)
+            return False
+
+    async def async_handle_printer_event(self, rt: BambuPrinterRuntime, event_type: str) -> None:
+        """Execute standalone notifications and chamber light automations when a printer changes state."""
+        target = str(self.notifications.get("target_printer") or "__ALL__").strip().upper()
+        if target not in ("__ALL__", "", rt.serial.upper(), rt.prefix.upper()):
+            return
+
+        cam_url = f"/api/bambu_fleet_studio/camera/{rt.serial}"
+        if event_type == "print_complete":
+            if self.notifications.get("print_complete", True) and self.notifications.get("notify_service"):
+                await self.async_send_notification(
+                    title=f"✅ Print Complete — {rt.name}",
+                    message=f"Job '{rt.task_name}' finished! Filament used: {rt.print_weight} g ({rt.print_length} m).",
+                    extra_data={"image": cam_url, "entity_id": cam_url},
+                )
+            if self.notifications.get("auto_light_off", True):
+                delay_sec = int(self.notifications.get("auto_light_off_delay_sec", 300) or 300)
+
+                async def _delayed_light_off() -> None:
+                    await asyncio.sleep(delay_sec)
+                    if rt.print_status in ("finish", "idle") and rt.light_on:
+                        await self.hass.async_add_executor_job(rt.send_action, "light_off")
+
+                self.hass.async_create_task(_delayed_light_off())
+
+        elif event_type == "hms_error":
+            if self.notifications.get("hms_error", True) and self.notifications.get("notify_service"):
+                await self.async_send_notification(
+                    title=f"🚨 Printer Alert — {rt.name}",
+                    message=(
+                        f"{rt.name} reported a print error or HMS fault during '{rt.task_name}' "
+                        f"(Stage: {rt.current_stage}). Check the chamber camera immediately!"
+                    ),
+                    extra_data={
+                        "push": {"interruption-level": "time-sensitive"},
+                        "ttl": 0,
+                        "priority": "high",
+                        "image": cam_url,
+                    },
+                )
 
     async def async_start_printer(self, serial: str, cfg: dict[str, Any]) -> BambuPrinterRuntime:
         """Start or restart a BambuPrinterRuntime."""
@@ -1691,7 +1814,50 @@ class FleetStatusAPIView(HomeAssistantView):
             "standalone": True,
             "version": VERSION,
             "printers": printers,
+            "notifications": dict(mgr.notifications) if mgr else {},
         })
+
+
+class FleetNotificationsAPIView(HomeAssistantView):
+    """Get, save, or test standalone Bambu Lab Fleet Studio notification & automation settings."""
+
+    url = "/api/bambu_fleet_studio/notifications"
+    name = "api:bambu_fleet_studio:notifications"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request: web.Request) -> web.Response:
+        mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
+        return web.json_response({
+            "ok": True,
+            "notifications": dict(mgr.notifications) if mgr else {},
+        })
+
+    async def post(self, request: web.Request) -> web.Response:
+        try:
+            mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
+            if not mgr:
+                return web.json_response({"error": "Manager not initialized"}, status=500)
+            body = await request.json()
+            saved = await mgr.async_update_notifications(body)
+            tested = False
+            if body.get("test"):
+                tested = await mgr.async_send_notification(
+                    title="🔔 Bambu Fleet Studio — Test Notification",
+                    message=(
+                        f"Notification target ({saved.get('notify_service') or 'none'}) saved & verified! "
+                        "Print Complete and HMS Fault alerts are active."
+                    ),
+                )
+            return web.json_response({
+                "ok": True,
+                "tested": tested,
+                "notifications": saved,
+            })
+        except Exception as err:
+            return web.json_response({"error": str(err)}, status=400)
 
 
 class FleetPrintersAPIView(HomeAssistantView):
@@ -1897,6 +2063,7 @@ async def _async_ensure_initialized(hass: HomeAssistant) -> BambuFleetStudioMana
 
     if not domain_data.get("views_registered"):
         hass.http.register_view(FleetStatusAPIView(hass))
+        hass.http.register_view(FleetNotificationsAPIView(hass))
         hass.http.register_view(FleetPrintersAPIView(hass))
         hass.http.register_view(FleetCommandAPIView(hass))
         hass.http.register_view(FleetCameraSnapshotAPIView(hass))
