@@ -3,6 +3,7 @@
   "name": "Bambu Lab Fleet Studio",
   "codeowners": ["@everyday3d"],
   "config_flow": true,
+  "dependencies": ["http"],
   "documentation": "https://github.com/everyday3d/bambu-fleet-studio",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/everyday3d/bambu-fleet-studio/issues",
