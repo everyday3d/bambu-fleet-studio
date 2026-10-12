@@ -1,6 +1,6 @@
-# 🖨️ Bambu Lab Fleet Studio `v1.2.3`
+# 🖨️ Bambu Lab Fleet Studio `v1.3.0`
 
-[![Release v1.2.3](https://img.shields.io/badge/Release-v1.2.3%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![Release v1.3.0](https://img.shields.io/badge/Release-v1.3.0%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 
 > **👋 Hello makers!** This is a project I've been working on for some time, and I think I'm finally ready to release it to the community.
 >
@@ -15,7 +15,8 @@ A professional, card-based Home Assistant Lovelace dashboard and custom card sui
 ## ✨ Key Highlights
 
 - **🔌 100% Standalone Local LAN Engine (`Zero External Dependencies`)**: Includes its own built-in Home Assistant backend (`custom_components/bambu_fleet_studio/`) that connects **directly** to your Bambu Lab printers over Port `8883` TLS MQTT, Port `6000` TLS camera streaming (`A1`, `A1 Mini`, `P1P`, `P1S`), and Port `322` RTSPS 1080p video decoding (`P2S`, `X1`, `H2`, `R1`)—**no `ha-bambulab` or third-party integration required**!
-- **🌐 11-Language Internationalization (`i18n`)**: Built-in translations for **English (`en`)**, **Deutsch (`de`)**, **Français (`fr`)**, **Español (`es`)**, **Italiano (`it`)**, **Nederlands (`nl`)**, **Polski (`pl`)**, **Português (`pt`)**, **Русский (`ru` — *untested; community feedback needed!*)**, **简体中文 (`zh`)**, and **日本語 (`ja`)** with automatic `hass.language` detection and an instant Command Bar **`🌐`** language selector.
+- **⏱️ Per-Printer Extrusion Odometer (`m` / `km` / `kg` / `Spools`) & Model-Aware Build Plate Selector**: Tracks cumulative lifetime print hours and extruded filament (`m` / `km` / `kg` / `~Spools`) in real time over Local LAN MQTT with 1-click **`⚡ Est. from Hours`** calibration, plus a bed-size-aware **Build Plate Selector** covering all **Official Bambu Lab Plates** and **BIQU CryoGrip Pro Glacier / Frostbite & Panda Plates**.
+- **🌐 12-Language Internationalization (`i18n`)**: Built-in translations for **English (`en`)**, **Deutsch (`de`)**, **Français (`fr`)**, **Español (`es`)**, **Italiano (`it`)**, **Nederlands (`nl`)**, **Polski (`pl`)**, **Português (`pt`)**, **Русский (`ru` — *untested; community feedback needed!*)**, **简体中文 (`zh` — *untested; community feedback needed!*)**, **繁體中文 (`zh-tw` — *untested; community feedback needed!*)**, and **日本語 (`ja`)** with automatic `hass.language` detection and an instant Command Bar **`🌐`** language selector.
 - **🖼️ Complete 14-Model Printer & R1 Laser Photography**: Embedded high-resolution studio renders for **`A1`**, **`A1 Mini`**, **`A2L`**, **`P1S`**, **`P1P`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, and the **`R1` (55W CO2 Laser)**.
 - **🎨 Embedded Studio Artwork for AMS Lite, AMS HT, AMS 2 Pro & AMS**: High-resolution studio renders for **`AMS Lite`** (4-spool rotary feeder), **`AMS HT`** (85°C High-Temp active dryer), **`AMS 2 Pro`**, and **`AMS`** displayed inside the AMS header, Edit Device modal, and Hardware Lineup gallery.
 - **🎨 Smart Conditional Multi-AMS Deck, Live `% RH` & Automatic `°F` → `°C` Normalization**: Automatically inspects live MQTT `print.ams.ams[]` payloads across single or daisy-chained AMS units (`AMS #1`, `AMS #2`, etc.), normalizes any Imperial (`°F`) printer/AMS temperature sensors to 3D-printing Celsius (`°C`), renders **`🌬️ Open-Air Rotary`** on sensorless `AMS Lite` feeders, and displays real relative humidity (`% RH`), amber/red wet-filament highlighting, inline **Chamber Temp (`°C`)**, **Aux/Chamber Fan `%`**, **Door Open/Closed**, and **Exact Finish Clock Time (`1h 12m • 7:42 PM`)**.

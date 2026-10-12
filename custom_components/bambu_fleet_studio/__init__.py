@@ -36,7 +36,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.2.3"
+VERSION = "1.3.0"
 STORAGE_KEY = "bambu_fleet_studio.printers"
 STORAGE_VERSION = 1
 LOGGER = logging.getLogger(__name__)
