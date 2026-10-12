@@ -4106,104 +4106,215 @@
       container-name: studio;
     }
     .cmd-bar {
-      background: linear-gradient(135deg, #181a20 0%, #111318 100%);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      position: relative;
+      background: linear-gradient(145deg, rgba(22, 26, 36, 0.95) 0%, rgba(12, 15, 22, 0.98) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 18px;
-      padding: 16px 20px;
+      padding: 13px 18px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+      gap: 12px 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 16px 38px rgba(0, 0, 0, 0.45);
       box-sizing: border-box;
       max-width: 100%;
       overflow: hidden;
+    }
+    .cmd-bar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 18px;
+      right: 18px;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #10b981 0%, #38bdf8 48%, #f59e0b 100%);
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .cmd-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+      flex: 1 1 260px;
     }
     .cmd-brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       min-width: 0;
       max-width: 100%;
     }
     .cmd-logo {
-      width: 44px;
-      height: 44px;
+      position: relative;
+      width: 40px;
+      height: 40px;
       flex-shrink: 0;
       border-radius: 12px;
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(234, 88, 12, 0.15));
-      border: 1px solid rgba(245, 158, 11, 0.45);
+      background: radial-gradient(circle at 30% 25%, rgba(16, 185, 129, 0.24), rgba(245, 158, 11, 0.14) 70%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 16px rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      color: #f8fafc;
+    }
+    .cmd-logo svg {
+      width: 21px;
+      height: 21px;
+      stroke: #f59e0b;
+      fill: none;
+    }
+    .cmd-logo-dot {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #0e1118;
+      background: #10b981;
+    }
+    .cmd-logo-dot.printing {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .cmd-logo-dot.offline {
+      background: #64748b;
+    }
+    .cmd-brand-text {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cmd-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
     .cmd-title {
-      font-size: clamp(15px, 3.8vw, 18px);
+      font-size: clamp(14.5px, 3.5vw, 17px);
       font-weight: 800;
       color: #f8fafc;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cmd-proto-pill {
+      flex-shrink: 0;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      padding: 2px 7px;
+      border-radius: 999px;
     }
     .cmd-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #94a3b8;
-      margin-top: 2px;
-      line-height: 1.35;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 460px;
+    }
+    .cmd-sub.live-ticker {
+      color: #e2e8f0;
+      font-weight: 600;
     }
     .cmd-kpis {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      display: inline-grid;
+      grid-template-columns: repeat(4, minmax(64px, auto));
+      gap: 3px;
+      padding: 4px;
+      border-radius: 13px;
+      background: rgba(7, 10, 16, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
       min-width: 0;
       max-width: 100%;
+      box-sizing: border-box;
     }
     .kpi-pill {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 7px 13px;
+      appearance: none;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      padding: 5px 11px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       box-sizing: border-box;
       min-width: 0;
       max-width: 100%;
       overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      touch-action: manipulation;
+    }
+    .kpi-pill:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .kpi-pill.active-filter {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
     .kpi-val {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
-      color: #f59e0b;
+      color: #f8fafc;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
     }
     .kpi-lbl {
-      font-size: 10px;
+      font-size: 9.5px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       color: #94a3b8;
       font-weight: 700;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      margin-top: 1px;
     }
     .cmd-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      align-items: center;
+      gap: 7px;
       min-width: 0;
       max-width: 100%;
       box-sizing: border-box;
     }
     .cmd-btn {
-      padding: 10px 14px;
-      border-radius: 11px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       transition: all 0.15s ease;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -4215,28 +4326,46 @@
       white-space: nowrap;
     }
     .cmd-btn:hover, .cmd-btn.active {
-      border-color: #f59e0b;
-      background: rgba(245, 158, 11, 0.18);
+      border-color: rgba(245, 158, 11, 0.55);
+      background: rgba(245, 158, 11, 0.15);
+      color: #f8fafc;
     }
     .cmd-btn.primary {
-      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
       color: #090c12;
-      border: none;
+      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(245, 158, 11, 0.25);
+    }
+    .cmd-btn.primary:hover {
+      filter: brightness(1.06);
+    }
+    .cmd-pill-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.22);
+      color: #fbbf24;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
     }
     .lang-select {
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 12px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 9px;
+      font-size: 11.5px;
       font-weight: 800;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
-      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
       outline: none;
       transition: all 0.15s ease;
       box-sizing: border-box;
       min-width: 0;
-      max-width: 100%;
+      max-width: 122px;
+      flex-shrink: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -5208,34 +5337,49 @@
         gap: 14px;
       }
       .cmd-bar {
-        padding: 14px;
+        padding: 13px 14px;
         border-radius: 16px;
-        gap: 12px;
+        gap: 10px;
+      }
+      .cmd-top-row {
+        width: 100%;
+        flex: 1 1 100%;
       }
       .cmd-brand {
-        width: 100%;
+        min-width: 0;
+        flex: 1;
       }
       .cmd-logo {
-        width: 38px;
-        height: 38px;
-        font-size: 19px;
+        width: 36px;
+        height: 36px;
+      }
+      .cmd-proto-pill {
+        display: none;
+      }
+      .lang-select {
+        width: auto;
+        max-width: 108px;
+        height: 32px;
+        padding: 0 7px;
+        font-size: 11px;
       }
       .cmd-kpis {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         width: 100%;
-        gap: 6px;
+        gap: 3px;
+        padding: 4px;
       }
       .kpi-pill {
         padding: 6px 4px;
-        border-radius: 10px;
+        border-radius: 9px;
         min-width: 0;
       }
       .kpi-val {
-        font-size: 14px;
+        font-size: 13.5px;
       }
       .kpi-lbl {
-        font-size: 9px;
+        font-size: 8.5px;
         letter-spacing: 0.02em;
         text-align: center;
         width: 100%;
@@ -5247,27 +5391,23 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
-        gap: 8px;
+        gap: 7px;
       }
-      .cmd-btn, .lang-select {
+      .cmd-btn {
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        height: 38px;
         box-sizing: border-box;
         text-align: center;
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: 0 8px;
+        font-size: 11.5px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .cmd-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-      .cmd-btn.primary {
-        grid-column: 1 / -1;
       }
       .ff-section, .wt-section {
         padding: 14px;
@@ -5308,34 +5448,49 @@
         gap: 14px;
       }
       .cmd-bar {
-        padding: 14px;
+        padding: 13px 14px;
         border-radius: 16px;
-        gap: 12px;
+        gap: 10px;
+      }
+      .cmd-top-row {
+        width: 100%;
+        flex: 1 1 100%;
       }
       .cmd-brand {
-        width: 100%;
+        min-width: 0;
+        flex: 1;
       }
       .cmd-logo {
-        width: 38px;
-        height: 38px;
-        font-size: 19px;
+        width: 36px;
+        height: 36px;
+      }
+      .cmd-proto-pill {
+        display: none;
+      }
+      .lang-select {
+        width: auto;
+        max-width: 108px;
+        height: 32px;
+        padding: 0 7px;
+        font-size: 11px;
       }
       .cmd-kpis {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         width: 100%;
-        gap: 6px;
+        gap: 3px;
+        padding: 4px;
       }
       .kpi-pill {
         padding: 6px 4px;
-        border-radius: 10px;
+        border-radius: 9px;
         min-width: 0;
       }
       .kpi-val {
-        font-size: 14px;
+        font-size: 13.5px;
       }
       .kpi-lbl {
-        font-size: 9px;
+        font-size: 8.5px;
         letter-spacing: 0.02em;
         text-align: center;
         width: 100%;
@@ -5347,27 +5502,23 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
-        gap: 8px;
+        gap: 7px;
       }
-      .cmd-btn, .lang-select {
+      .cmd-btn {
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        height: 38px;
         box-sizing: border-box;
         text-align: center;
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: 0 8px;
+        font-size: 11.5px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .cmd-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-      .cmd-btn.primary {
-        grid-column: 1 / -1;
       }
       .printers-grid {
         grid-template-columns: minmax(0, 1fr);
@@ -5542,6 +5693,7 @@
       this._showFilamentFinder = false;
       this._filamentMatFilter = "ALL";
       this._filamentSearch = "";
+      this._kpiFilter = "all";
       this._highlightedPrefix = "";
       this._lastSig = "";
       this._lastInteractedPrefix = "";
@@ -5748,12 +5900,34 @@
       }
 
       const onlineCount = allPrinters.filter(p => p.online).length;
+      const printingPrinters = allPrinters.filter(p => p.online && (p.printStatus === "running" || p.printStatus === "prepare" || p.printStatus === "pause"));
       const amsCount = allPrinters.reduce((acc, p) => acc + (p.amsUnits && p.amsUnits.length > 0 ? p.amsUnits.length : (p.hasAms ? 1 : 0)), 0);
       const alertCount = allPrinters.reduce((acc, p) => acc + (p.alerts ? p.alerts.length : 0), 0);
+      const loadedSpoolCount = collectFleetSpools(allPrinters).filter(s => !s.empty).length;
       const totalHrs = allPrinters.reduce((acc, p) => {
         const v = parseFloat(p.totalUsage);
         return acc + (isNaN(v) ? 0 : v);
       }, 0).toFixed(1);
+
+      const kpiFilter = this._kpiFilter || "all";
+      if (!filterPrefix && !filterModel && kpiFilter !== "all") {
+        if (kpiFilter === "online") {
+          const sub = printers.filter(p => p.online);
+          if (sub.length > 0) printers = sub;
+        } else if (kpiFilter === "ams") {
+          const sub = printers.filter(p => p.hasAms);
+          if (sub.length > 0) printers = sub;
+        } else if (kpiFilter === "alerts" && alertCount > 0) {
+          const sub = printers.filter(p => p.alerts && p.alerts.length > 0);
+          if (sub.length > 0) printers = sub;
+        }
+      }
+
+      const isAnyPrinting = printingPrinters.length > 0;
+      const logoDotClass = isAnyPrinting ? "printing" : (onlineCount > 0 ? "" : "offline");
+      const subText = isAnyPrinting
+        ? ("🟢 " + printingPrinters.map(p => `${p.name}: ${p.progress}% • ${p.etaDisplay}`).join("  •  "))
+        : t("cmd_subtitle", lang);
 
       const onlyWalkthrough = this._config.mode === "walkthrough_only" || this._config.default_tab === "walkthrough";
       const onlySinglePrinter = Boolean((filterPrefix || filterModel) && !onlyWalkthrough);
@@ -5765,37 +5939,53 @@
         <div class="studio-wrap">
           ${!onlySinglePrinter ? `
             <div class="cmd-bar">
-              <div class="cmd-brand">
-                <div class="cmd-logo">🖨️</div>
-                <div>
-                  <div class="cmd-title">${studioTitle}</div>
-                  <div class="cmd-sub">${t("cmd_subtitle", lang)}</div>
+              <div class="cmd-top-row">
+                <div class="cmd-brand">
+                  <div class="cmd-logo">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z"/>
+                      <path d="M12 22V12"/>
+                      <path d="M21 7l-9 5-9-5"/>
+                      <circle cx="12" cy="12" r="2.2" fill="#10b981" stroke="none"/>
+                    </svg>
+                    <span class="cmd-logo-dot ${logoDotClass}"></span>
+                  </div>
+                  <div class="cmd-brand-text">
+                    <div class="cmd-title-row">
+                      <div class="cmd-title">${studioTitle}</div>
+                      <span class="cmd-proto-pill">LAN • TLS</span>
+                    </div>
+                    <div class="cmd-sub ${isAnyPrinting ? 'live-ticker' : ''}">${subText}</div>
+                  </div>
                 </div>
-              </div>
-              <div class="cmd-kpis">
-                <div class="kpi-pill">
-                  <span class="kpi-val">${allPrinters.length}</span>
-                  <span class="kpi-lbl">${t("kpi_printers", lang)}</span>
-                </div>
-                <div class="kpi-pill">
-                  <span class="kpi-val" style="color:#10b981;">${onlineCount}</span>
-                  <span class="kpi-lbl">${t("kpi_online", lang)}</span>
-                </div>
-                <div class="kpi-pill">
-                  <span class="kpi-val" style="color:#38bdf8;">${amsCount}</span>
-                  <span class="kpi-lbl">${t("kpi_ams_units", lang)}</span>
-                </div>
-                <div class="kpi-pill">
-                  <span class="kpi-val" style="color:${alertCount > 0 ? '#ef4444' : '#f59e0b'};">${alertCount > 0 ? (alertCount + ' 🚨') : (totalHrs + 'h')}</span>
-                  <span class="kpi-lbl">${alertCount > 0 ? t("kpi_hms_alerts", lang) : t("kpi_print_hours", lang)}</span>
-                </div>
-              </div>
-              <div class="cmd-actions">
-                <select class="lang-select" id="langSelectBtn" title="Switch Language / Sprache / Langue / Idioma">
-                  <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${t("lang_auto", lang)} (${lang.toUpperCase()})</option>
+                <select class="lang-select" id="langSelectBtn" title="Switch Language / Sprache / Langue / Idioma / Язык">
+                  <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${lang.toUpperCase()} (${t("lang_auto", lang)})</option>
                   ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${savedLangPref === l.code ? "selected" : ""}>${l.flag} ${l.label}</option>`).join("")}
                 </select>
-                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">${t("btn_filament_finder", lang)}</button>
+              </div>
+              <div class="cmd-kpis">
+                <button type="button" class="kpi-pill ${kpiFilter === 'all' ? 'active-filter' : ''}" data-kpi-filter="all" title="Show All Printers">
+                  <span class="kpi-val">${allPrinters.length}</span>
+                  <span class="kpi-lbl">${t("kpi_printers", lang)}</span>
+                </button>
+                <button type="button" class="kpi-pill ${kpiFilter === 'online' ? 'active-filter' : ''}" data-kpi-filter="online" title="Filter Online Printers">
+                  <span class="kpi-val" style="color:#10b981;">${onlineCount}</span>
+                  <span class="kpi-lbl">${t("kpi_online", lang)}</span>
+                </button>
+                <button type="button" class="kpi-pill ${kpiFilter === 'ams' ? 'active-filter' : ''}" data-kpi-filter="ams" title="Filter AMS-Equipped Printers">
+                  <span class="kpi-val" style="color:#38bdf8;">${amsCount}</span>
+                  <span class="kpi-lbl">${t("kpi_ams_units", lang)}</span>
+                </button>
+                <button type="button" class="kpi-pill ${kpiFilter === 'alerts' && alertCount > 0 ? 'active-filter' : ''}" data-kpi-filter="${alertCount > 0 ? 'alerts' : 'all'}" title="${alertCount > 0 ? 'Filter Printers with HMS Alerts' : 'Total Fleet Print Hours'}">
+                  <span class="kpi-val" style="color:${alertCount > 0 ? '#ef4444' : '#f59e0b'};">${alertCount > 0 ? (alertCount + ' 🚨') : (totalHrs + 'h')}</span>
+                  <span class="kpi-lbl">${alertCount > 0 ? t("kpi_hms_alerts", lang) : t("kpi_print_hours", lang)}</span>
+                </button>
+              </div>
+              <div class="cmd-actions">
+                <button type="button" class="cmd-btn ${this._showFilamentFinder ? 'active' : ''}" id="toggleFinderBtn">
+                  <span>${t("btn_filament_finder", lang)}</span>
+                  ${loadedSpoolCount > 0 ? `<span class="cmd-pill-badge">${loadedSpoolCount}</span>` : ''}
+                </button>
                 <button type="button" class="cmd-btn" id="openAutomationsBtn">${t("btn_automations", lang)}</button>
                 <button type="button" class="cmd-btn ${this._showWalkthrough ? 'active' : ''}" id="toggleGuideBtn">${this._showWalkthrough ? t("btn_hide_guide", lang) : t("btn_setup_guide", lang)}</button>
                 <button type="button" class="cmd-btn primary" id="addPrinterMainBtn">${t("btn_add_printer", lang)}</button>
@@ -5855,6 +6045,13 @@
           this._render();
         };
       }
+      this.shadowRoot.querySelectorAll(".kpi-pill[data-kpi-filter]").forEach(pill => {
+        pill.onclick = () => {
+          const targetFilter = pill.getAttribute("data-kpi-filter") || "all";
+          this._kpiFilter = (this._kpiFilter === targetFilter) ? "all" : targetFilter;
+          this._render();
+        };
+      });
       const addMain = this.shadowRoot.getElementById("addPrinterMainBtn");
       if (addMain) {
         addMain.onclick = () => openStudioModal(this._hass, "add", {}, () => { this._lastSig = ""; this._render(); });
