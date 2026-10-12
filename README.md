@@ -232,18 +232,6 @@ bambu-fleet-studio/
 
 Vote on upcoming features in **[📊 Roadmap Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)** or join **[👋 Welcome & Roadmap Discussion #29](https://github.com/everyday3d/bambu-fleet-studio/discussions/29)**!
 
-### ✅ Shipped Milestones
-- [x] ~~**🔌 100% Standalone Local LAN MQTT (`Port 8883`) & Camera (`Port 6000` TLS / `Port 322` RTSPS) Engine** — Zero `ha-bambulab` dependency (`#15`)~~ ✅
-- [x] ~~**⏱️ Per-Printer & Fleet Lifetime Extrusion Odometer (`m` / `km` / `kg` / `~Spools`) & Hours Calibration** (`#24`)~~ ✅
-- [x] ~~**🛏️ Model-Aware Build Plate Selector (Official Bambu Lab + BIQU CryoGrip Pro Glacier / Frostbite & Panda Plates)** (`#25`)~~ ✅
-- [x] ~~**🎨 Dedicated Cross-Fleet Filament Studio & RGB Euclidean Color Name Resolver** (`#21`, `#26`)~~ ✅
-- [x] ~~**📦 Low-Spool Filament RFID Watchdog Alert ($\le 15\%$ Remaining)** (`#33`)~~ ✅
-- [x] ~~**🌈 WLED Live Print Progress Bar (`0%` → `100%`) with 3× Emerald Green Completion Flash, 5m Auto-Off & Interactive Status Bar Tester** (`#33`, `#35`)~~ ✅
-- [x] ~~**🔊 Smart Speaker Voice TTS Announcer (with 🌙 Quiet Hours) & 🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)** (`#33`)~~ ✅
-- [x] ~~**🕒 Offline Printer "Last Online" Timestamp & Relative Time Badge** (`#34`)~~ ✅
-- [x] ~~**🎯 Deep-Linked Push Notifications with Filament Grams Used (`g`), Live Camera Action & 1-Tap Scroll/Highlight to Target Printer Card** (`#35`, `#36`)~~ ✅
-- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.3.0 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
-
 ### 🚧 Upcoming Local-LAN Roadmap (`v1.4.x` — [Vote in Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))
 - [ ] **1️⃣ 📊 Print Job History, Two-Way Spoolman Sync & Cost Ledger (`g` / `m` / `$`)** *(~~Low-spool RFID alerts~~ ✅ & ~~Filament grams `g` in push notifications~~ ✅ shipped!)*: Automatic local SQLite/JSON ledger of completed and failed print jobs with duration, exact filament meters/grams used, two-way **Spoolman** inventory deduction across multiple printers, and estimated spool cost (`$`) per job.
 - [ ] **2️⃣ 🤖 Multi-Provider AI Spaghetti, First-Layer & Nozzle Blob Vision Guard (`Ollama` / `Gemini` / `OpenAI` / `Claude` / `OpenRouter` / HA AI Tasks)**: Periodic Local LAN camera frame inspection (`Port 6000` TLS / `Port 322` RTSPS) using **any AI vision provider** — including 100% local **Ollama** (`llava`, `qwen2.5-vl`, `llama3.2-vision`), **Google Gemini**, **OpenAI (`gpt-4o`)**, **Anthropic Claude**, **OpenRouter**, or native Home Assistant `ai_task` / `conversation` agents — to detect spaghetti, first-layer peeling, or nozzle blobs with optional **1-Click Auto-Pause** and instant deep-linked phone alerts.
@@ -256,6 +244,18 @@ Vote on upcoming features in **[📊 Roadmap Poll #30](https://github.com/everyd
 
 > **☁️ Note on Cloud-Only / Printer Touchscreen Firmware Restrictions**:
 > Because **Bambu Lab Fleet Studio** operates **100% over Local LAN (`Port 8883 TLS`)** with zero cloud dependency, features locked by Bambu Lab firmware to Bambu Cloud or physical printer touchscreen confirmation — specifically **Remote AMS Active Drying Initiation** and **Custom Non-RFID AMS Slot Writing** — are marked **Cloud / Touchscreen Only** and excluded from the Local LAN roadmap. *(Passive AMS humidity `%`, temperature `°C`, and official Bambu RFID spool telemetry remain 100% supported over Local LAN!)*
+
+### ✅ Completed & Shipped Roadmap Milestones
+- [x] ~~**🔌 100% Standalone Local LAN MQTT (`Port 8883`) & Camera (`Port 6000` TLS / `Port 322` RTSPS) Engine** — Zero `ha-bambulab` dependency (`#15`)~~ ✅
+- [x] ~~**⏱️ Per-Printer & Fleet Lifetime Extrusion Odometer (`m` / `km` / `kg` / `~Spools`) & Hours Calibration** (`#24`)~~ ✅
+- [x] ~~**🛏️ Model-Aware Build Plate Selector (Official Bambu Lab + BIQU CryoGrip Pro Glacier / Frostbite & Panda Plates)** (`#25`)~~ ✅
+- [x] ~~**🎨 Dedicated Cross-Fleet Filament Studio & RGB Euclidean Color Name Resolver** (`#21`, `#26`)~~ ✅
+- [x] ~~**📦 Low-Spool Filament RFID Watchdog Alert ($\le 15\%$ Remaining)** (`#33`)~~ ✅
+- [x] ~~**🌈 WLED Live Print Progress Bar (`0%` → `100%`) with 3× Emerald Green Completion Flash, 5m Auto-Off & Interactive Status Bar Tester** (`#33`, `#35`)~~ ✅
+- [x] ~~**🔊 Smart Speaker Voice TTS Announcer (with 🌙 Quiet Hours) & 🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)** (`#33`)~~ ✅
+- [x] ~~**🕒 Offline Printer "Last Online" Timestamp & Relative Time Badge** (`#34`)~~ ✅
+- [x] ~~**🎯 Deep-Linked Push Notifications with Filament Grams Used (`g`), Live Camera Action & 1-Tap Scroll/Highlight to Target Printer Card** (`#35`, `#36`)~~ ✅
+- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.3.0 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
 
 ---
 
