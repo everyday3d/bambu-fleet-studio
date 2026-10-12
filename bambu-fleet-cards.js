@@ -3880,13 +3880,17 @@
         for (const [eid, st] of Object.entries(hass.states)) {
           const fname = (st && st.attributes && st.attributes.friendly_name) ? st.attributes.friendly_name : eid;
           if (eid.startsWith("light.") && !eid.endsWith("_chamber_light")) {
-            lightEntities.push({ id: eid, label: `${fname} (${eid})` });
+            const prefixIcon = eid.includes("wled") ? "🌈 " : "💡 ";
+            lightEntities.push({ id: eid, label: `${prefixIcon}${fname} (${eid})` });
           } else if (eid.startsWith("media_player.")) {
             mediaPlayerEntities.push({ id: eid, label: `${fname} (${eid})` });
           } else if (eid.startsWith("switch.")) {
             switchEntities.push({ id: eid, label: `${fname} (${eid})` });
           }
         }
+      }
+      if (!lightEntities.some(l => l.id === "light.wled")) {
+        lightEntities.unshift({ id: "light.wled", label: "🌈 WLED Strip (light.wled)" });
       }
       lightEntities.sort((a, b) => {
         const aWled = a.id.includes("wled") ? 0 : 1;
@@ -3903,7 +3907,7 @@
         ? savedPrefs.notify_service
         : (preferredMobileApp || notifySvcs[0] || "notify.persistent_notification");
       const initialTargetPrinter = savedPrefs.target_printer || "__ALL__";
-      const defaultWledLight = (lightEntities.find(l => l.id === "light.wled") || lightEntities.find(l => l.id.includes("wled")) || {}).id || "";
+      const defaultWledLight = (lightEntities.find(l => l.id === "light.wled") || lightEntities.find(l => l.id.includes("wled")) || {}).id || "light.wled";
       const initialRgbLight = savedPrefs.rgb_light_entity || defaultWledLight;
       let isCurrentlySaved = Boolean(savedPrefs.saved && savedPrefs.notify_service === initialNotifySvc);
 
@@ -3976,11 +3980,48 @@
             padding-top: 4px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
           }
+          .wled-top-hero {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(16, 185, 129, 0.10), rgba(15, 23, 42, 0.92));
+            border: 1px solid rgba(56, 189, 248, 0.38);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+          }
+          .wled-quick-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+          }
+          .wled-q-btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(15, 23, 42, 0.88);
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.15s ease;
+          }
+          .wled-q-btn:hover {
+            border-color: #38bdf8;
+            transform: translateY(-1px);
+          }
+          .wled-q-btn.primary-demo {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.30), rgba(16, 185, 129, 0.28));
+            border-color: rgba(56, 189, 248, 0.65);
+            color: #ffffff;
+          }
         </style>
         <div class="overlay" id="bgOverlay">
-          <div class="dialog wide" style="width:min(920px,96vw);max-height:92vh;overflow-y:auto;">
+          <div class="dialog wide" style="width:min(940px,96vw);max-height:92vh;overflow-y:auto;">
             <div class="hdr">
-              <div class="hdr-title">🔔 1-Click Printer Notifications & Automations</div>
+              <div class="hdr-title">🔔 1-Click Printer Notifications, WLED Status Bar &amp; Automations</div>
               <button class="x-btn" id="xBtn">✕</button>
             </div>
 
@@ -4007,6 +4048,43 @@
                   <button class="btn btn-green" id="saveNotifyInlineBtn" style="padding:8px 14px;white-space:nowrap;font-size:12px;">💾 Save</button>
                 </div>
                 <div class="sub-hint">Select your Home Assistant Mobile App (e.g., Jim's iPhone) and click Save</div>
+              </div>
+            </div>
+
+            <!-- TOP HERO: WLED Live Print Progress Bar & Interactive Status Bar Tester -->
+            <div class="wled-top-hero" id="wledTopHeroBox">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:20px;">🌈</span>
+                  <div>
+                    <div style="font-size:13px;font-weight:900;color:#f8fafc;">WLED Live Print Progress Bar (0% &rarr; 100%) &amp; Status Light Tester</div>
+                    <div style="font-size:11px;color:#cbd5e1;">Grows 0%&rarr;100% Cyan as print progresses &bull; Flashes 3&times; at 100% &bull; Holds Solid Green &bull; Auto-Off after 5m</div>
+                  </div>
+                </div>
+                <span id="wledActiveBadge" style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:999px;color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.38);">
+                  ✓ Active: ${initialRgbLight || "light.wled"} (5m Auto-Off)
+                </span>
+              </div>
+
+              <div style="display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;">
+                <select id="rgbLightEntitySel" class="bp-cfg-select" style="flex:1;min-width:220px;font-size:12px;padding:7px 10px;">
+                  <option value="">— Select WLED Strip or Smart RGB Light (light.*) —</option>
+                  ${lightEntities.map(l => `<option value="${l.id}" ${initialRgbLight === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
+                </select>
+                <button class="btn btn-green" id="enableWledTopBtn" type="button" style="padding:7px 14px;font-size:12px;white-space:nowrap;">⚡ 1-Click Enable &amp; Save WLED</button>
+              </div>
+
+              <div class="wled-quick-bar">
+                <span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:#38bdf8;margin-right:2px;">Test WLED Status Bar:</span>
+                <button class="wled-q-btn primary-demo" id="testRgbLightBtn" type="button">📊 Full 0%&rarr;100% Bar + 3&times; Flash Demo</button>
+                <button class="wled-q-btn" data-wled-quick="running:25" type="button">🔵 25% Bar</button>
+                <button class="wled-q-btn" data-wled-quick="running:50" type="button">🔵 50% Bar</button>
+                <button class="wled-q-btn" data-wled-quick="running:75" type="button">🔵 75% Bar</button>
+                <button class="wled-q-btn" data-wled-quick="finish:100" type="button">🟢 100% Flash (3&times;) + Solid Green</button>
+                <button class="wled-q-btn" data-wled-quick="prepare:10" type="button">🟠 Prepare Amber</button>
+                <button class="wled-q-btn" data-wled-quick="hms_error:100" type="button">🔴 HMS Fault Red</button>
+                <button class="wled-q-btn" data-wled-quick="off:0" type="button">⏹️ Off</button>
+                <button class="wled-q-btn" data-bp="rgb_light_sync" data-act="yaml" type="button">📋 YAML</button>
               </div>
             </div>
 
@@ -4058,41 +4136,11 @@
             </div>
 
             <div class="bp-sec-hdr">
-              <span>⚡ Smart Home, WLED Print Progress Bar, Voice, Cooldown & Spool 1-Click Automations</span>
+              <span>⚡ Voice TTS, Safe Cooldown Smart Plug &amp; Low Spool 1-Click Automations</span>
               <span style="color:#38bdf8;font-size:10px;">ZERO YAML REQUIRED</span>
             </div>
 
-            <div class="bp-grid" style="grid-template-columns:repeat(auto-fit,minmax(360px,1fr));">
-              <!-- 4. RGB Status Light Sync / WLED Print Progress Bar -->
-              <div class="bp-card">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-size:22px;">🌈</span>
-                  <span style="font-size:10px;font-weight:800;color:#c084fc;background:rgba(192,132,252,0.15);padding:3px 8px;border-radius:999px;">WLED PROGRESS BAR + RGB SYNC</span>
-                </div>
-                <div class="bp-title">WLED Print Progress Bar &amp; RGB Status Sync</div>
-                <div class="bp-desc">
-                  When WLED is selected, operates the strip as a live <strong>0% &rarr; 100% print progress bar</strong> that grows in length as the print advances, <strong>flashes 3&times; at 100%</strong>, goes <strong>solid green across all 100%</strong>, and auto-shuts off after <strong>5 minutes</strong>.
-                </div>
-                <div class="bp-color-legend">
-                  <span class="bp-color-Chip" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);">🟠 Amber: Prepare</span>
-                  <span class="bp-color-Chip" style="background:rgba(56,189,248,0.16);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);">📊 Cyan Bar (0%→100%): Printing</span>
-                  <span class="bp-color-Chip" style="background:rgba(16,185,129,0.16);color:#10b981;border:1px solid rgba(16,185,129,0.35);">⚡🟢 3× Flash → 100% Green (5m Off)</span>
-                  <span class="bp-color-Chip" style="background:rgba(239,68,68,0.16);color:#f87171;border:1px solid rgba(239,68,68,0.35);">🔴 Red: HMS / Pause</span>
-                </div>
-                <div class="bp-cfg-row">
-                  <span class="bp-cfg-lbl">Select WLED Strip or Smart RGB Light (<code>light.*</code>)</span>
-                  <select id="rgbLightEntitySel" class="bp-cfg-select">
-                    <option value="">— Select a WLED Strip or Smart RGB Light —</option>
-                    ${lightEntities.map(l => `<option value="${l.id}" ${initialRgbLight === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="bp-actions">
-                  <button class="bp-btn deploy" data-bp="rgb_light_sync" data-act="deploy">${savedPrefs.rgb_light_sync && initialRgbLight ? "✓ Active (Update & Sync)" : "⚡ 1-Click Enable"}</button>
-                  <button class="bp-btn" id="testRgbLightBtn" type="button">📊 Test WLED Bar / Light</button>
-                  <button class="bp-btn" data-bp="rgb_light_sync" data-act="yaml">📋 YAML</button>
-                </div>
-              </div>
-
+            <div class="bp-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
               <!-- 5. Smart Speaker Voice Alert (TTS) -->
               <div class="bp-card">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -4186,8 +4234,9 @@
 
             <div class="ftr" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Notification & Automation Settings</button>
-                <button class="btn btn-cyan" id="testAlertBtn">📲 Send Test Alert to Phone Now</button>
+                <button class="btn btn-green" id="saveNotifyFooterBtn">💾 Save Settings</button>
+                <button class="btn btn-cyan" id="testAlertBtn">📲 Test Phone Push Alert</button>
+                <button class="btn btn-cyan" id="testWledFooterBtn" style="background:linear-gradient(135deg,rgba(14,165,233,0.28),rgba(16,185,129,0.28));border-color:rgba(56,189,248,0.6);">📊 Test WLED Status Bar (0%→100%)</button>
               </div>
               <button class="btn btn-ghost" id="closeBtn">Close</button>
             </div>
@@ -4209,8 +4258,11 @@
       const cooldownTempSel = shadow.getElementById("cooldownTempSel");
       const lowSpoolThresholdSel = shadow.getElementById("lowSpoolThresholdSel");
       const saveStatusBadge = shadow.getElementById("notifySaveStatusBadge");
+      const wledActiveBadge = shadow.getElementById("wledActiveBadge");
       const saveInlineBtn = shadow.getElementById("saveNotifyInlineBtn");
       const saveFooterBtn = shadow.getElementById("saveNotifyFooterBtn");
+      const enableWledTopBtn = shadow.getElementById("enableWledTopBtn");
+      const testWledFooterBtn = shadow.getElementById("testWledFooterBtn");
 
       const updateBadgeState = (savedNow) => {
         if (!saveStatusBadge) return;
@@ -4219,6 +4271,9 @@
           saveStatusBadge.style.color = "#10b981";
           saveStatusBadge.style.background = "rgba(16,185,129,0.16)";
           saveStatusBadge.style.border = "1px solid rgba(16,185,129,0.35)";
+          if (wledActiveBadge && rgbLightEntitySel) {
+            wledActiveBadge.textContent = "✓ Active: " + (rgbLightEntitySel.value || "light.wled") + " (5m Auto-Off)";
+          }
         } else {
           saveStatusBadge.textContent = "● Unsaved — Click Save";
           saveStatusBadge.style.color = "#f59e0b";
@@ -4233,7 +4288,7 @@
 
       const gatherCurrentFormOptions = () => {
         const cur = loadNotifyPrefs();
-        const rgbEnt = rgbLightEntitySel ? rgbLightEntitySel.value : "";
+        const rgbEnt = (rgbLightEntitySel && rgbLightEntitySel.value) ? rgbLightEntitySel.value : "light.wled";
         const ttsEnt = ttsMediaPlayerSel ? ttsMediaPlayerSel.value : "";
         return {
           notify_service: autoNotifySel.value,
@@ -4270,7 +4325,7 @@
             ? "All Fleet Printers (" + printers.length + ")"
             : ((printers.find(p => p.prefix === targetPrn) || {}).name || targetPrn);
           alertBox.className = "alert ok";
-          alertBox.textContent = "✓ Saved notification target (" + payloadToSave.notify_service + ") and 1-click automation settings for " + targetLabel + "!";
+          alertBox.textContent = "✓ Saved notification target (" + payloadToSave.notify_service + "), WLED (" + payloadToSave.rgb_light_entity + "), and 1-click settings for " + targetLabel + "!";
         }
         return payloadToSave;
       };
@@ -4292,43 +4347,77 @@
         await persistNotifySettings({}, true);
         saveFooterBtn.textContent = "✓ Settings Saved";
         setTimeout(() => {
-          saveFooterBtn.textContent = "💾 Save Notification & Automation Settings";
+          saveFooterBtn.textContent = "💾 Save Settings";
           saveFooterBtn.disabled = false;
         }, 1600);
       };
 
-      const testRgbBtn = shadow.getElementById("testRgbLightBtn");
-      if (testRgbBtn) {
-        testRgbBtn.onclick = async () => {
-          const rgbEnt = rgbLightEntitySel ? rgbLightEntitySel.value : "";
-          if (!rgbEnt) {
-            alertBox.className = "alert err";
-            alertBox.textContent = "Select a WLED strip or Smart RGB Light (light.*) from the dropdown first.";
-            return;
-          }
-          const isWled = rgbEnt.toLowerCase().includes("wled");
-          testRgbBtn.disabled = true;
-          testRgbBtn.textContent = isWled ? "Animating WLED Bar..." : "Testing...";
-          try {
-            await persistNotifySettings({
-              rgb_light_entity: rgbEnt,
-              rgb_light_sync: true,
-              test_rgb: true,
-              rgb_test_state: isWled ? "test_wled_bar" : "finish"
-            }, false);
-            alertBox.className = "alert ok";
-            alertBox.textContent = isWled
-              ? ("✓ WLED Progress Bar Demo running on " + rgbEnt + " (25% → 60% → 90% → 100% → 3× Flash → 100% Solid Green + 5m Auto-Off)!")
-              : ("✓ Saved & set " + rgbEnt + " to Print Complete Emerald Green (5m Auto-Off)!");
-          } catch (e) {
-            alertBox.className = "alert err";
-            alertBox.textContent = "RGB Light test failed: " + (e.message || e);
-          } finally {
-            testRgbBtn.textContent = "📊 Test WLED Bar / Light";
-            testRgbBtn.disabled = false;
-          }
+      if (enableWledTopBtn) {
+        enableWledTopBtn.onclick = async () => {
+          const rgbEnt = (rgbLightEntitySel && rgbLightEntitySel.value) ? rgbLightEntitySel.value : "light.wled";
+          enableWledTopBtn.disabled = true;
+          enableWledTopBtn.textContent = "Saving WLED...";
+          await persistNotifySettings({ rgb_light_entity: rgbEnt, rgb_light_sync: true }, true);
+          enableWledTopBtn.textContent = "✓ WLED Active";
+          setTimeout(() => {
+            enableWledTopBtn.textContent = "⚡ 1-Click Enable & Save WLED";
+            enableWledTopBtn.disabled = false;
+          }, 1600);
         };
       }
+
+      const runWledStatusTest = async (testState = "test_wled_bar", pctVal = 100, triggerBtn = null) => {
+        const rgbEnt = (rgbLightEntitySel && rgbLightEntitySel.value) ? rgbLightEntitySel.value : "light.wled";
+        const origLabel = triggerBtn ? triggerBtn.innerHTML : "";
+        if (triggerBtn) {
+          triggerBtn.disabled = true;
+          triggerBtn.textContent = testState === "test_wled_bar" ? "⏳ Running 0%→100% Bar Demo..." : "⏳ Sending to WLED...";
+        }
+        try {
+          await persistNotifySettings({
+            rgb_light_entity: rgbEnt,
+            rgb_light_sync: true,
+            test_rgb: true,
+            rgb_test_state: testState,
+            progress: pctVal,
+            progress_pct: pctVal
+          }, false);
+          alertBox.className = "alert ok";
+          if (testState === "test_wled_bar") {
+            alertBox.textContent = "✓ WLED Status Bar Demo running on " + rgbEnt + " (20% → 45% → 70% → 95% → 100% → 3× Emerald Green Flash → Solid Green, then auto-restores active print progress / 5m Auto-Off)!";
+          } else if (testState === "running") {
+            alertBox.textContent = "✓ Set " + rgbEnt + " to " + pctVal + "% Live Cyan Progress Bar (Effect: Percent, Intensity: " + pctVal + "%)!";
+          } else if (testState === "finish") {
+            alertBox.textContent = "✓ Triggered 100% Print Complete on " + rgbEnt + " (3× Emerald Green Flash → 100% Solid Green + 5m Auto-Off)!";
+          } else if (testState === "off") {
+            alertBox.textContent = "✓ Turned off " + rgbEnt + "!";
+          } else {
+            alertBox.textContent = "✓ Set " + rgbEnt + " to state '" + testState + "'!";
+          }
+        } catch (e) {
+          alertBox.className = "alert err";
+          alertBox.textContent = "WLED test failed: " + (e.message || e);
+        } finally {
+          if (triggerBtn) {
+            triggerBtn.innerHTML = origLabel;
+            triggerBtn.disabled = false;
+          }
+        }
+      };
+
+      const testRgbBtn = shadow.getElementById("testRgbLightBtn");
+      if (testRgbBtn) {
+        testRgbBtn.onclick = () => runWledStatusTest("test_wled_bar", 100, testRgbBtn);
+      }
+      if (testWledFooterBtn) {
+        testWledFooterBtn.onclick = () => runWledStatusTest("test_wled_bar", 100, testWledFooterBtn);
+      }
+      shadow.querySelectorAll("[data-wled-quick]").forEach(qBtn => {
+        qBtn.onclick = () => {
+          const [stKey, pctStr] = String(qBtn.getAttribute("data-wled-quick") || "running:50").split(":");
+          runWledStatusTest(stKey, Number(pctStr || 50), qBtn);
+        };
+      });
 
       const testTtsBtn = shadow.getElementById("testTtsVoiceBtn");
       if (testTtsBtn) {
@@ -4382,7 +4471,7 @@
           alertBox.className = "alert err";
           alertBox.textContent = "Test alert error: " + (err.message || JSON.stringify(err));
         } finally {
-          testBtn.textContent = "📲 Send Test Alert to Phone Now";
+          testBtn.textContent = "📲 Test Phone Push Alert";
           testBtn.disabled = false;
         }
       };

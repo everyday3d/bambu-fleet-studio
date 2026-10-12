@@ -1683,9 +1683,10 @@ class BambuFleetStudioManager:
 
             self._cancel_rgb_auto_off()
 
-            if is_wled and state_key == "test_wled_bar":
-                # Live interactive demo of the WLED progress bar (25% -> 60% -> 90% -> 100% Flash 3x -> Solid Green + 5m Auto-Off)
-                for demo_pct in (25, 60, 90):
+            is_demo_bar = (state_key == "test_wled_bar")
+            if is_wled and is_demo_bar:
+                # Live interactive demo of the WLED progress bar (20% -> 45% -> 70% -> 95% -> 100% Flash 3x -> Solid Green)
+                for demo_pct in (20, 45, 70, 95):
                     if wled_ip:
                         await self.hass.async_add_executor_job(
                             self._post_wled_json_sync,
@@ -1696,14 +1697,14 @@ class BambuFleetStudioManager:
                                 "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": demo_pct, "col": [[14, 165, 233], [0, 0, 0], [0, 0, 0]]}],
                             },
                         )
-                    if intensity_ent:
-                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": demo_pct})
                     await self.hass.services.async_call(
                         "light",
                         "turn_on",
                         {"entity_id": light_ent, "rgb_color": [14, 165, 233], "brightness_pct": 90, "effect": "Percent"},
                     )
-                    await asyncio.sleep(0.55)
+                    if intensity_ent:
+                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": demo_pct})
+                    await asyncio.sleep(0.65)
                 state_key = "finish"
                 progress = 100
 
@@ -1720,17 +1721,17 @@ class BambuFleetStudioManager:
                             "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": bar_pct, "col": [rgb, [0, 0, 0], [0, 0, 0]]}],
                         },
                     )
+                await self.hass.services.async_call(
+                    "light",
+                    "turn_on",
+                    {"entity_id": light_ent, "rgb_color": rgb, "brightness_pct": bri, "effect": "Percent"},
+                )
                 if intensity_ent:
                     await self.hass.services.async_call(
                         "number",
                         "set_value",
                         {"entity_id": intensity_ent, "value": bar_pct},
                     )
-                await self.hass.services.async_call(
-                    "light",
-                    "turn_on",
-                    {"entity_id": light_ent, "rgb_color": rgb, "brightness_pct": bri, "effect": "Percent"},
-                )
                 return True
 
             if state_key == "finish":
@@ -1746,13 +1747,13 @@ class BambuFleetStudioManager:
                                 "seg": [{"id": 0, "fx": 98, "sx": 128, "ix": 100, "col": [[16, 185, 129], [0, 0, 0], [0, 0, 0]]}],
                             },
                         )
-                    if intensity_ent:
-                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": 100})
                     await self.hass.services.async_call(
                         "light",
                         "turn_on",
                         {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100, "effect": "Solid"},
                     )
+                    if intensity_ent:
+                        await self.hass.services.async_call("number", "set_value", {"entity_id": intensity_ent, "value": 100})
                     await asyncio.sleep(0.35)
 
                     # 2. Flash 3 times at 100% completion
@@ -1760,7 +1761,7 @@ class BambuFleetStudioManager:
                         if wled_ip:
                             await self.hass.async_add_executor_job(self._post_wled_json_sync, wled_ip, {"on": False})
                         await self.hass.services.async_call("light", "turn_off", {"entity_id": light_ent})
-                        await asyncio.sleep(0.32)
+                        await asyncio.sleep(0.35)
                         if wled_ip:
                             await self.hass.async_add_executor_job(
                                 self._post_wled_json_sync,
@@ -1776,7 +1777,7 @@ class BambuFleetStudioManager:
                             "turn_on",
                             {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100, "effect": "Solid"},
                         )
-                        await asyncio.sleep(0.42)
+                        await asyncio.sleep(0.45)
 
                     # 3. Hold Solid Emerald Green across all 100% of strip
                     if wled_ip:
@@ -1800,6 +1801,20 @@ class BambuFleetStudioManager:
                         "turn_on",
                         {"entity_id": light_ent, "rgb_color": [16, 185, 129], "brightness_pct": 100},
                     )
+
+                if is_demo_bar:
+                    active_rt = next(
+                        (r for r in self.runtimes.values() if r.online and r.print_status == "running"),
+                        None,
+                    )
+                    if active_rt:
+                        async def _restore_active_bar() -> None:
+                            await asyncio.sleep(3.5)
+                            if active_rt.online and active_rt.print_status == "running":
+                                await self.async_sync_rgb_light("running", light_ent, progress=active_rt.progress)
+
+                        self.hass.async_create_task(_restore_active_bar())
+                        return True
 
                 # 4. Schedule 5-minute (300s) auto-shutoff on completion
                 self._schedule_rgb_auto_off(light_ent, delay_sec=300)
