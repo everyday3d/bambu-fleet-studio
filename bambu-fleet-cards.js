@@ -1712,9 +1712,15 @@
       airductMode: "",
       hasDoorSensor: Boolean(sp.hasDoorSensor),
       doorOpen: Boolean(sp.doorOpen),
-      hmsError: false,
+      authFailed: Boolean(sp.authFailed),
+      hmsError: Boolean(sp.authFailed),
       printError: false,
-      alerts: [],
+      alerts: sp.authFailed ? [{
+        severity: "crit",
+        title: "🔑 LAN Access Code Rejected (Port 8883 TLS)",
+        message: "Printer refused MQTT authentication (Not Authorized). Click ✏️ Edit Device to update the 8-character LAN Access Code.",
+        wikiUrl: "https://wiki.bambulab.com/en/knowledge-sharing/enable-developer-mode"
+      }] : [],
       smartPlug,
       lightEntityId: "light." + prefix + "_chamber_light",
       lightOn: Boolean(sp.lightOn),
@@ -3736,7 +3742,7 @@
               </div>
               <div class="fld">
                 <label>8-Char Access Code *</label>
-                <input id="codeInp" type="text" placeholder="e.g. 12345678" />
+                <input id="codeInp" type="password" autocomplete="off" placeholder="•••••••• (8-Char Access Code)" />
                 <div class="sub-hint">Settings → LAN Only / WLAN</div>
               </div>
             </div>
@@ -4220,7 +4226,7 @@
               </div>
               <div class="fld">
                 <label>8-Char LAN Access Code</label>
-                <input id="codeInp" type="text" value="${payload.accessCode || ''}" placeholder="Loading saved Access Code..." />
+                <input id="codeInp" type="password" autocomplete="off" value="" placeholder="•••••••• (Saved — leave blank to keep)" />
               </div>
             </div>
 
@@ -4396,7 +4402,9 @@
             if (match) {
               const savedHost = match.host || (match.ipAddress !== "—" ? match.ipAddress : "");
               if (savedHost) shadow.getElementById("hostInp").value = savedHost;
-              if (match.access_code) shadow.getElementById("codeInp").value = match.access_code;
+              if (match.has_access_code) {
+                shadow.getElementById("codeInp").placeholder = "•••••••• (Saved — enter new 8-char code to replace)";
+              }
               if (match.usage_hours !== undefined && parseFloat(match.usage_hours) > 0) {
                 shadow.getElementById("hoursInp").value = match.usage_hours;
               }

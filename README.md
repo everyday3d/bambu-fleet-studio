@@ -187,7 +187,7 @@ cards:
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `prefix` | `string` | Optional | Printer identifier prefix (`<model>_<serial>`, e.g. `a1_03900a100000001` or `p2s_22e8aj5c2800735`). |
+| `prefix` | `string` | Optional | Printer identifier prefix (`<model>_<serial>`, e.g. `a1_03900a100000001` or `p2s_22e00a100000001`). |
 | `name` | `string` | Auto-detected | Display name shown in the card header (e.g. `Bambu A1`, `Bambu P2S`, `Bambu R1 Laser`). |
 | `printer_model` | `string` | `auto` | Hardware model filter / artwork selector: `A1`, `A1MINI`, `A2L`, `P1S`, `P1P`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2DPRO`, `H2S`, or `R1`. |
 | `language` | `string` | `auto` | UI language override (`auto`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `ru`, `zh`, `zh-tw`, `ja`). |

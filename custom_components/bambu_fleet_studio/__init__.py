@@ -457,6 +457,7 @@ class BambuPrinterRuntime:
 
         # Live telemetry state
         self.online: bool = False
+        self.auth_failed: bool = False
         self.last_seen: float = 0.0
         self.sw_version: str = "—"
         self.print_status: str = "offline"
@@ -768,6 +769,7 @@ class BambuPrinterRuntime:
                     rc_val = getattr(rc, "value", rc)
                     if rc_val == 0:
                         disconnected[0] = False
+                        self.auth_failed = False
                         self.online = True
                         self.last_seen = time.time()
                         if self.print_status == "offline":
@@ -796,6 +798,11 @@ class BambuPrinterRuntime:
                         )
                     else:
                         disconnected[0] = True
+                        rc_str = str(rc).lower()
+                        if rc_val in (4, 5, 134, 135) or "not authorized" in rc_str or "bad user name or password" in rc_str:
+                            self.auth_failed = True
+                            self.online = False
+                            self.print_status = "offline"
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
 
                 def on_disconnect(cli, userdata, *args):
@@ -1277,6 +1284,7 @@ class BambuPrinterRuntime:
             "ipAddress": self.host,
             "swVersion": self.sw_version,
             "online": is_online,
+            "authFailed": self.auth_failed,
             "printStatus": p_status,
             "currentStage": c_stage,
             "progress": self.progress,
@@ -1704,7 +1712,7 @@ class FleetPrintersAPIView(HomeAssistantView):
                 d = rt.to_status_dict()
                 cfg = mgr.configs.get(rt.serial, {})
                 d["host"] = rt.host or cfg.get("host", "")
-                d["access_code"] = rt.access_code or cfg.get("access_code", "")
+                d["has_access_code"] = bool(rt.access_code or cfg.get("access_code", ""))
                 d["usage_hours"] = rt.usage_hours or cfg.get("usage_hours", "0")
                 d["extruded_meters"] = round(rt._extruded_meters, 1)
                 d["extruded_grams"] = round(rt._extruded_grams, 0)
