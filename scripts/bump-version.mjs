@@ -27,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const REPO = "everyday3d/bambu-fleet-studio";
-const DISC_29_ID = "D_kwDOVFBKKc4Ap-Zm";
+const DISC_29_ID = "D_kwDOVFBKKc4Ap-ZU";
 const DISC_30_ID = "D_kwDOVFBKKc4Ap-Zn";
 
 const args = process.argv.slice(2);
@@ -160,15 +160,17 @@ function syncGitHubDiscussions(currentTag) {
     "*Vote with 👍 on the comments below, or drop a new comment if you have another killer Local-LAN feature idea!*"
   ].join("\n");
 
+  const disc30Title = `📊 [Roadmap Poll] Which upcoming Bambu Lab Fleet Studio (${currentTag}) feature should we build next?`;
+
   runGraphQL({
-    query: `mutation($id: ID!, $body: String!) {
-      updateDiscussion(input: { discussionId: $id, body: $body }) {
-        discussion { id url }
+    query: `mutation($id: ID!, $title: String!, $body: String!) {
+      updateDiscussion(input: { discussionId: $id, title: $title, body: $body }) {
+        discussion { id title url }
       }
     }`,
-    variables: { id: DISC_30_ID, body: disc30Body }
+    variables: { id: DISC_30_ID, title: disc30Title, body: disc30Body }
   });
-  console.log(`[discussions] Updated Discussion #30 body (${upcomingItems.length} options + ${completedLines.length} shipped milestones).`);
+  console.log(`[discussions] Updated Discussion #30 title & body (${upcomingItems.length} options + ${completedLines.length} shipped milestones -> ${currentTag}).`);
 
   // 2. Sync Discussion #30 Voting Comments (1️⃣ .. N️⃣) + Check Discussion #29
   const existingRes = runGraphQL({
@@ -182,9 +184,6 @@ function syncGitHubDiscussions(currentTag) {
         disc29: discussion(number: 29) {
           id
           viewerCanUpdate
-          comments(first: 20) {
-            nodes { id body }
-          }
         }
       }
     }`
@@ -226,8 +225,9 @@ function syncGitHubDiscussions(currentTag) {
     }
   }
 
-  // 3. Build & Update Discussion #29 (Welcome & Roadmap Overview)
-  const disc29Node = existingRes?.data?.repository?.disc29;
+  // 3. Build & Update Discussion #29 (Welcome & Roadmap Overview — Title + Body)
+  const disc29Id = existingRes?.data?.repository?.disc29?.id || "D_kwDOVFBKKc4Ap-ZU";
+  const disc29Title = `👋 Welcome to Bambu Lab Fleet Studio! — What It Is, What's Live in ${currentTag} & Where We're Headed 🧭`;
   const disc29Body = [
     `## 👋 Welcome to the Bambu Lab Fleet Studio Community! (\`${currentTag}\`)`,
     "",
@@ -253,43 +253,15 @@ function syncGitHubDiscussions(currentTag) {
     "Drop a comment below to introduce yourself and let us know what printers are in your fleet! 🖨️🔥"
   ].join("\n");
 
-  if (disc29Node?.viewerCanUpdate) {
-    runGraphQL({
-      query: `mutation($id: ID!, $body: String!) {
-        updateDiscussion(input: { discussionId: $id, body: $body }) {
-          discussion { id url }
-        }
-      }`,
-      variables: { id: disc29Node.id, body: disc29Body }
-    });
-    console.log(`[discussions] Updated Discussion #29 body (-> ${currentTag}).`);
-  } else if (disc29Node) {
-    const existing29Comments = disc29Node.comments?.nodes || [];
-    const roadmapComment = existing29Comments.find((c) =>
-      c.body.includes("Welcome to the Bambu Lab Fleet Studio Community!")
-    );
-    if (roadmapComment) {
-      runGraphQL({
-        query: `mutation($id: ID!, $body: String!) {
-          updateDiscussionComment(input: { commentId: $id, body: $body }) {
-            comment { id }
-          }
-        }`,
-        variables: { id: roadmapComment.id, body: disc29Body }
-      });
-      console.log(`[discussions] Updated Discussion #29 Roadmap Overview comment (-> ${currentTag}).`);
-    } else {
-      runGraphQL({
-        query: `mutation($discussionId: ID!, $body: String!) {
-          addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
-            comment { id }
-          }
-        }`,
-        variables: { discussionId: disc29Node.id, body: disc29Body }
-      });
-      console.log(`[discussions] Added Discussion #29 Roadmap Overview comment (-> ${currentTag}).`);
-    }
-  }
+  runGraphQL({
+    query: `mutation($id: ID!, $title: String!, $body: String!) {
+      updateDiscussion(input: { discussionId: $id, title: $title, body: $body }) {
+        discussion { id title url }
+      }
+    }`,
+    variables: { id: disc29Id, title: disc29Title, body: disc29Body }
+  });
+  console.log(`[discussions] Updated Discussion #29 title & body (-> ${currentTag}).`);
 }
 
 if (!discussionsOnly) {
