@@ -121,17 +121,16 @@
   const LANG_STORAGE_KEY = "bambu_fleet_lang_override_v1";
 
   const SUPPORTED_LANGUAGES = [
-    { code: "auto", label: "🌐 Auto (HA)" },
-    { code: "en", label: "🇺🇸 EN — English" },
-    { code: "de", label: "🇩🇪 DE — Deutsch" },
-    { code: "fr", label: "🇫🇷 FR — Français" },
-    { code: "es", label: "🇪🇸 ES — Español" },
-    { code: "it", label: "🇮🇹 IT — Italiano" },
-    { code: "nl", label: "🇳🇱 NL — Nederlands" },
-    { code: "pl", label: "🇵🇱 PL — Polski" },
-    { code: "pt", label: "🇵🇹 PT — Português" },
-    { code: "zh", label: "🇨🇳 ZH — 简体中文" },
-    { code: "ja", label: "🇯🇵 JA — 日本語" }
+    { code: "en", flag: "🇺🇸", label: "English" },
+    { code: "de", flag: "🇩🇪", label: "Deutsch" },
+    { code: "fr", flag: "🇫🇷", label: "Français" },
+    { code: "es", flag: "🇪🇸", label: "Español" },
+    { code: "it", flag: "🇮🇹", label: "Italiano" },
+    { code: "nl", flag: "🇳🇱", label: "Nederlands" },
+    { code: "pl", flag: "🇵🇱", label: "Polski" },
+    { code: "pt", flag: "🇵🇹", label: "Português" },
+    { code: "zh", flag: "🇨🇳", label: "简体中文" },
+    { code: "ja", flag: "🇯🇵", label: "日本語" }
   ];
 
   const I18N_DICT = {
@@ -804,9 +803,102 @@
     return normalizeLangCode(haLang);
   }
 
+  const I18N_KEY_ALIASES = {
+    cmd_subtitle: "cmdSub",
+    kpi_printers: "kpiPrinters",
+    kpi_online: "kpiOnline",
+    kpi_ams_units: "kpiAmsUnits",
+    kpi_hms_alerts: "kpiHmsAlerts",
+    kpi_print_hours: "kpiPrintHours",
+    btn_filament_finder: "btnFilamentFinder",
+    btn_automations: "btnAutomations",
+    btn_setup_guide: "btnShowGuide",
+    btn_hide_guide: "btnHideGuide",
+    btn_add_printer: "btnAddPrinter",
+    empty_ready_pair: "readyToPair",
+    empty_connect_btn: "connectNow",
+    tab_cam: "tabCam",
+    tab_3mf: "tab3mf",
+    tab_ctrl: "tabCtrl",
+    no_3mf_preview: "no3mfPreview",
+    cam_offline: "camOffline",
+    ctrl_light_on: "lightOn",
+    ctrl_light_off: "lightOff",
+    ctrl_force_sync: "forceSync",
+    ctrl_pause: "pause",
+    ctrl_resume: "resume",
+    ctrl_stop_job: "stopJob",
+    confirm_stop: "confirmStopJob",
+    job_no_active: "noActiveJob",
+    job_idle_done: "idleDone",
+    job_layer: "layer",
+    tel_nozzle: "tileNozzle",
+    tel_bed_chamber: "tileBedChamber",
+    tel_build_plate: "tileBuildPlate",
+    tel_cooling_speed: "tileCoolingSpeed",
+    tel_fleet_hours: "tileFleetHours",
+    tel_target: "target",
+    tel_mode: "mode",
+    tel_standard_plate: "standardPlate",
+    door_open: "doorOpen",
+    door_closed: "doorClosed",
+    ams_open_air: "openAirRotary",
+    ams_drying: "drying",
+    ams_empty: "emptySlot",
+    ams_4slot: "amsSubStd",
+    ext_spool_title: "directExtSpool",
+    ext_spool_badge: "singleExtruderNoAms",
+    ff_badge: "ffBadge",
+    ff_title: "ffTitle",
+    ff_search_placeholder: "ffSearchPlaceholder",
+    ff_all: "ffAll",
+    wt_badge: "wtBadge",
+    wt_title: "wtTitle",
+    wt_gallery_hdr: "wtSupportedHdr",
+    wt_connect_now: "connectNow",
+    stop_job_confirm: "confirmStopJob",
+    ams_offline: "statusOffline"
+  };
+
+  const I18N_EXTRA = {
+    lang_auto: { en: "Auto", de: "Auto", fr: "Auto", es: "Auto", it: "Auto", nl: "Auto", pl: "Auto", pt: "Auto", zh: "自动", ja: "自動" },
+    safety_lock_alert_title: { en: "⚠️ SAFETY LOCK ACTIVE: Printer is currently PRINTING!", de: "⚠️ SICHERHEITSSPERRE: Drucker druckt gerade!", fr: "⚠️ VERROUILLAGE DE SÉCURITÉ : Impression en cours !", es: "⚠️ BLOQUEO DE SEGURIDAD: ¡Imprimiendo ahora!", it: "⚠️ BLOCCO DI SICUREZZA: Stampa in corso!", nl: "⚠️ VEILIGHEIDSSLOT: Printer is aan het printen!", pl: "⚠️ BLOKADA BEZPIECZEŃSTWA: Trwa drukowanie!", pt: "⚠️ TRAVA DE SEGURANÇA: Impressão em andamento!", zh: "⚠️ 安全锁已激活：打印机正在打印中！", ja: "⚠️ 安全ロック作動中：現在造形中です！" },
+    safety_lock_alert_wait: { en: "Wait until the print completes and nozzle cools below 50°C before cutting AC power.", de: "Warten Sie, bis der Druck beendet und die Düse unter 50°C abgekühlt ist.", fr: "Attendez la fin de l'impression et le refroidissement de la buse sous 50°C.", es: "Espera a que termine la impresión y la boquilla baje de 50°C.", it: "Attendi la fine della stampa e il raffreddamento dell'ugello sotto i 50°C.", nl: "Wacht tot de print klaar is en de nozzle onder 50°C is afgekoeld.", pl: "Poczekaj na koniec wydruku i schłodzenie dyszy poniżej 50°C.", pt: "Aguarde o fim da impressão e o resfriamento do bico abaixo de 50°C.", zh: "请等待打印完成且喷嘴冷却至 50°C 以下后再切断电源。", ja: "造形が完了し、ノズルが50°C以下に冷えるまで電源を切らないでください。" },
+    hms_wiki_btn: { en: "Bambu Wiki ↗", de: "Bambu Wiki ↗", fr: "Wiki Bambu ↗", es: "Wiki Bambu ↗", it: "Wiki Bambu ↗", nl: "Bambu Wiki ↗", pl: "Wiki Bambu ↗", pt: "Wiki Bambu ↗", zh: "拓竹百科 ↗", ja: "Bambu Wiki ↗" },
+    cam_live: { en: "● LIVE", de: "● LIVE", fr: "● DIRECT", es: "● EN VIVO", it: "● LIVE", nl: "● LIVE", pl: "● NA ŻYWO", pt: "● AO VIVO", zh: "● 实时", ja: "● ライブ" },
+    cam_liveview_off: { en: "📹 LAN LIVEVIEW OFF", de: "📹 LAN-LIVEVIEW AUS", fr: "📹 LIVEVIEW LAN DÉSACTIVÉ", es: "📹 LIVEVIEW LAN APAGADO", it: "📹 LIVEVIEW LAN OFF", nl: "📹 LAN-LIVEVIEW UIT", pl: "📹 PODGLĄD LAN WYŁ.", pt: "📹 LIVEVIEW LAN DESLIGADO", zh: "📹 局域网实时监控未开启", ja: "📹 LANライブビュー OFF" },
+    cam_lan_liveview_hint: { en: "Printer Online • Enable 'LAN Only Liveview' on Touchscreen", de: "Drucker Online • 'LAN Only Liveview' am Display aktivieren", fr: "Imprimante en ligne • Activez 'LAN Only Liveview' sur l'écran", es: "Impresora en línea • Activa 'LAN Only Liveview' en pantalla", it: "Stampante online • Attiva 'LAN Only Liveview' sullo schermo", nl: "Printer online • Schakel 'LAN Only Liveview' in op scherm", pl: "Drukarka online • Włącz 'LAN Only Liveview' na ekranie", pt: "Impressora online • Ative 'LAN Only Liveview' na tela", zh: "打印机在线 • 请在屏幕设置中开启“局域网实时监控”", ja: "オンライン • 本体画面で「LAN Only Liveview」をONにしてください" },
+    cam_setup_reconnect: { en: "Tap for 3-Step Guide & Reconnect ➔", de: "Tippen für Anleitung & Neuverbindung ➔", fr: "Appuyez pour le guide & reconnecter ➔", es: "Toca para guía y reconectar ➔", it: "Tocca per guida e riconnetti ➔", nl: "Tik voor gids & opnieuw verbinden ➔", pl: "Kliknij po instrukcję i połącz ➔", pt: "Toque para guia e reconectar ➔", zh: "点击查看 3 步开启指南并重连 ➔", ja: "タップして手順確認＆再接続 ➔" },
+    tel_aux: { en: "Aux", de: "Aux", fr: "Aux", es: "Aux", it: "Aux", nl: "Aux", pl: "Aux", pt: "Aux", zh: "辅助", ja: "補助" },
+    tel_chamb: { en: "Chamb", de: "Kammer", fr: "Chamb", es: "Cám", it: "Cam", nl: "Kamer", pl: "Komora", pt: "Câm", zh: "腔体", ja: "庫内" },
+    tip_smart_plug: { en: "Toggle Smart Plug Power", de: "Smart-Plug umschalten", fr: "Basculer prise connectée", es: "Alternar enchufe inteligente", it: "Commuta presa smart", nl: "Slimme stekker schakelen", pl: "Przełącz inteligentne gniazdko", pt: "Alternar tomada inteligente", zh: "切换智能插座电源", ja: "スマートプラグ電源切替" },
+    tip_light: { en: "Toggle Chamber Light", de: "Bauraumlicht umschalten", fr: "Basculer éclairage chambre", es: "Alternar luz de cámara", it: "Commuta luce camera", nl: "Kamerverlichting schakelen", pl: "Przełącz oświetlenie komory", pt: "Alternar luz da câmara", zh: "切换机箱照明灯", ja: "庫内ライト切替" },
+    tip_reload: { en: "Reload Printer Connection", de: "Druckerverbindung neu laden", fr: "Recharger la connexion", es: "Recargar conexión", it: "Ricarica connessione", nl: "Verbinding herladen", pl: "Odśwież połączenie", pt: "Recarregar conexão", zh: "重新加载打印机连接", ja: "プリンター接続を再読込" },
+    tip_edit: { en: "Edit Printer, AMS & Smart Plug", de: "Drucker, AMS & Smart-Plug bearbeiten", fr: "Modifier imprimante, AMS & prise", es: "Editar impresora, AMS y enchufe", it: "Modifica stampante, AMS e presa", nl: "Printer, AMS & stekker bewerken", pl: "Edytuj drukarkę, AMS i gniazdko", pt: "Editar impressora, AMS e tomada", zh: "编辑打印机、AMS 与智能插座", ja: "プリンター・AMS・プラグ編集" },
+    tip_delete: { en: "Remove Printer", de: "Drucker entfernen", fr: "Supprimer l'imprimante", es: "Eliminar impresora", it: "Rimuovi stampante", nl: "Printer verwijderen", pl: "Usuń drukarkę", pt: "Remover impressora", zh: "移除打印机", ja: "プリンターを削除" },
+    ff_click_highlight: { en: "Click to highlight", de: "Klicken zum Hervorheben von", fr: "Cliquer pour mettre en évidence", es: "Clic para resaltar", it: "Clicca per evidenziare", nl: "Klik om te markeren", pl: "Kliknij, aby podświetlić", pt: "Clique para destacar", zh: "点击高亮定位", ja: "クリックしてハイライト" },
+    wt_step: { en: "STEP", de: "SCHRITT", fr: "ÉTAPE", es: "PASO", it: "PASSO", nl: "STAP", pl: "KROK", pt: "PASSO", zh: "步骤", ja: "ステップ" },
+    wt_s1_title: { en: "Find Printer IP", de: "Drucker-IP finden", fr: "Trouver l'IP", es: "Buscar IP", it: "Trova IP stampante", nl: "Vind printer-IP", pl: "Znajdź IP drukarki", pt: "Encontrar IP", zh: "查找打印机 IP", ja: "プリンターIP確認" },
+    wt_s1_ams_title: { en: "Connect Bus Cable", de: "Buskabel verbinden", fr: "Brancher le câble bus", es: "Conectar cable bus", it: "Collega cavo bus", nl: "Buskabel aansluiten", pl: "Podłącz kabel magistrali", pt: "Conectar cabo bus", zh: "连接总线电缆", ja: "バスケーブル接続" },
+    wt_s2_title: { en: "Get Access Code", de: "Zugangscode abrufen", fr: "Code d'accès LAN", es: "Código de acceso", it: "Codice di accesso", nl: "Toegangscode ophalen", pl: "Kod dostępu LAN", pt: "Código de acesso", zh: "获取局域网访问码", ja: "アクセスコード取得" },
+    wt_s2_ams_title: { en: "Auto-Detect Spools", de: "Spulen automatisch erkennen", fr: "Détection auto bobines", es: "Detección automática", it: "Rilevamento bobine", nl: "Spoelen auto-detecteren", pl: "Wykrywanie szpul", pt: "Detecção automática", zh: "自动识别耗材盘", ja: "スプール自動認識" },
+    wt_s3_title: { en: "Serial Number", de: "Seriennummer", fr: "Numéro de série", es: "Número de serie", it: "Numero di serie", nl: "Serienummer", pl: "Numer seryjny", pt: "Número de série", zh: "15 位序列号", ja: "シリアル番号" },
+    wt_s3_ams_title: { en: "Select AMS Artwork", de: "AMS-Modell wählen", fr: "Choisir modèle AMS", es: "Elegir modelo AMS", it: "Seleziona modello AMS", nl: "Kies AMS-model", pl: "Wybierz model AMS", pt: "Selecionar modelo AMS", zh: "选择 AMS 型号外观", ja: "AMSモデル選択" },
+    wt_s4_add_prefix: { en: "Add", de: "Verbinden:", fr: "Ajouter", es: "Añadir", it: "Aggiungi", nl: "Toevoegen:", pl: "Dodaj", pt: "Adicionar", zh: "添加", ja: "追加:" },
+    wt_s4_ams_title: { en: "Pair Printer + AMS", de: "Drucker + AMS koppeln", fr: "Associer Imprimante + AMS", es: "Vincular Impresora + AMS", it: "Abbina Stampante + AMS", nl: "Koppel Printer + AMS", pl: "Sparuj Drukarkę + AMS", pt: "Parear Impressora + AMS", zh: "配对打印机与 AMS", ja: "プリンター＋AMS接続" },
+    wt_s4_desc: { en: "Launch the in-dashboard setup wizard right here.", de: "Starten Sie den Einrichtungsassistenten direkt hier.", fr: "Lancez l'assistant de configuration directement ici.", es: "Inicia el asistente de configuración directamente aquí.", it: "Avvia la configurazione guidata direttamente da qui.", nl: "Start de installatiewizard direct vanaf dit dashboard.", pl: "Uruchom kreatora konfiguracji bezpośrednio tutaj.", pt: "Inicie o assistente de configuração diretamente aqui.", zh: "直接在此处启动局域网打印机配对向导。", ja: "ここから直接セットアップウィザードを起動します。" },
+    empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" }
+  };
+
   function t(key, lang = "en") {
     const dict = I18N_DICT[lang] || I18N_DICT.en;
-    return dict[key] || I18N_DICT.en[key] || key;
+    const mapped = I18N_KEY_ALIASES[key] || key;
+    if (dict[mapped]) return dict[mapped];
+    if (I18N_DICT.en[mapped]) return I18N_DICT.en[mapped];
+    if (I18N_EXTRA[key]) {
+      return I18N_EXTRA[key][lang] || I18N_EXTRA[key].en || key;
+    }
+    return key;
   }
 
   function localizeStatusBadge(rawStatus, online, lang = "en") {
@@ -1135,9 +1227,7 @@
     };
 
     const isRtspCam = Boolean(sp.isRtspCam);
-    const cameraPic = isRtspCam
-      ? (sp.cameraPic || ("/api/bambu_fleet_studio/camera/" + serial))
-      : (sp.cameraStreamUrl || ("/api/bambu_fleet_studio/camera_stream/" + serial));
+    const cameraPic = sp.cameraPic || ("/api/bambu_fleet_studio/camera/" + serial);
 
     // Enrich coverPic / totalUsage from HA states if available
     const stCover = hass?.states?.["image." + prefix + "_cover_image"];
@@ -1584,9 +1674,17 @@
       const existing = bySerial.get(sn);
       if (!existing) {
         result.push(spHydrated);
-      } else if (!existing.online && spHydrated.online) {
-        // Standalone engine is online while legacy entity is offline
-        Object.assign(existing, spHydrated);
+      } else {
+        const keepDeviceId = existing.deviceId;
+        const keepEntryId = existing.entryId;
+        const keepCover = spHydrated.coverPic || existing.coverPic;
+        const keepPick = spHydrated.pickPic || existing.pickPic;
+        Object.assign(existing, spHydrated, {
+          deviceId: spHydrated.deviceId || keepDeviceId,
+          entryId: spHydrated.entryId || keepEntryId,
+          coverPic: keepCover,
+          pickPic: keepPick
+        });
       }
     }
 
@@ -3955,12 +4053,15 @@
       gap: 14px;
       box-shadow: 0 12px 32px rgba(0,0,0,0.4);
       box-sizing: border-box;
+      max-width: 100%;
+      overflow: hidden;
     }
     .cmd-brand {
       display: flex;
       align-items: center;
       gap: 14px;
       min-width: 0;
+      max-width: 100%;
     }
     .cmd-logo {
       width: 44px;
@@ -3990,6 +4091,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      min-width: 0;
+      max-width: 100%;
     }
     .kpi-pill {
       background: rgba(255,255,255,0.04);
@@ -4000,6 +4103,9 @@
       flex-direction: column;
       align-items: center;
       box-sizing: border-box;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
     }
     .kpi-val {
       font-size: 15px;
@@ -4012,11 +4118,18 @@
       letter-spacing: 0.05em;
       color: #94a3b8;
       font-weight: 700;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .cmd-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .cmd-btn {
       padding: 10px 14px;
@@ -4031,6 +4144,11 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       box-sizing: border-box;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .cmd-btn:hover, .cmd-btn.active {
       border-color: #f59e0b;
@@ -4052,6 +4170,12 @@
       color: #f8fafc;
       outline: none;
       transition: all 0.15s ease;
+      box-sizing: border-box;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .lang-select:hover, .lang-select:focus {
       border-color: #f59e0b;
@@ -4065,6 +4189,8 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
       gap: 18px;
+      min-width: 0;
+      max-width: 100%;
     }
     .p-card {
       background: linear-gradient(160deg, #171920 0%, #101217 100%);
@@ -4079,7 +4205,9 @@
       container-type: inline-size;
       container-name: pcard;
       min-width: 0;
+      max-width: 100%;
       box-sizing: border-box;
+      overflow: hidden;
     }
     .p-card.is-online {
       border-color: rgba(245, 158, 11, 0.38);
@@ -4093,6 +4221,7 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
+      min-width: 0;
     }
     .p-hdr-left {
       display: flex;
@@ -4111,6 +4240,8 @@
       padding: 3px 9px;
       border-radius: 999px;
       border: 1px solid;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .watt-pill {
       display: inline-flex;
@@ -4123,6 +4254,8 @@
       border: 1px solid rgba(245, 158, 11, 0.38);
       padding: 3px 8px;
       border-radius: 999px;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .p-dot {
       width: 7px;
@@ -4130,15 +4263,18 @@
       border-radius: 50%;
     }
     .p-name {
-      font-size: clamp(17px, 4.2vw, 20px);
+      font-size: clamp(16px, 4vw, 20px);
       font-weight: 800;
       color: #ffffff;
       line-height: 1.15;
-      word-break: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .p-sub {
       font-size: 11px;
       color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .p-hdr-actions {
       display: flex;
@@ -4426,8 +4562,9 @@
     }
     .p-telemetry-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+      min-width: 0;
     }
     .t-tile {
       background: rgba(255,255,255,0.03);
@@ -4435,18 +4572,26 @@
       border-radius: 12px;
       padding: 9px 11px;
       min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
     }
     .t-lbl {
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .t-val {
       font-size: 17px;
       font-weight: 800;
       color: #f8fafc;
       margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .t-sub {
       font-size: 10px;
@@ -4461,6 +4606,10 @@
       border: 1px solid rgba(245, 158, 11, 0.25);
       border-radius: 14px;
       padding: 11px;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .ams-hdr {
       display: flex;
@@ -4469,6 +4618,7 @@
       justify-content: space-between;
       gap: 6px;
       margin-bottom: 9px;
+      min-width: 0;
     }
     .ams-title {
       display: flex;
@@ -4476,6 +4626,7 @@
       gap: 9px;
       font-size: 12px;
       color: #f8fafc;
+      min-width: 0;
     }
     .ams-unit-thumb {
       width: 40px;
@@ -4489,6 +4640,7 @@
       height: 8px;
       border-radius: 50%;
       background: #f59e0b;
+      flex-shrink: 0;
     }
     .ams-sub {
       font-size: 10px;
@@ -4499,6 +4651,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
+      min-width: 0;
+      max-width: 100%;
     }
     .ams-chip {
       font-size: 10px;
@@ -4507,6 +4661,11 @@
       padding: 2px 7px;
       border-radius: 999px;
       color: #cbd5e1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-sizing: border-box;
     }
     .ams-chip.drying {
       background: rgba(245, 158, 11, 0.22);
@@ -4524,8 +4683,9 @@
     }
     .ams-slots-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 7px;
+      min-width: 0;
     }
     .spool-card {
       background: rgba(255,255,255,0.04);
@@ -4536,6 +4696,8 @@
       flex-direction: column;
       gap: 5px;
       min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
     }
     .spool-card.active-spool {
       border-color: #10b981;
@@ -4589,11 +4751,16 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .ext-spool-left {
       display: flex;
       align-items: center;
       gap: 10px;
+      min-width: 0;
     }
     .ext-badge {
       font-size: 10px;
@@ -4602,6 +4769,11 @@
       background: rgba(255,255,255,0.05);
       padding: 4px 8px;
       border-radius: 999px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-sizing: border-box;
     }
     .ff-section, .wt-section {
       background: linear-gradient(160deg, #16181f 0%, #101217 100%);
@@ -4609,6 +4781,8 @@
       border-radius: 20px;
       padding: 20px;
       box-sizing: border-box;
+      max-width: 100%;
+      overflow: hidden;
     }
     .ff-hdr, .wt-hdr {
       display: flex;
@@ -4617,12 +4791,15 @@
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 16px;
+      min-width: 0;
     }
     .ff-controls {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px;
+      min-width: 0;
+      max-width: 100%;
     }
     .ff-search {
       background: #090c12;
@@ -4632,6 +4809,7 @@
       color: #f8fafc;
       font-size: 12px;
       min-width: 210px;
+      max-width: 100%;
       box-sizing: border-box;
     }
     .ff-grid {
@@ -4734,6 +4912,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+      min-width: 0;
+      max-width: 100%;
     }
     .wt-pill {
       padding: 6px 12px;
@@ -4764,6 +4944,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-width: 0;
     }
     .wt-card.highlight {
       border-color: rgba(245, 158, 11, 0.4);
@@ -4902,7 +5083,7 @@
         border-radius: 16px;
       }
       .p-stage {
-        grid-template-columns: 104px 1fr;
+        grid-template-columns: 100px minmax(0, 1fr);
         height: 154px;
         gap: 8px;
       }
@@ -4913,7 +5094,7 @@
         padding: 8px 4px;
       }
       .ams-slots-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
       .spool-name {
@@ -4977,13 +5158,14 @@
       }
       .cmd-kpis {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         width: 100%;
         gap: 6px;
       }
       .kpi-pill {
         padding: 6px 4px;
         border-radius: 10px;
+        min-width: 0;
       }
       .kpi-val {
         font-size: 14px;
@@ -4992,21 +5174,36 @@
         font-size: 9px;
         letter-spacing: 0.02em;
         text-align: center;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .cmd-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
         gap: 8px;
       }
-      .cmd-btn {
+      .cmd-btn, .lang-select {
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
         text-align: center;
-        padding: 11px 8px;
+        padding: 10px 8px;
         font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cmd-btn {
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      .cmd-btn.primary {
+        grid-column: 1 / -1;
       }
       .ff-section, .wt-section {
         padding: 14px;
@@ -5061,13 +5258,14 @@
       }
       .cmd-kpis {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         width: 100%;
         gap: 6px;
       }
       .kpi-pill {
         padding: 6px 4px;
         border-radius: 10px;
+        min-width: 0;
       }
       .kpi-val {
         font-size: 14px;
@@ -5076,24 +5274,39 @@
         font-size: 9px;
         letter-spacing: 0.02em;
         text-align: center;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .cmd-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
         gap: 8px;
       }
-      .cmd-btn {
+      .cmd-btn, .lang-select {
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
         text-align: center;
-        padding: 11px 8px;
+        padding: 10px 8px;
         font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .cmd-btn {
         display: flex;
         align-items: center;
         justify-content: center;
       }
+      .cmd-btn.primary {
+        grid-column: 1 / -1;
+      }
       .printers-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 14px;
       }
       .p-card {
@@ -5102,7 +5315,7 @@
         border-radius: 16px;
       }
       .p-stage {
-        grid-template-columns: 104px 1fr;
+        grid-template-columns: 100px minmax(0, 1fr);
         height: 154px;
         gap: 8px;
       }
@@ -5110,7 +5323,7 @@
         height: 106px;
       }
       .ams-slots-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
       .spool-name {
@@ -5153,8 +5366,8 @@
         padding: 8px 14px;
       }
       .icon-btn {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
       }
     }
   `;
@@ -5412,7 +5625,7 @@
     set hass(hass) {
       this._hass = hass;
       this._startStandalonePollLoop();
-      if (STANDALONE_FLEET_STATE.lastFetchTs === 0) {
+      if (STANDALONE_FLEET_STATE.lastFetch === 0) {
         fetchStandaloneFleet(hass, () => {
           if (this._hass) this.hass = this._hass;
         });
