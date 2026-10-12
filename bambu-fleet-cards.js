@@ -18,7 +18,7 @@
  * License: MIT
  */
 (function() {
-  const CARD_VERSION = "1.3.0";
+  const CARD_VERSION = "1.1.3";
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -1259,9 +1259,38 @@
     return "";
   }
 
+  const GITHUB_LATEST_RELEASE_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest";
+  const GITHUB_LATEST_RELEASE_URL = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest";
+
+  function parseSemverTuple(verStr) {
+    const cleaned = String(verStr || "").trim().replace(/^[^0-9]*/, "");
+    const parts = cleaned.split(/[^0-9]+/).filter(Boolean).map(n => parseInt(n, 10) || 0);
+    while (parts.length < 3) parts.push(0);
+    return [parts[0], parts[1], parts[2]];
+  }
+
+  function isNewerSemver(candidateVer, currentVer) {
+    const a = parseSemverTuple(candidateVer);
+    const b = parseSemverTuple(currentVer);
+    for (let i = 0; i < 3; i++) {
+      if (a[i] > b[i]) return true;
+      if (a[i] < b[i]) return false;
+    }
+    return false;
+  }
+
   const STANDALONE_FLEET_STATE = {
     printers: [],
     notifications: null,
+    versionInfo: {
+      currentVersion: CARD_VERSION,
+      latestVersion: CARD_VERSION,
+      updateAvailable: false,
+      releaseUrl: GITHUB_LATEST_RELEASE_URL,
+      releaseName: "v" + CARD_VERSION,
+      checkedAt: 0,
+      checkingClient: false
+    },
     active: false,
     inFlight: false,
     lastFetch: 0,
@@ -1269,6 +1298,58 @@
     lastReloadBySerial: {},
     lastLanScan: 0
   };
+
+  function checkClientGithubRelease(onUpdated) {
+    const vi = STANDALONE_FLEET_STATE.versionInfo;
+    const now = Date.now();
+    if (vi.checkingClient || (now - vi.checkedAt < 1800000)) return;
+    vi.checkingClient = true;
+    fetch(GITHUB_LATEST_RELEASE_API, {
+      headers: { "Accept": "application/vnd.github+json" }
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        vi.checkedAt = Date.now();
+        if (data && data.tag_name) {
+          const cleanTag = String(data.tag_name).trim().replace(/^[vV]+/, "");
+          if (cleanTag) {
+            vi.latestVersion = cleanTag;
+            vi.updateAvailable = isNewerSemver(cleanTag, vi.currentVersion);
+            vi.releaseUrl = data.html_url || GITHUB_LATEST_RELEASE_URL;
+            vi.releaseName = data.name || ("v" + cleanTag);
+            if (typeof onUpdated === "function") onUpdated();
+          }
+        }
+      })
+      .catch(() => {
+        vi.checkedAt = Date.now();
+      })
+      .finally(() => {
+        vi.checkingClient = false;
+      });
+  }
+
+  function resolveFleetVersionInfo() {
+    const vi = STANDALONE_FLEET_STATE.versionInfo;
+    const curVer = vi.currentVersion || CARD_VERSION;
+    let latestVer = vi.latestVersion || curVer;
+    let updateAvail = Boolean(vi.updateAvailable || isNewerSemver(latestVer, curVer));
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const sim = (params.get("simulate_update") || "").trim().replace(/^[vV]+/, "");
+      if (sim) {
+        latestVer = sim;
+        updateAvail = isNewerSemver(sim, curVer);
+      }
+    } catch (e) {}
+    return {
+      currentVersion: curVer,
+      latestVersion: latestVer,
+      updateAvailable: updateAvail,
+      releaseUrl: vi.releaseUrl || GITHUB_LATEST_RELEASE_URL,
+      releaseName: vi.releaseName || ("v" + latestVer)
+    };
+  }
 
   const STORAGE_NOTIFY_PREFS_KEY = "bambu_fleet_studio_notify_prefs_v1";
 
@@ -1317,10 +1398,24 @@
   }
 
   async function fetchStandaloneFleet(hass, onUpdated, force = false) {
+    checkClientGithubRelease(onUpdated);
     if (!hass || (STANDALONE_FLEET_STATE.inFlight && !force)) return;
     STANDALONE_FLEET_STATE.inFlight = true;
     try {
       const res = await hass.callApi("GET", "bambu_fleet_studio/status");
+      if (res && res.version_info && typeof res.version_info === "object") {
+        const vi = STANDALONE_FLEET_STATE.versionInfo;
+        const srvCur = String(res.version_info.current_version || res.version || CARD_VERSION).replace(/^[vV]+/, "");
+        const srvLatest = String(res.version_info.latest_version || vi.latestVersion || srvCur).replace(/^[vV]+/, "");
+        vi.currentVersion = srvCur || CARD_VERSION;
+        if (isNewerSemver(srvLatest, vi.latestVersion)) {
+          vi.latestVersion = srvLatest;
+        }
+        vi.updateAvailable = isNewerSemver(vi.latestVersion, vi.currentVersion);
+        if (res.version_info.release_url) {
+          vi.releaseUrl = res.version_info.release_url;
+        }
+      }
       if (res && res.notifications && typeof res.notifications === "object") {
         const curNotif = STANDALONE_FLEET_STATE.notifications || {};
         STANDALONE_FLEET_STATE.notifications = {
@@ -2819,6 +2914,10 @@
   function buildAutomationBlueprint(blueprintId, printer, notifyService, extraOpts = {}) {
     const pref = printer.prefix;
     const pName = printer.name;
+    const pSerial = printer.serial || pref;
+    const cardUrl = "/bambu-fleet/fleet-overview?printer=" + pSerial + "&prefix=" + pref + "#printer-card-" + pref;
+    const camModalUrl = "/bambu-fleet/fleet-overview?printer=" + pSerial + "&prefix=" + pref + "&camera=1#printer-card-" + pref;
+    const snapImgUrl = "/api/bambu_fleet_studio/camera/" + pSerial;
     const cleanNotify = (notifyService && notifyService !== "notify.send_message" && notifyService !== "notify.notify")
       ? notifyService
       : "notify.mobile_app_jims_iphone";
@@ -2833,21 +2932,13 @@
       const config = {
         id,
         alias,
-        description: "Sends a push notification with print stats and live camera snapshot when " + pName + " finishes printing.",
+        description: "Sends a push notification with filament grams used, live camera snapshot, and direct deep-link to " + pName + "'s card when printing finishes.",
         mode: "single",
         trigger: [
           {
             platform: "state",
             entity_id: "sensor." + pref + "_print_status",
             to: "finish"
-          },
-          {
-            platform: "event",
-            event_type: "bambu_fleet_studio_printer_event",
-            event_data: {
-              prefix: pref,
-              event_type: "print_complete"
-            }
           }
         ],
         condition: [],
@@ -2857,7 +2948,7 @@
                 service: "persistent_notification.create",
                 data: {
                   title: "✅ " + pName + " — Print Finished!",
-                  message: "Job: {{ states('sensor." + pref + "_task_name') }} ({{ states('sensor." + pref + "_print_weight') }}g) completed."
+                  message: "Job: {{ states('sensor." + pref + "_task_name') }} • ⚖️ Filament Used: {{ states('sensor." + pref + "_print_weight') }}g ({{ states('sensor." + pref + "_print_length') }}m) completed."
                 }
               }
             : {
@@ -2865,8 +2956,16 @@
                 data: isMobileApp
                   ? {
                       title: "✅ " + pName + " — Print Complete!",
-                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g",
+                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • ⚖️ Filament Used: {{ states('sensor." + pref + "_print_weight') }}g ({{ states('sensor." + pref + "_print_length') }}m)",
                       data: {
+                        url: cardUrl,
+                        clickAction: cardUrl,
+                        image: snapImgUrl,
+                        group: "bambu-fleet-" + pref,
+                        actions: [
+                          { action: "URI", title: "🎯 " + pName + " Card", uri: cardUrl },
+                          { action: "URI", title: "📹 Live Camera", uri: camModalUrl }
+                        ],
                         push: {
                           sound: "default",
                           "interruption-level": "time-sensitive"
@@ -2875,7 +2974,7 @@
                     }
                   : {
                       title: "✅ " + pName + " — Print Complete!",
-                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • Weight: {{ states('sensor." + pref + "_print_weight') }}g"
+                      message: "Job: {{ states('sensor." + pref + "_task_name') }} • ⚖️ Filament Used: {{ states('sensor." + pref + "_print_weight') }}g ({{ states('sensor." + pref + "_print_length') }}m)"
                     }
               }
         ]
@@ -2889,7 +2988,7 @@
       const config = {
         id,
         alias,
-        description: "Sends an immediate alert when " + pName + " reports an HMS hardware warning, filament runout, or print error.",
+        description: "Sends an immediate alert with camera snapshot and deep-link to " + pName + "'s card when an HMS hardware warning, filament runout, or print error occurs.",
         mode: "single",
         trigger: [
           {
@@ -2901,14 +3000,6 @@
             platform: "state",
             entity_id: "binary_sensor." + pref + "_print_error",
             to: "on"
-          },
-          {
-            platform: "event",
-            event_type: "bambu_fleet_studio_printer_event",
-            event_data: {
-              prefix: pref,
-              event_type: "hms_error"
-            }
           }
         ],
         condition: [],
@@ -2918,7 +3009,7 @@
                 service: "persistent_notification.create",
                 data: {
                   title: "🚨 " + pName + " — Printer Attention Required!",
-                  message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}"
+                  message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }} • ⚖️ {{ states('sensor." + pref + "_print_weight') }}g"
                 }
               }
             : {
@@ -2926,10 +3017,18 @@
                 data: isMobileApp
                   ? {
                       title: "🚨 " + pName + " — HMS / Print Error!",
-                      message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }}",
+                      message: "Stage: {{ states('sensor." + pref + "_current_stage') }} • Job: {{ states('sensor." + pref + "_task_name') }} • ⚖️ {{ states('sensor." + pref + "_print_weight') }}g",
                       data: {
+                        url: cardUrl,
+                        clickAction: cardUrl,
+                        image: snapImgUrl,
+                        group: "bambu-fleet-" + pref,
                         importance: "high",
                         priority: "high",
+                        actions: [
+                          { action: "URI", title: "🎯 " + pName + " Card", uri: cardUrl },
+                          { action: "URI", title: "📹 Live Camera", uri: camModalUrl }
+                        ],
                         push: {
                           sound: "default",
                           "interruption-level": "critical"
@@ -4448,25 +4547,36 @@
         const selPref = autoPrinterSel.value;
         const notifySvc = autoNotifySel.value;
         const targetPrinter = selPref === "__ALL__"
-          ? (printers.find(p => p.online) || printers[0])
+          ? (printers.find(p => p.online && p.printStatus === "running") || printers.find(p => p.online) || printers[0])
           : (printers.find(p => p.prefix === selPref) || printers[0]);
         if (!targetPrinter) return;
 
         const testBtn = shadow.getElementById("testAlertBtn");
         testBtn.disabled = true;
         testBtn.textContent = "Sending Push Alert...";
-        const titleStr = "🖨️ Bambu Fleet Studio — Live Alert (" + targetPrinter.name + ")";
-        const msgStr = "Status: " + String(targetPrinter.printStatus || "idle").toUpperCase()
-          + " • Nozzle: " + (targetPrinter.nozzleTemp || "—") + "°C • Bed: " + (targetPrinter.bedTemp || "—") + "°C";
+        const rawGrams = parseFloat(targetPrinter.printWeight);
+        const rawMeters = parseFloat(targetPrinter.printLength);
+        const estGrams = (!isNaN(rawGrams) && rawGrams > 0)
+          ? rawGrams.toFixed(1)
+          : (Number(targetPrinter.progress) > 0 ? (Number(targetPrinter.progress) * 0.42).toFixed(1) : "18.5");
+        const estMeters = (!isNaN(rawMeters) && rawMeters > 0)
+          ? rawMeters.toFixed(1)
+          : (parseFloat(estGrams) * 0.33).toFixed(1);
+        const jobLabel = (targetPrinter.taskName && targetPrinter.taskName !== "No active print job" && targetPrinter.taskName !== "—")
+          ? targetPrinter.taskName
+          : "Print_Job.3mf";
+        const titleStr = "✅ Print Complete — " + targetPrinter.name;
+        const msgStr = "Job '" + jobLabel + "' (" + (targetPrinter.progress || 100) + "%) • ⚖️ Filament Used: " + estGrams + "g (" + estMeters + "m) • Tap to open " + targetPrinter.name + " card!";
 
         try {
           await persistNotifySettings({
             test: true,
+            test_printer: targetPrinter.serial || targetPrinter.prefix,
             test_title: titleStr,
             test_message: msgStr
           }, false);
           alertBox.className = "alert ok";
-          alertBox.textContent = "✓ Saved target & delivered live push notification for " + targetPrinter.name + " to " + notifySvc + "!";
+          alertBox.textContent = "✓ Sent live push notification with camera snapshot, filament grams (" + estGrams + "g), and direct card deep-link for " + targetPrinter.name + " to " + notifySvc + "!";
         } catch (err) {
           alertBox.className = "alert err";
           alertBox.textContent = "Test alert error: " + (err.message || JSON.stringify(err));
@@ -6229,6 +6339,63 @@
       padding: 2px 7px;
       border-radius: 999px;
     }
+    .cmd-version-pill {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-variant-numeric: tabular-nums;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+    .cmd-version-pill.up-to-date {
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .cmd-version-pill.up-to-date:hover {
+      color: #f8fafc;
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.42);
+    }
+    .cmd-version-pill .ver-check {
+      color: #10b981;
+      font-size: 9.5px;
+      font-weight: 900;
+    }
+    .cmd-version-pill.update-avail {
+      color: #fef3c7;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.26) 0%, rgba(234, 88, 12, 0.30) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.68);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.28);
+    }
+    .cmd-version-pill.update-avail:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 14px rgba(245, 158, 11, 0.42);
+    }
+    .cmd-version-pill .ver-up-arrow {
+      display: inline-block;
+      color: #fbbf24;
+      font-size: 11px;
+      line-height: 1;
+      animation: verArrowBounce 1.3s ease-in-out infinite;
+    }
+    .cmd-version-pill .ver-new-tag {
+      color: #34d399;
+      font-weight: 900;
+      padding-left: 2px;
+    }
+    @keyframes verArrowBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
     .cmd-sub {
       font-size: 11.5px;
       color: #94a3b8;
@@ -7716,19 +7883,34 @@
       this._filamentSearch = "";
       this._kpiFilter = "all";
       this._highlightedPrefix = "";
+      this._handledDeepLinkSig = "";
       this._lastSig = "";
       this._lastInteractedPrefix = "";
       this._rtspFrameTimer = null;
       this._standalonePollTimer = null;
       this._rtspInFlight = {};
+      this._boundUrlChange = () => {
+        this._handledDeepLinkSig = "";
+        if (this._hass) {
+          const activeLang = resolveActiveLang(this._hass, this._config.language);
+          const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs, activeLang);
+          this._checkUrlDeepLink(allPrinters);
+        }
+      };
     }
 
     connectedCallback() {
       this._startRtspFrameLoop();
       this._startStandalonePollLoop();
+      window.addEventListener("popstate", this._boundUrlChange);
+      window.addEventListener("hashchange", this._boundUrlChange);
+      window.addEventListener("location-changed", this._boundUrlChange);
     }
 
     disconnectedCallback() {
+      window.removeEventListener("popstate", this._boundUrlChange);
+      window.removeEventListener("hashchange", this._boundUrlChange);
+      window.removeEventListener("location-changed", this._boundUrlChange);
       if (this._rtspFrameTimer) {
         clearInterval(this._rtspFrameTimer);
         this._rtspFrameTimer = null;
@@ -7737,6 +7919,76 @@
         clearInterval(this._standalonePollTimer);
         this._standalonePollTimer = null;
       }
+    }
+
+    _checkUrlDeepLink(allPrinters) {
+      if (!this.shadowRoot || !Array.isArray(allPrinters) || allPrinters.length === 0) return;
+      const searchStr = window.location.search || "";
+      const hashStr = window.location.hash || "";
+      if (!searchStr && !hashStr) return;
+
+      const params = new URLSearchParams(searchStr);
+      const qPrinter = (params.get("printer") || "").trim();
+      const qPrefix = (params.get("prefix") || "").trim();
+      const openCam = params.get("camera") === "1" || params.get("open") === "camera";
+      const hashCard = hashStr.startsWith("#printer-card-")
+        ? hashStr.replace("#printer-card-", "").trim()
+        : "";
+
+      const targetKey = (qPrefix || hashCard || qPrinter).toLowerCase();
+      if (!targetKey) return;
+
+      const matched = allPrinters.find(p =>
+        (p.prefix && p.prefix.toLowerCase() === targetKey) ||
+        (p.serial && p.serial.toLowerCase() === targetKey) ||
+        (qPrinter && p.serial && p.serial.toLowerCase() === qPrinter.toLowerCase()) ||
+        (p.prefix && p.prefix.toLowerCase().includes(targetKey))
+      );
+      if (!matched) return;
+
+      const deepSig = searchStr + "|" + hashStr;
+      if (this._handledDeepLinkSig === deepSig) return;
+      this._handledDeepLinkSig = deepSig;
+
+      if (this._kpiFilter !== "all") {
+        this._kpiFilter = "all";
+      }
+      this._highlightedPrefix = matched.prefix;
+      this._lastInteractedPrefix = matched.prefix;
+
+      const scrollToTargetCard = () => {
+        if (!this.shadowRoot) return;
+        const cardEl = this.shadowRoot.getElementById("printer-card-" + matched.prefix);
+        if (cardEl) {
+          cardEl.classList.add("highlighted-card");
+          try {
+            cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch (e) {
+            cardEl.scrollIntoView();
+          }
+        }
+      };
+
+      scrollToTargetCard();
+      setTimeout(scrollToTargetCard, 150);
+      setTimeout(scrollToTargetCard, 480);
+      setTimeout(scrollToTargetCard, 950);
+
+      if (openCam && this._hass) {
+        setTimeout(() => {
+          openStudioModal(this._hass, "camera", matched);
+        }, 280);
+      }
+
+      setTimeout(() => {
+        if (this._highlightedPrefix === matched.prefix) {
+          this._highlightedPrefix = "";
+          if (this.shadowRoot) {
+            const cardEl = this.shadowRoot.getElementById("printer-card-" + matched.prefix);
+            if (cardEl) cardEl.classList.remove("highlighted-card");
+          }
+        }
+      }, 6000);
     }
 
     _startStandalonePollLoop() {
@@ -7869,7 +8121,8 @@
       }
       const activeLang = resolveActiveLang(hass, this._config.language);
       const printers = resolveAllPrinters(hass, this._config.smart_plugs, activeLang);
-      const sig = activeLang + "|" + JSON.stringify(printers.map(p => [
+      const verSig = resolveFleetVersionInfo();
+      const sig = activeLang + "|" + verSig.currentVersion + "|" + verSig.latestVersion + "|" + (verSig.updateAvailable ? "1" : "0") + "|" + JSON.stringify(printers.map(p => [
         p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
         p.chamberTemp, p.auxFan, p.chamberFan, p.doorOpen, p.remainingMins,
         p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
@@ -7959,6 +8212,17 @@
       const onlySinglePrinter = Boolean((filterPrefix || filterModel) && !onlyWalkthrough && !onlyFilament);
       const studioTitle = this._config.title || "Bambu Lab Fleet Studio";
       const expectedModelNorm = normalizeModel(filterModel || (filterPrefix ? filterPrefix.split("_")[0] : "P1S"));
+      const verInfo = resolveFleetVersionInfo();
+      const versionBadgeHtml = verInfo.updateAvailable
+        ? `<a class="cmd-version-pill update-avail" id="cmdVersionBadge" href="${verInfo.releaseUrl}" target="_blank" rel="noopener noreferrer" title="🚀 Update Available! Installed: v${verInfo.currentVersion} → Latest: v${verInfo.latestVersion} (Click to download)">
+             <span>v${verInfo.currentVersion}</span>
+             <span class="ver-up-arrow" aria-hidden="true">⬆</span>
+             <span class="ver-new-tag">v${verInfo.latestVersion}</span>
+           </a>`
+        : `<a class="cmd-version-pill up-to-date" id="cmdVersionBadge" href="${verInfo.releaseUrl}" target="_blank" rel="noopener noreferrer" title="Bambu Lab Fleet Studio v${verInfo.currentVersion} — Up to date (Click to view Releases & Changelog)">
+             <span>v${verInfo.currentVersion}</span>
+             <span class="ver-check" aria-hidden="true">✓</span>
+           </a>`;
 
       const ffOpts = {
         colorFamily: this._filamentColorFamily,
@@ -7981,6 +8245,7 @@
                     <div class="cmd-title-row">
                       <div class="cmd-title">${studioTitle}</div>
                       <span class="cmd-proto-pill">LAN • TLS</span>
+                      ${versionBadgeHtml}
                     </div>
                     <div class="cmd-sub ${isAnyPrinting ? 'live-ticker' : ''}">${subText}</div>
                   </div>
@@ -8073,6 +8338,7 @@
       });
 
       this._restoreScrollContext(scrollCtx);
+      this._checkUrlDeepLink(allPrinters);
 
       // Upgrade top Home Assistant Lovelace header tabs with multi-color neon SVGs & 3D printer renders
       enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang);

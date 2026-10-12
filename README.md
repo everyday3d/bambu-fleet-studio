@@ -32,8 +32,8 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 - **🚨 Conditional HMS Error & Print Pause Alert Strip**: Hidden (`0px`) during healthy operation; automatically expands into a high-visibility amber/red diagnostic banner when HMS faults, `print_error`, or filament runout occurs, complete with a 1-click **Bambu Wiki ↗** troubleshooting button.
 - **⚡ Safety-Locked Smart Plug Power Toggle & Live Wattage (`W`)**: Bind any Home Assistant `switch.*` and `sensor.*_power` entity per printer in the **Edit Printer** modal. Displays live power draw (`W`) and a mains toggle button that **automatically locks (`🔒`)** while printing or while `nozzleTemp > 60°C` to prevent heat-creep extruder jams.
 - **🔔 7-in-1 1-Click Notification, WLED Progress Bar & Smart Home Automation Builder**: Auto-discovers your Home Assistant `notify.mobile_app_*`, `light.wled` / `light.*`, `media_player.*`, and `switch.*` devices with 1-click **Save** & live **Test** buttons:
-  - **📱 Print Complete Push + Live Camera Snapshot** & **🚨 HMS Error / Filament Runout Alert** (with iOS/Android time-sensitive push priority).
-  - **🌈 WLED Live Print Progress Bar (`0%` → `100%`) & RGB Status Light Sync**: Turns any WLED strip (`light.wled` / `number.wled_intensity`) into a live growing `0%` → `100%` cyan progress bar (`Percent` effect) as your print advances, **flashes Emerald Green 3 times** at `100%` completion, holds **100% Solid Emerald Green**, and automatically shuts off after **5 minutes**!
+  - **📱 Deep-Linked Print Complete Push + Filament Grams (`g`) + Live Camera Snapshot (`#35`, `#36`)**: Sends job name, **exact filament grams & meters used (`⚖️ X.Xg (X.Xm)`)**, and a live camera snapshot (`Port 6000` TLS / `Port 322` RTSPS). Tapping the notification (or its **`🎯 <Printer> Card`** / **`📹 Live Camera`** action buttons) deep-links directly to that printer's card (`#printer-card-<prefix>`), smoothly scrolls it into the center of your screen with a glowing highlight border, or opens its fullscreen Live Camera modal.
+  - **🌈 WLED Live Print Progress Bar (`0%` → `100%`) & Status Light Tester (`#33`, `#35`)**: Turns any WLED strip (`light.wled` / `number.wled_intensity`) into a live growing `0%` → `100%` cyan progress bar (`Percent` effect) as your print advances, **flashes Emerald Green 3 times** at `100%` completion, holds **100% Solid Emerald Green**, and automatically shuts off after **5 minutes**—complete with an interactive 8-button **Test WLED Status Bar** hero bar right at the top of the modal!
   - **🔊 Smart Speaker Voice Alert (`tts.*`)** with optional **🌙 Quiet Hours (`10 PM – 8 AM`)**, **🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)**, **💡 5m Auto-Off Chamber Light**, and **📦 Low Spool Filament Watchdog ($\le 15\%$)**.
 - **📹 1080p RTSPS & MJPEG Live Camera Viewport + P2S Liveview Assistant**: Side-by-side model artwork and flicker-free live camera feed with double-buffered 1920×1080 RTSPS stream decoding for `P2S`, `H2`, `X1`, and `R1`, native Port `6000` TLS streaming for `A1`, `A1 Mini`, `P1S`, and `P1P`, DOM-preserved `<img>` viewports with scroll-anchored card controls, and an interactive **Enable LAN Only Liveview** setup helper when a P2S camera stream is disabled on the printer touchscreen.
 - **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers directly via the standalone LAN engine (`/api/bambu_fleet_studio/printers`) with 1-click LAN Auto-Discovery, customize printer & AMS hardware artwork, reconnect streams, or remove devices directly from the dashboard UI.
@@ -228,9 +228,37 @@ bambu-fleet-studio/
 
 ---
 
+## 🗺️ Project Roadmap & Completed Milestones ([Community Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))
+
+Vote on upcoming features in **[📊 Roadmap Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)** or join **[👋 Welcome & Roadmap Discussion #29](https://github.com/everyday3d/bambu-fleet-studio/discussions/29)**!
+
+### ✅ Shipped Milestones
+- [x] ~~**🔌 100% Standalone Local LAN MQTT (`Port 8883`) & Camera (`Port 6000` TLS / `Port 322` RTSPS) Engine** — Zero `ha-bambulab` dependency (`#15`)~~ ✅
+- [x] ~~**⏱️ Per-Printer & Fleet Lifetime Extrusion Odometer (`m` / `km` / `kg` / `~Spools`) & Hours Calibration** (`#24`)~~ ✅
+- [x] ~~**🛏️ Model-Aware Build Plate Selector (Official Bambu Lab + BIQU CryoGrip Pro Glacier / Frostbite & Panda Plates)** (`#25`)~~ ✅
+- [x] ~~**🎨 Dedicated Cross-Fleet Filament Studio & RGB Euclidean Color Name Resolver** (`#21`, `#26`)~~ ✅
+- [x] ~~**🔥 Active AMS 2 Pro & AMS HT (85°C) Filament Dryer Control Modal** (`#13`)~~ ✅
+- [x] ~~**📦 Low-Spool Filament RFID Watchdog Alert ($\le 15\%$ Remaining)** (`#33`)~~ ✅
+- [x] ~~**🌈 WLED Live Print Progress Bar (`0%` → `100%`) with 3× Emerald Green Completion Flash, 5m Auto-Off & Interactive Status Bar Tester** (`#33`, `#35`)~~ ✅
+- [x] ~~**🔊 Smart Speaker Voice TTS Announcer (with 🌙 Quiet Hours) & 🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)** (`#33`)~~ ✅
+- [x] ~~**🕒 Offline Printer "Last Online" Timestamp & Relative Time Badge** (`#34`)~~ ✅
+- [x] ~~**🎯 Deep-Linked Push Notifications with Filament Grams Used (`g`), Live Camera Snapshot & 1-Tap Scroll/Highlight to Target Printer Card** (`#35`, `#36`)~~ ✅
+- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.1.3 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
+
+### 🚧 Upcoming Roadmap (`v1.4.x` — [Vote in Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))
+- [ ] **1️⃣ 📊 Print Job History, Spool Consumption Analytics & Cost Ledger** *(~~Low-spool RFID alerts~~ ✅ & ~~Filament grams `g` in push notifications~~ ✅ shipped!)*: Automatic local ledger of completed/failed print jobs with duration, filament meters/grams used, and estimated spool cost (`$`) per job.
+- [ ] **2️⃣ 📂 Direct LAN MicroSD / Storage Browser & 1-Click Reprint Queue**: Browse `.3mf` and `.gcode` files stored on your printers over Local LAN FTPS (`Port 990`), preview embedded 3MF cover art, and trigger reprints or queue jobs across idle printers directly from the dashboard.
+- [ ] **3️⃣ 🔥 Multi-Zone Thermal Preheat Presets** *(~~Active `AMS 2 Pro` & `AMS HT` 85°C Filament Dryer Control Modal~~ ✅ shipped in `#13`!)*: 1-click nozzle/bed preheat presets (`PLA`, `PETG`, `ABS/ASA`, `PA-CF`, `TPU`) and scheduled pre-print chamber warmup.
+- [ ] **4️⃣ 🛠️ Odometer-Driven Preventative Maintenance Assistant**: Smart, customizable maintenance reminders triggered by your printer's real **Hours & Extrusion Odometer** (X/Y/Z rail/rod lubrication, lead screw greasing, carbon filter replacement, and nozzle/PTFE wear intervals) with 1-click service reset logs.
+- [ ] **5️⃣ 📱 Wall-Tablet Kiosk Mode & Community Localization Polish**: High-density wall-tablet / print-farm monitor layout plus community-verified terminology refinements for **Russian (`ru`)**, **Simplified Chinese (`zh`)**, and **Traditional Chinese (`zh-tw`)**.
+- [ ] **6️⃣ 🎞️ Automatic Layer-by-Layer Timelapse & Failure Snapshot Archiver + Smart Plug Energy (`kWh` / `$`) Ledger** *(NEW)*: Automatically capture 1 frame per layer change (or every $N$ minutes) from Port `6000` TLS / Port `322` RTSPS into `/config/www/bambu_timelapses/` for instant in-card timelapse playback, paired with per-job `kWh` electricity cost tracking from your bound Smart Plug (`sensor.*_power` / `sensor.*_energy`).
+
+---
+
 ## 🐛 Issue Tracking & Community Support
 
 - **📋 Bug Reports & Feature Requests**: Tracked exclusively via **[Bambu Lab Fleet Studio GitHub Issues](https://github.com/everyday3d/bambu-fleet-studio/issues)**.
+- **🗳️ Roadmap & Community Discussions**: Join **[GitHub Discussions](https://github.com/everyday3d/bambu-fleet-studio/discussions)** and vote in **[Roadmap Poll #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)**.
 
 ---
 

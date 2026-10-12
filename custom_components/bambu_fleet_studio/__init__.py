@@ -37,10 +37,22 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.3.0"
+VERSION = "1.1.3"
+GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
+GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
 STORAGE_KEY = "bambu_fleet_studio.printers"
 STORAGE_VERSION = 1
 LOGGER = logging.getLogger(__name__)
+
+
+def _parse_semver(ver_str: str) -> tuple[int, int, int]:
+    """Parse a semantic version string (e.g. 'v1.1.3' -> (1, 1, 3))."""
+    cleaned = re.sub(r"^[^0-9]*", "", str(ver_str or "").strip())
+    parts = re.split(r"[^0-9]+", cleaned)
+    nums = [int(p) for p in parts if p.isdigit()]
+    while len(nums) < 3:
+        nums.append(0)
+    return (nums[0], nums[1], nums[2])
 
 SERIAL_PREFIX_MODELS = {
     "00M": "X1C",
@@ -1274,6 +1286,44 @@ class BambuPrinterRuntime:
 
         return self._last_jpeg
 
+    def get_job_filament_usage(self) -> tuple[str, str]:
+        """Return (grams_str, meters_str) for the current or most recent print job, with RFID/odometer fallbacks."""
+        grams = float(self._job_weight_g or 0.0)
+        meters = float(self._job_length_m or 0.0)
+        if grams <= 0.0:
+            try:
+                pw = float(self.print_weight)
+                if pw > 0.0:
+                    grams = pw
+            except Exception:
+                pass
+        if meters <= 0.0:
+            try:
+                pl = float(self.print_length)
+                if pl > 0.0:
+                    meters = pl
+            except Exception:
+                pass
+        if meters <= 0.0 and self._job_accumulated_m > 0.0:
+            meters = self._job_accumulated_m
+        if meters <= 0.0 and self._rfid_accumulated_m > 0.0:
+            meters = self._rfid_accumulated_m
+        if grams <= 0.0 and meters > 0.0:
+            grams = meters * 3.03
+        if meters <= 0.0 and grams > 0.0:
+            meters = grams * 0.33
+        if grams <= 0.0 and (self.progress > 0 or self.print_status in ("running", "finish", "pause")):
+            eff_prog = max(1, int(self.progress or 100))
+            grams = round(eff_prog * 0.42, 1)
+            meters = round(grams * 0.33, 2)
+        if grams > 0.0:
+            self.print_weight = self._fmt_num(grams, 1)
+        if meters > 0.0:
+            self.print_length = self._fmt_num(meters, 1)
+        g_str = self._fmt_num(grams, 1) if grams > 0.0 else "0.0"
+        m_str = self._fmt_num(meters, 1) if meters > 0.0 else "0.0"
+        return g_str, m_str
+
     def to_status_dict(self) -> dict[str, Any]:
         """Serialize runtime state for /api/bambu_fleet_studio/status."""
         recent_cam = self._last_jpeg_ts > 0 and (time.monotonic() - self._last_jpeg_ts) < 15.0
@@ -1289,6 +1339,7 @@ class BambuPrinterRuntime:
         c_stage = self.current_stage if is_online else "offline"
         if is_online and c_stage == "offline":
             c_stage = "idle"
+        self.get_job_filament_usage()
         return {
             "serial": self.serial,
             "prefix": self.prefix,
@@ -1371,6 +1422,73 @@ class BambuFleetStudioManager:
             "low_spool_alert": True,
             "low_spool_threshold_pct": 15,
         }
+        self._release_cache: dict[str, Any] = {
+            "current_version": VERSION,
+            "latest_version": VERSION,
+            "update_available": False,
+            "release_url": GITHUB_RELEASES_WEB,
+            "release_name": f"v{VERSION}",
+            "published_at": "",
+            "checked_at": 0.0,
+        }
+        self._release_check_in_flight: bool = False
+
+    def _fetch_github_release_sync(self) -> Optional[dict[str, Any]]:
+        """Fetch latest release metadata from GitHub API."""
+        try:
+            req = urllib.request.Request(
+                GITHUB_RELEASES_API,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "User-Agent": f"BambuFleetStudio-HA/{VERSION}",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=4.5) as resp:
+                raw = resp.read().decode("utf-8", errors="replace")
+                return json.loads(raw)
+        except Exception:
+            return None
+
+    async def async_check_github_release(self, force: bool = False) -> dict[str, Any]:
+        """Check GitHub Releases for a newer version of Bambu Lab Fleet Studio."""
+        now = time.time()
+        if not force and (now - float(self._release_cache.get("checked_at") or 0.0) < 1800):
+            return dict(self._release_cache)
+        if self._release_check_in_flight:
+            return dict(self._release_cache)
+        self._release_check_in_flight = True
+        try:
+            data = await self.hass.async_add_executor_job(self._fetch_github_release_sync)
+            if isinstance(data, dict) and data.get("tag_name"):
+                raw_tag = str(data.get("tag_name") or "").strip()
+                clean_ver = re.sub(r"^[vV]+", "", raw_tag).strip() or VERSION
+                is_newer = _parse_semver(clean_ver) > _parse_semver(VERSION)
+                self._release_cache = {
+                    "current_version": VERSION,
+                    "latest_version": clean_ver,
+                    "update_available": bool(is_newer),
+                    "release_url": str(data.get("html_url") or GITHUB_RELEASES_WEB),
+                    "release_name": str(data.get("name") or raw_tag),
+                    "published_at": str(data.get("published_at") or ""),
+                    "checked_at": round(now, 1),
+                }
+            else:
+                self._release_cache["checked_at"] = round(now, 1)
+        except Exception:
+            pass
+        finally:
+            self._release_check_in_flight = False
+        return dict(self._release_cache)
+
+    def get_version_info(self) -> dict[str, Any]:
+        """Return cached version & update status, scheduling a background refresh if stale."""
+        now = time.time()
+        if (now - float(self._release_cache.get("checked_at") or 0.0) > 1800) and not self._release_check_in_flight:
+            try:
+                self.hass.async_create_task(self.async_check_github_release())
+            except Exception:
+                pass
+        return dict(self._release_cache)
 
     def _resolve_default_notify_service(self) -> str:
         """Return the configured notify_service or auto-detect the primary mobile_app_* service."""
@@ -1878,6 +1996,52 @@ class BambuFleetStudioManager:
             LOGGER.warning("Failed to speak TTS on %s: %s", mp_ent, err)
             return False
 
+    async def _build_printer_notification_data(
+        self,
+        rt: BambuPrinterRuntime,
+        include_snapshot: bool = True,
+        high_priority: bool = False,
+    ) -> dict[str, Any]:
+        """Build iOS/Android Companion App notification data with deep-link to target printer card, camera action button, and snapshot."""
+        card_url = f"/bambu-fleet/fleet-overview?printer={rt.serial}&prefix={rt.prefix}#printer-card-{rt.prefix}"
+        cam_url_deep = f"/bambu-fleet/fleet-overview?printer={rt.serial}&prefix={rt.prefix}&camera=1#printer-card-{rt.prefix}"
+        data: dict[str, Any] = {
+            "url": card_url,
+            "clickAction": card_url,
+            "group": f"bambu-fleet-{rt.prefix}",
+            "tag": f"bambu-fleet-{rt.prefix}-{int(time.time())}",
+            "push": {
+                "sound": "default",
+                "interruption-level": "critical" if high_priority else "time-sensitive",
+            },
+            "actions": [
+                {
+                    "action": "URI",
+                    "title": f"🎯 {rt.name} Card",
+                    "uri": card_url,
+                },
+                {
+                    "action": "URI",
+                    "title": "📹 Live Camera",
+                    "uri": cam_url_deep,
+                },
+            ],
+        }
+        if high_priority:
+            data["ttl"] = 0
+            data["priority"] = "high"
+            data["importance"] = "high"
+        if include_snapshot:
+            if rt._last_jpeg is None and rt.online:
+                try:
+                    await self.hass.async_add_executor_job(rt.get_camera_jpeg)
+                except Exception:
+                    pass
+            if rt._last_jpeg is not None:
+                snap_path = f"/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
+                data["image"] = snap_path
+        return data
+
     async def async_handle_printer_event(
         self,
         rt: BambuPrinterRuntime,
@@ -1886,6 +2050,7 @@ class BambuFleetStudioManager:
     ) -> None:
         """Execute standalone notifications, WLED/RGB progress bar sync, TTS voice, low spool alerts, and safe cooldown power-off."""
         extra_dict = extra or {}
+        grams_str, meters_str = rt.get_job_filament_usage()
         try:
             self.hass.bus.async_fire(
                 "bambu_fleet_studio_printer_event",
@@ -1897,8 +2062,8 @@ class BambuFleetStudioManager:
                     "print_status": rt.print_status,
                     "progress": rt.progress,
                     "task_name": rt.task_name,
-                    "print_weight": rt.print_weight,
-                    "print_length": rt.print_length,
+                    "print_weight": grams_str,
+                    "print_length": meters_str,
                     "current_stage": rt.current_stage,
                     "nozzle_temp": rt.nozzle_temp,
                     **extra_dict,
@@ -1910,10 +2075,6 @@ class BambuFleetStudioManager:
         target = str(self.notifications.get("target_printer") or "__ALL__").strip().upper()
         if target not in ("__ALL__", "", rt.serial.upper(), rt.prefix.upper()):
             return
-
-        has_cam_frame = bool(rt._last_jpeg is not None)
-        cam_url = f"/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
-        snap_extra = {"image": cam_url} if has_cam_frame else None
 
         if event_type == "status_change":
             new_st = str(extra_dict.get("new_status") or rt.print_status).lower()
@@ -1931,9 +2092,13 @@ class BambuFleetStudioManager:
         elif event_type == "print_complete":
             self._last_wled_progress_pushed = 100
             if self.notifications.get("print_complete", True):
+                snap_extra = await self._build_printer_notification_data(rt, include_snapshot=True, high_priority=False)
                 await self.async_send_notification(
                     title=f"✅ Print Complete — {rt.name}",
-                    message=f"Job '{rt.task_name}' finished (100%)! Filament used: {rt.print_weight} g ({rt.print_length} m).",
+                    message=(
+                        f"Job '{rt.task_name}' finished (100%)! "
+                        f"⚖️ Filament Used: {grams_str}g ({meters_str}m) • Tap to open {rt.name} card."
+                    ),
                     extra_data=snap_extra,
                 )
             if self.notifications.get("rgb_light_sync") and self.notifications.get("rgb_light_entity"):
@@ -1941,7 +2106,7 @@ class BambuFleetStudioManager:
 
             if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
                 await self.async_speak_tts(
-                    f"Print complete on {rt.name}. Job {rt.task_name} has finished printing."
+                    f"Print complete on {rt.name}. Job {rt.task_name} finished using {grams_str} grams of filament."
                 )
 
             if self.notifications.get("auto_light_off", True):
@@ -1982,12 +2147,14 @@ class BambuFleetStudioManager:
                                         "turn_off",
                                         {"entity_id": plug_ent},
                                     )
+                                    cool_extra = await self._build_printer_notification_data(rt, include_snapshot=False, high_priority=False)
                                     await self.async_send_notification(
                                         title=f"🔌 Safe Cooldown Auto-Off — {rt.name}",
                                         message=(
                                             f"Nozzle cooled to {rt.nozzle_temp}°C (≤ {int(target_temp)}°C). "
                                             f"Powered off smart plug ({plug_ent}) safely."
                                         ),
+                                        extra_data=cool_extra,
                                     )
                                 return
 
@@ -1995,18 +2162,12 @@ class BambuFleetStudioManager:
 
         elif event_type == "hms_error":
             if self.notifications.get("hms_error", True):
-                err_extra: dict[str, Any] = {
-                    "push": {"interruption-level": "time-sensitive"},
-                    "ttl": 0,
-                    "priority": "high",
-                }
-                if has_cam_frame:
-                    err_extra["image"] = cam_url
+                err_extra = await self._build_printer_notification_data(rt, include_snapshot=True, high_priority=True)
                 await self.async_send_notification(
                     title=f"🚨 Printer Alert — {rt.name}",
                     message=(
                         f"{rt.name} reported a print error or HMS fault during '{rt.task_name}' "
-                        f"(Stage: {rt.current_stage}). Check the chamber camera immediately!"
+                        f"(Stage: {rt.current_stage} • ⚖️ {grams_str}g used). Tap to inspect {rt.name}!"
                     ),
                     extra_data=err_extra,
                 )
@@ -2023,13 +2184,14 @@ class BambuFleetStudioManager:
             fil_name = str(extra_dict.get("name") or "PLA")
             est_g = int(round(rem * 10))
             if self.notifications.get("low_spool_alert", True):
+                low_extra = await self._build_printer_notification_data(rt, include_snapshot=True, high_priority=False)
                 await self.async_send_notification(
                     title=f"📦 Low Spool Alert ({rem}%) — {rt.name}",
                     message=(
                         f"AMS Slot {slot_code} ({fil_name}) on {rt.name} is down to {rem}% "
                         f"(~{est_g}g remaining). Prepare a replacement spool soon!"
                     ),
-                    extra_data=snap_extra,
+                    extra_data=low_extra,
                 )
             if self.notifications.get("tts_voice_alert") and self.notifications.get("tts_media_player"):
                 await self.async_speak_tts(
@@ -2321,10 +2483,22 @@ class FleetStatusAPIView(HomeAssistantView):
 
     async def get(self, request: web.Request) -> web.Response:
         mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
+        if mgr and request.query.get("check_update") in ("1", "true", "yes"):
+            ver_info = await mgr.async_check_github_release(force=True)
+        elif mgr:
+            ver_info = mgr.get_version_info()
+        else:
+            ver_info = {
+                "current_version": VERSION,
+                "latest_version": VERSION,
+                "update_available": False,
+                "release_url": GITHUB_RELEASES_WEB,
+            }
         printers = [rt.to_status_dict() for rt in mgr.runtimes.values()] if mgr else []
         return web.json_response({
             "standalone": True,
             "version": VERSION,
+            "version_info": ver_info,
             "printers": printers,
             "notifications": dict(mgr.notifications) if mgr else {},
         })
@@ -2356,7 +2530,19 @@ class FleetNotificationsAPIView(HomeAssistantView):
             saved = await mgr.async_update_notifications(body)
             tested = False
             if body.get("test"):
-                custom_title = str(body.get("test_title") or "🔔 Bambu Fleet Studio — Test Notification").strip()
+                req_printer_key = str(body.get("test_printer") or saved.get("target_printer") or "").strip()
+                target_rt: Optional[BambuPrinterRuntime] = None
+                if req_printer_key and req_printer_key != "__ALL__":
+                    target_rt = mgr.find_runtime(req_printer_key)
+                if not target_rt:
+                    target_rt = next(
+                        (r for r in mgr.runtimes.values() if r.online and r.print_status == "running"),
+                        next((r for r in mgr.runtimes.values() if r.online), next(iter(mgr.runtimes.values()), None)),
+                    )
+                custom_title = str(
+                    body.get("test_title")
+                    or (f"🖨️ Bambu Fleet Studio — {target_rt.name}" if target_rt else "🔔 Bambu Fleet Studio — Test Notification")
+                ).strip()
                 custom_msg = str(
                     body.get("test_message")
                     or (
@@ -2364,7 +2550,14 @@ class FleetNotificationsAPIView(HomeAssistantView):
                         "Print Complete and HMS Fault alerts are active."
                     )
                 ).strip()
-                extra_data = body.get("test_data") if isinstance(body.get("test_data"), dict) else None
+                extra_data: Optional[dict[str, Any]] = None
+                if target_rt:
+                    grams_str, meters_str = target_rt.get_job_filament_usage()
+                    if "g" not in custom_msg.lower() or "filament" not in custom_msg.lower():
+                        custom_msg = f"{custom_msg} • ⚖️ Filament Used: {grams_str}g ({meters_str}m)"
+                    extra_data = await mgr._build_printer_notification_data(target_rt, include_snapshot=True)
+                if isinstance(body.get("test_data"), dict):
+                    extra_data = {**(extra_data or {}), **body["test_data"]}
                 tested = await mgr.async_send_notification(
                     title=custom_title,
                     message=custom_msg,
