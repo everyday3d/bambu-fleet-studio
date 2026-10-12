@@ -612,9 +612,12 @@ class BambuPrinterRuntime:
                 ctx.verify_mode = ssl.CERT_NONE
                 client.tls_set_context(ctx)
 
+                disconnected = [False]
+
                 def on_connect(cli, userdata, flags, rc, *args):
                     rc_val = getattr(rc, "value", rc)
                     if rc_val == 0:
+                        disconnected[0] = False
                         self.online = True
                         self.last_seen = time.time()
                         if self.print_status == "offline":
@@ -642,15 +645,20 @@ class BambuPrinterRuntime:
                             }),
                         )
                     else:
+                        disconnected[0] = True
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
 
                 def on_disconnect(cli, userdata, *args):
-                    self.online = False
-                    self.print_status = "offline"
+                    disconnected[0] = True
+                    if (time.time() - self.last_seen) > 90.0:
+                        self.online = False
+                        self.print_status = "offline"
 
                 def on_message(cli, userdata, msg):
                     self.online = True
                     self.last_seen = time.time()
+                    if self.print_status == "offline":
+                        self.print_status = "idle"
                     try:
                         data = json.loads(msg.payload.decode("utf-8", errors="ignore"))
                         self._handle_mqtt_payload(data)
@@ -666,18 +674,28 @@ class BambuPrinterRuntime:
                 client.loop_start()
 
                 last_pushall = time.time()
-                while not self._stop_event.is_set():
-                    time.sleep(2.0)
-                    if self.online and (time.time() - last_pushall) > 75.0:
-                        last_pushall = time.time()
+                while not self._stop_event.is_set() and not disconnected[0]:
+                    time.sleep(1.5)
+                    now_ts = time.time()
+                    if self.online and (now_ts - last_pushall) > 60.0:
+                        last_pushall = now_ts
                         self.send_action("pushall")
-                    if self.online and (time.time() - self.last_seen) > 180.0:
+                    if (now_ts - self.last_seen) > 120.0:
                         break
 
-                client.loop_stop()
+                try:
+                    client.loop_stop()
+                    client.disconnect()
+                except Exception:
+                    pass
+                for _ in range(4):
+                    if self._stop_event.is_set():
+                        break
+                    time.sleep(0.5)
             except Exception as err:
-                self.online = False
-                self.print_status = "offline"
+                if (time.time() - self.last_seen) > 90.0:
+                    self.online = False
+                    self.print_status = "offline"
                 LOGGER.warning("MQTT loop error for %s (%s): %s", self.serial, self.host, err)
                 for _ in range(10):
                     if self._stop_event.is_set():
@@ -971,6 +989,7 @@ class BambuPrinterRuntime:
                                     jpeg_bytes = bytes(buf[soi : eoi + 2])
                                     del buf[: eoi + 2]
                                     if len(jpeg_bytes) > 1024:
+                                        self.online = True
                                         with self._jpeg_lock:
                                             self._last_jpeg = jpeg_bytes
                                             self._last_jpeg_ts = time.monotonic()
@@ -1019,10 +1038,19 @@ class BambuPrinterRuntime:
 
     def to_status_dict(self) -> dict[str, Any]:
         """Serialize runtime state for /api/bambu_fleet_studio/status."""
-        cam_available = self.online and (
+        recent_mqtt = self.last_seen > 0 and (time.time() - self.last_seen) < 120.0
+        recent_cam = self._last_jpeg_ts > 0 and (time.monotonic() - self._last_jpeg_ts) < 30.0
+        is_online = bool(self.online or recent_mqtt or recent_cam)
+        cam_available = is_online and (
             (self.model in RTSP_MODELS and self.rtsp_url != "disable")
             or (self.model not in RTSP_MODELS and self._last_jpeg is not None)
         )
+        p_status = self.print_status if is_online else "offline"
+        if is_online and p_status == "offline":
+            p_status = "idle"
+        c_stage = self.current_stage if is_online else "offline"
+        if is_online and c_stage == "offline":
+            c_stage = "idle"
         return {
             "serial": self.serial,
             "prefix": self.prefix,
@@ -1032,9 +1060,9 @@ class BambuPrinterRuntime:
             "rawModelNorm": self.model,
             "ipAddress": self.host,
             "swVersion": self.sw_version,
-            "online": self.online,
-            "printStatus": self.print_status if self.online else "offline",
-            "currentStage": self.current_stage if self.online else "offline",
+            "online": is_online,
+            "printStatus": p_status,
+            "currentStage": c_stage,
             "progress": self.progress,
             "nozzleTemp": self.nozzle_temp,
             "nozzleTarget": self.nozzle_target,

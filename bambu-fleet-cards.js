@@ -1150,7 +1150,8 @@
     active: false,
     inFlight: false,
     lastFetch: 0,
-    lastJson: ""
+    lastJson: "",
+    lastReloadBySerial: {}
   };
 
   async function fetchStandaloneFleet(hass, onUpdated) {
@@ -1160,7 +1161,17 @@
       const res = await hass.callApi("GET", "bambu_fleet_studio/status");
       if (res && Array.isArray(res.printers)) {
         STANDALONE_FLEET_STATE.active = true;
-        STANDALONE_FLEET_STATE.lastFetch = Date.now();
+        const now = Date.now();
+        STANDALONE_FLEET_STATE.lastFetch = now;
+        for (const p of res.printers) {
+          if (p && p.serial && !p.online && p.nozzleTemp && p.nozzleTemp !== "—") {
+            const lastRel = STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] || 0;
+            if (now - lastRel > 30000) {
+              STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] = now;
+              hass.callApi("POST", "bambu_fleet_studio/command", { serial: p.serial, action: "reload" }).catch(() => {});
+            }
+          }
+        }
         const nextJson = JSON.stringify(res.printers);
         if (nextJson !== STANDALONE_FLEET_STATE.lastJson) {
           STANDALONE_FLEET_STATE.lastJson = nextJson;
@@ -1183,9 +1194,13 @@
     const displayModelNorm = overrideMod ? normalizeModel(overrideMod) : rawModelNorm;
     const displayModelLabel = displayModelNorm === "R1" ? "R1 Laser" : (overrideMod || sp.model || displayModelNorm);
 
-    const online = Boolean(sp.online);
-    const printStatus = online ? String(sp.printStatus || "idle") : "offline";
-    const currentStage = online ? String(sp.currentStage || "idle") : "offline";
+    const haOnline = hass?.states?.["binary_sensor." + prefix + "_online"]?.state === "on";
+    const hasLiveNozzle = Boolean(sp.nozzleTemp && sp.nozzleTemp !== "—" && sp.nozzleTemp !== "0" && sp.wifiSignal && sp.wifiSignal !== "—");
+    const online = Boolean(sp.online || haOnline || hasLiveNozzle);
+    const rawStatus = String(sp.printStatus || "").toLowerCase();
+    const printStatus = online ? (rawStatus && rawStatus !== "offline" ? rawStatus : "idle") : "offline";
+    const rawStage = String(sp.currentStage || "").toLowerCase();
+    const currentStage = online ? (rawStage && rawStage !== "offline" ? rawStage : "idle") : "offline";
     const progress = typeof sp.progress === "number" ? sp.progress : (parseFloat(sp.progress) || 0);
     const remainingMins = String(sp.remainingMins || "0");
     const remMinsNum = parseFloat(remainingMins);
@@ -1349,7 +1364,7 @@
       lightOn: Boolean(sp.lightOn),
       cameraEntityId: "camera." + prefix + "_camera",
       cameraStateObj: null,
-      camAvailable: Boolean(sp.camAvailable),
+      camAvailable: Boolean(sp.camAvailable || (online && cameraPic)),
       isRtspCam,
       cameraPic,
       cameraSwitchEntityId: "",
@@ -1743,9 +1758,21 @@
         const keepEntryId = existing.entryId;
         const keepCover = spHydrated.coverPic || existing.coverPic;
         const keepPick = spHydrated.pickPic || existing.pickPic;
+        const mergedOnline = Boolean(spHydrated.online || existing.online);
+        const mergedStatus = mergedOnline
+          ? ((spHydrated.printStatus && spHydrated.printStatus !== "offline") ? spHydrated.printStatus : (existing.printStatus !== "offline" ? existing.printStatus : "idle"))
+          : "offline";
+        const mergedStage = mergedOnline
+          ? ((spHydrated.currentStage && spHydrated.currentStage !== "offline") ? spHydrated.currentStage : (existing.currentStage !== "offline" ? existing.currentStage : "idle"))
+          : "offline";
+        const mergedCamAvail = Boolean(spHydrated.camAvailable || existing.camAvailable || (mergedOnline && spHydrated.cameraPic));
         Object.assign(existing, spHydrated, {
           deviceId: spHydrated.deviceId || keepDeviceId,
           entryId: spHydrated.entryId || keepEntryId,
+          online: mergedOnline,
+          printStatus: mergedStatus,
+          currentStage: mergedStage,
+          camAvailable: mergedCamAvail,
           coverPic: keepCover,
           pickPic: keepPick
         });
@@ -4102,6 +4129,10 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      width: 100%;
+      max-width: 100%;
+      padding: 16px 20px 28px;
+      box-sizing: border-box;
       container-type: inline-size;
       container-name: studio;
     }
@@ -4138,10 +4169,10 @@
     .cmd-top-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: flex-start;
+      gap: 14px;
       min-width: 0;
-      flex: 1 1 260px;
+      flex: 1 1 240px;
     }
     .cmd-brand {
       display: flex;
@@ -5335,6 +5366,7 @@
     @container studio (max-width: 680px) {
       .studio-wrap {
         gap: 14px;
+        padding: 10px 10px 20px;
       }
       .cmd-bar {
         padding: 13px 14px;
@@ -5344,6 +5376,7 @@
       .cmd-top-row {
         width: 100%;
         flex: 1 1 100%;
+        justify-content: space-between;
       }
       .cmd-brand {
         min-width: 0;
@@ -5446,6 +5479,7 @@
     @media (max-width: 680px) {
       .studio-wrap {
         gap: 14px;
+        padding: 10px 10px 20px;
       }
       .cmd-bar {
         padding: 13px 14px;
@@ -5455,6 +5489,7 @@
       .cmd-top-row {
         width: 100%;
         flex: 1 1 100%;
+        justify-content: space-between;
       }
       .cmd-brand {
         min-width: 0;
@@ -6332,6 +6367,20 @@
 
     getCardSize() {
       return 8;
+    }
+
+    getGridOptions() {
+      return {
+        columns: "full",
+        rows: "auto"
+      };
+    }
+
+    getLayoutOptions() {
+      return {
+        grid_columns: "full",
+        grid_rows: "auto"
+      };
     }
   }
 
