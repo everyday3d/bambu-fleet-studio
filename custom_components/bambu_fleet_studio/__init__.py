@@ -1214,6 +1214,10 @@ class BambuFleetStudioManager:
         self.configs[serial] = cfg
         await self.async_save()
         rt = await self.async_start_printer(serial, cfg)
+        for _ in range(22):
+            if rt.online:
+                break
+            await asyncio.sleep(0.1)
         return rt.to_status_dict()
 
     async def async_delete_printer(self, serial_or_prefix: str) -> bool:
@@ -1320,12 +1324,18 @@ async def async_scan_bambu_network(hass: HomeAssistant, subnet_override: str = "
         existing = known_by_serial.get(sn)
         if existing:
             prev_host = existing.get("host", "")
+            ip_changed = bool(prev_host and live_host and prev_host != live_host)
+            if ip_changed and mgr:
+                try:
+                    await mgr.async_upsert_printer({"serial": sn, "host": live_host})
+                except Exception:
+                    pass
             discovered_by_serial[sn] = {
                 "serial": sn,
                 "model": existing.get("model") or inferred_model or "P1S",
                 "host": live_host or prev_host,
-                "previous_host": prev_host if (prev_host and live_host and prev_host != live_host) else "",
-                "ip_changed": bool(prev_host and live_host and prev_host != live_host),
+                "previous_host": prev_host if ip_changed else "",
+                "ip_changed": ip_changed,
                 "name": existing.get("name") or f"{inferred_model or 'Bambu'}_{sn[-4:]}",
                 "entry_id": existing.get("entry_id", sn),
                 "configured": True,
@@ -1402,7 +1412,15 @@ class FleetPrintersAPIView(HomeAssistantView):
 
     async def get(self, request: web.Request) -> web.Response:
         mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
-        printers = [rt.to_status_dict() for rt in mgr.runtimes.values()] if mgr else []
+        printers = []
+        if mgr:
+            for rt in mgr.runtimes.values():
+                d = rt.to_status_dict()
+                cfg = mgr.configs.get(rt.serial, {})
+                d["host"] = rt.host or cfg.get("host", "")
+                d["access_code"] = rt.access_code or cfg.get("access_code", "")
+                d["usage_hours"] = cfg.get("usage_hours", rt.total_usage)
+                printers.append(d)
         return web.json_response({"printers": printers})
 
     async def post(self, request: web.Request) -> web.Response:

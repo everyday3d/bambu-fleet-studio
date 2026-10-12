@@ -1151,11 +1151,12 @@
     inFlight: false,
     lastFetch: 0,
     lastJson: "",
-    lastReloadBySerial: {}
+    lastReloadBySerial: {},
+    lastLanScan: 0
   };
 
-  async function fetchStandaloneFleet(hass, onUpdated) {
-    if (!hass || STANDALONE_FLEET_STATE.inFlight) return;
+  async function fetchStandaloneFleet(hass, onUpdated, force = false) {
+    if (!hass || (STANDALONE_FLEET_STATE.inFlight && !force)) return;
     STANDALONE_FLEET_STATE.inFlight = true;
     try {
       const res = await hass.callApi("GET", "bambu_fleet_studio/status");
@@ -1163,17 +1164,36 @@
         STANDALONE_FLEET_STATE.active = true;
         const now = Date.now();
         STANDALONE_FLEET_STATE.lastFetch = now;
+        let hasOfflinePrinter = false;
         for (const p of res.printers) {
-          if (p && p.serial && !p.online && p.nozzleTemp && p.nozzleTemp !== "—") {
-            const lastRel = STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] || 0;
-            if (now - lastRel > 30000) {
-              STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] = now;
-              hass.callApi("POST", "bambu_fleet_studio/command", { serial: p.serial, action: "reload" }).catch(() => {});
+          if (p && p.serial && !p.online) {
+            hasOfflinePrinter = true;
+            if (p.nozzleTemp && p.nozzleTemp !== "—") {
+              const lastRel = STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] || 0;
+              if (now - lastRel > 30000) {
+                STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] = now;
+                hass.callApi("POST", "bambu_fleet_studio/command", { serial: p.serial, action: "reload" }).catch(() => {});
+              }
             }
           }
         }
+        if (hasOfflinePrinter && (now - STANDALONE_FLEET_STATE.lastLanScan > 45000)) {
+          STANDALONE_FLEET_STATE.lastLanScan = now;
+          hass.callApi("GET", "bambu_fleet_studio/scan_network").then(scanRes => {
+            if (scanRes && Array.isArray(scanRes.printers)) {
+              for (const dp of scanRes.printers) {
+                if (dp && dp.serial && dp.host && dp.ip_changed) {
+                  hass.callApi("POST", "bambu_fleet_studio/printers", {
+                    serial: dp.serial,
+                    host: dp.host
+                  }).then(() => fetchStandaloneFleet(hass, onUpdated, true)).catch(() => {});
+                }
+              }
+            }
+          }).catch(() => {});
+        }
         const nextJson = JSON.stringify(res.printers);
-        if (nextJson !== STANDALONE_FLEET_STATE.lastJson) {
+        if (nextJson !== STANDALONE_FLEET_STATE.lastJson || force) {
           STANDALONE_FLEET_STATE.lastJson = nextJson;
           STANDALONE_FLEET_STATE.printers = res.printers;
           if (typeof onUpdated === "function") onUpdated();
@@ -2976,6 +2996,10 @@
           hostInp.value = item.host;
         }
         applyDiscoveredModelAndSerial(item.serial, item.model);
+        serialInp.setAttribute("data-configured", item.configured ? "1" : "0");
+        if (item.configured && codeInp && !codeInp.value) {
+          codeInp.placeholder = "Saved in Fleet Studio (optional — leave blank to keep)";
+        }
         const modNorm = normalizeModel(item.model || inferModelFromSerial(item.serial));
         if (item.name && (!nameInp.value || nameInp.getAttribute("data-autofilled") === "1")) {
           nameInp.value = item.name;
@@ -3023,7 +3047,7 @@
                 </div>
                 <div class="disc-meta">🌐 ${item.host || 'No IP'} • SN: ${item.serial} • Model: ${modNorm}</div>
               </div>
-              <span class="disc-cta">${isNew ? '➕ Pair ➔' : 'Select ➔'}</span>
+              <span class="disc-cta">${isNew ? '➕ Pair ➔' : (ipChanged ? '🔄 Update IP ➔' : 'Select ➔')}</span>
             </div>
           `;
         }).join("");
@@ -3037,10 +3061,13 @@
           };
         });
 
-        const firstNewIdx = items.findIndex(x => !x.configured && x.host);
-        if (firstNewIdx >= 0 && !hostInp.value) {
-          const cardEl = shadow.querySelector(`.disc-card[data-disc-idx="${firstNewIdx}"]`);
-          selectDiscoveredPrinter(items[firstNewIdx], cardEl, false);
+        let autoSelectIdx = items.findIndex(x => !x.configured && x.host);
+        if (autoSelectIdx < 0) {
+          autoSelectIdx = items.findIndex(x => x.ip_changed && x.host);
+        }
+        if (autoSelectIdx >= 0 && !hostInp.value) {
+          const cardEl = shadow.querySelector(`.disc-card[data-disc-idx="${autoSelectIdx}"]`);
+          selectDiscoveredPrinter(items[autoSelectIdx], cardEl, false);
         }
       };
 
@@ -3166,8 +3193,10 @@
         const hoursVal = shadow.getElementById("hoursInp").value.trim() || "0";
         const alertBox = shadow.getElementById("alertBox");
         const btn = shadow.getElementById("submitAddBtn");
+        const isAlreadyConfigured = serialInp.getAttribute("data-configured") === "1"
+          || Boolean(serialVal && existingPrinters.some(p => String(p.serial || "").toUpperCase() === serialVal));
 
-        if (!hostVal || !codeVal) {
+        if (!hostVal || (!codeVal && !isAlreadyConfigured)) {
           alertBox.className = "alert err";
           alertBox.textContent = "Enter Local IP Address and 8-Char Access Code.";
           return;
@@ -3210,7 +3239,8 @@
             if (finalSerial) {
               saveModelOverride(finalSerial, chosenModel);
             }
-            fetchStandaloneFleet(hass, null, true);
+            fetchStandaloneFleet(hass, () => { if (onComplete) onComplete(); }, true);
+            setTimeout(() => { fetchStandaloneFleet(hass, () => { if (onComplete) onComplete(); }, true); }, 2000);
             alertBox.className = "alert ok";
             alertBox.textContent = "✓ Device connected via Standalone LAN Engine (Port 8883 TLS)!";
             setTimeout(() => { close(); if (onComplete) onComplete(); }, 650);
@@ -3486,31 +3516,30 @@
             const stList = await hass.callApi("GET", "bambu_fleet_studio/printers");
             const match = (stList?.printers || []).find(x => String(x.serial || "").toUpperCase() === String(payload.serial || "").toUpperCase());
             if (match) {
-              if (match.host) shadow.getElementById("hostInp").value = match.host;
+              const savedHost = match.host || (match.ipAddress !== "—" ? match.ipAddress : "");
+              if (savedHost) shadow.getElementById("hostInp").value = savedHost;
               if (match.access_code) shadow.getElementById("codeInp").value = match.access_code;
               if (match.usage_hours !== undefined) shadow.getElementById("hoursInp").value = match.usage_hours;
             }
           } catch (e0) {}
 
-          // 2. Fallback: Legacy options flow if entryId is a config_entry
-          if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
-            const o1 = await hass.callApi("POST", "config/config_entries/options/flow", {
-              handler: payload.entryId
-            });
-            activeOptionsFlowId = o1.flow_id;
-            const o2 = await hass.callApi("POST", "config/config_entries/options/flow/" + o1.flow_id, {
-              printer_mode: "lan"
-            });
-            activeOptionsFlowId = o2.flow_id;
-            if (o2 && Array.isArray(o2.data_schema)) {
-              for (const f of o2.data_schema) {
-                if (f.name === "host" && f.default && !shadow.getElementById("hostInp").value) shadow.getElementById("hostInp").value = f.default;
-                if (f.name === "access_code" && f.default && !shadow.getElementById("codeInp").value) shadow.getElementById("codeInp").value = f.default;
-                if (f.name === "usage_hours" && f.default !== undefined) shadow.getElementById("hoursInp").value = f.default;
-                if (f.name === "print_cache_count" && f.default !== undefined) shadow.getElementById("cacheInp").value = f.default;
+          // 2. If printer is offline, automatically scan LAN for a new DHCP IP
+          if (!payload.online && payload.serial) {
+            try {
+              const scanData = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
+              const targetSn = String(payload.serial || "").toUpperCase();
+              const found = (scanData?.printers || []).find(p => String(p.serial || "").toUpperCase() === targetSn);
+              if (found && found.host && found.host !== shadow.getElementById("hostInp").value) {
+                shadow.getElementById("hostInp").value = found.host;
+                const alertBox = shadow.getElementById("alertBox");
+                if (alertBox) {
+                  alertBox.className = "alert ok";
+                  alertBox.textContent = "✓ Auto-detected new DHCP IP on LAN: " + found.host + " (Port 8883 TLS)!";
+                }
               }
-            }
+            } catch (eScan) {}
           }
+
           if (!editSerialInp.value && shadow.getElementById("hostInp").value) {
             try {
               const disc = await hass.callApi("GET", "bambu_fleet_studio/discover_serial?host=" + encodeURIComponent(shadow.getElementById("hostInp").value));
@@ -3518,10 +3547,10 @@
             } catch (e) {}
           }
           shadow.getElementById("hostInp").placeholder = "192.168.1.xxx";
-          shadow.getElementById("codeInp").placeholder = "8-character Access Code";
+          shadow.getElementById("codeInp").placeholder = "Saved in Fleet Studio (leave blank to keep)";
         } catch (e) {
           shadow.getElementById("hostInp").placeholder = "192.168.1.xxx";
-          shadow.getElementById("codeInp").placeholder = "8-character Access Code";
+          shadow.getElementById("codeInp").placeholder = "Saved in Fleet Studio (leave blank to keep)";
         }
       })();
 
