@@ -1,0 +1,14 @@
+{
+  "title": "拓竹機隊控制中心 (Bambu Lab Fleet Studio)",
+  "config": {
+    "step": {
+      "user": {
+        "title": "拓竹機隊控制中心（獨立區網引擎）",
+        "description": "啟用零外部相依性的本機區網 MQTT 與 TLS 即時串流引擎，支援拓竹全系列 3D 列印機、R1 CO2 雷射雕刻機及 AMS 供料系統。"
+      }
+    },
+    "abort": {
+      "already_configured": "拓竹機隊控制中心 (Bambu Lab Fleet Studio) 已完成設定。"
+    }
+  }
+}

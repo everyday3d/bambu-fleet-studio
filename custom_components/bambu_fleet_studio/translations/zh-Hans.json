@@ -1,0 +1,14 @@
+{
+  "title": "拓竹机队控制中心 (Bambu Lab Fleet Studio)",
+  "config": {
+    "step": {
+      "user": {
+        "title": "拓竹机队控制中心（独立局域网引擎）",
+        "description": "启用零外部依赖的本地局域网 MQTT 与 TLS 实时视频流引擎，支持拓竹全系列 3D 打印机、R1 CO2 激光雕刻机及 AMS 供料系统。"
+      }
+    },
+    "abort": {
+      "already_configured": "拓竹机队控制中心 (Bambu Lab Fleet Studio) 已完成配置。"
+    }
+  }
+}

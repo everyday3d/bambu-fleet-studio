@@ -131,6 +131,7 @@
     { code: "pt", flag: "🇵🇹", label: "Português" },
     { code: "ru", flag: "🇷🇺", label: "Русский" },
     { code: "zh", flag: "🇨🇳", label: "简体中文" },
+    { code: "zh-tw", flag: "🇹🇼", label: "繁體中文" },
     { code: "ja", flag: "🇯🇵", label: "日本語" }
   ];
 
@@ -702,6 +703,69 @@
       readyToPair: "等待配对连接",
       connectNow: "立即连接"
     },
+    "zh-tw": {
+      cmdSub: "拓竹 Bambu Lab 列印機、R1 雷射雕刻機與 AMS 機隊 • 區域網路遙測、智慧插座與耗材庫存",
+      kpiPrinters: "列印機",
+      kpiOnline: "在線",
+      kpiAmsUnits: "AMS 數量",
+      kpiHmsAlerts: "HMS 警報",
+      kpiPrintHours: "列印時數",
+      btnFilamentFinder: "🎨 耗材尋找",
+      btnAutomations: "🔔 通知與自動化",
+      btnShowGuide: "📖 配網指南",
+      btnHideGuide: "📖 隱藏指南",
+      btnAddPrinter: "➕ 新增列印機",
+      statusPrinting: "列印中",
+      statusIdle: "閒置",
+      statusPaused: "已暫停",
+      statusPrepare: "準備中",
+      statusFinish: "已完成",
+      statusFailed: "失敗",
+      statusOffline: "離線",
+      doorOpen: "🚪 艙門已開",
+      doorClosed: "🚪 艙門已關",
+      standardPlate: "標準列印板",
+      tabCam: "📹 監控",
+      tab3mf: "🖼️ 3MF",
+      tabCtrl: "🎛️ 控制",
+      no3mfPreview: "暫無 3MF 預覽",
+      camOffline: "攝影機離線",
+      lightOn: "💡 機箱燈已開",
+      lightOff: "💡 機箱燈已關",
+      forceSync: "🔄 強制同步",
+      pause: "⏸️ 暫停",
+      resume: "▶️ 繼續",
+      stopJob: "⏹️ 停止列印",
+      confirmStopJob: "確定要停止目前的列印工作嗎？",
+      noActiveJob: "目前無進行中的列印工作",
+      idleDone: "閒置 / 已完成",
+      layer: "層數",
+      tileNozzle: "🔥 噴嘴溫度",
+      tileBedChamber: "🛏️ 熱床與腔溫",
+      tileBuildPlate: "🛏️ 熱床溫度",
+      tileCoolingSpeed: "🌀 風扇與速度",
+      tileFleetHours: "⏳ 累計時數",
+      target: "目標",
+      mode: "模式",
+      openAirRotary: "🌬️ 開放式旋轉供料",
+      drying: "🔥 烘乾中",
+      emptySlot: "空槽",
+      directExtSpool: "外掛料盤供料",
+      singleExtruderNoAms: "單噴嘴直通 • 無 AMS",
+      amsSubLite: "4 盤開放式旋轉供料器",
+      amsSubHt: "85°C 高溫主動烘乾系統",
+      amsSub2Pro: "4 槽主動烘乾供料系統",
+      amsSubStd: "4 槽封閉式供料系統",
+      ffBadge: "全機隊耗材庫存",
+      ffTitle: "🎨 耗材工坊 — 哪台列印機裝著我的料盤？",
+      ffSearchPlaceholder: "搜尋顏色、材料或列印機...",
+      ffAll: "全部",
+      wtBadge: "拓竹列印機、雷射機與 AMS 四步接入指南",
+      wtTitle: "如何透過 4 個步驟連線 Bambu Lab 列印機、R1 雷射機或 AMS",
+      wtSupportedHdr: "🖼️ 支援的拓竹列印機、R1 雷射機與 AMS 硬體 — 點擊任意設備配對",
+      readyToPair: "等待配對連線",
+      connectNow: "立即連線"
+    },
     ja: {
       cmdSub: "Bambu Lab プリンター・R1 レーザー・AMS フリート管理 • LANテレメトリ・スマートプラグ・スプール在庫",
       kpiPrinters: "プリンター",
@@ -850,8 +914,14 @@
 
   function normalizeLangCode(raw) {
     if (!raw) return "en";
-    const low = String(raw).trim().toLowerCase();
-    const prefix = low.split(/[-_]/)[0];
+    const low = String(raw).trim().toLowerCase().replace(/_/g, "-");
+    if (low === "zh-tw" || low === "zh-hk" || low === "zh-mo" || low.startsWith("zh-hant")) {
+      return "zh-tw";
+    }
+    if (low.startsWith("zh")) {
+      return "zh";
+    }
+    const prefix = low.split("-")[0];
     if (I18N_DICT[prefix]) return prefix;
     return "en";
   }
@@ -925,42 +995,66 @@
   };
 
   const I18N_EXTRA = {
-    lang_auto: { en: "Auto", de: "Auto", fr: "Auto", es: "Auto", it: "Auto", nl: "Auto", pl: "Auto", pt: "Auto", ru: "Авто", zh: "自动", ja: "自動" },
-    safety_lock_alert_title: { en: "⚠️ SAFETY LOCK ACTIVE: Printer is currently PRINTING!", de: "⚠️ SICHERHEITSSPERRE: Drucker druckt gerade!", fr: "⚠️ VERROUILLAGE DE SÉCURITÉ : Impression en cours !", es: "⚠️ BLOQUEO DE SEGURIDAD: ¡Imprimiendo ahora!", it: "⚠️ BLOCCO DI SICUREZZA: Stampa in corso!", nl: "⚠️ VEILIGHEIDSSLOT: Printer is aan het printen!", pl: "⚠️ BLOKADA BEZPIECZEŃSTWA: Trwa drukowanie!", pt: "⚠️ TRAVA DE SEGURANÇA: Impressão em andamento!", ru: "⚠️ БЛОКИРОВКА БЕЗОПАСНОСТИ: Идет печать!", zh: "⚠️ 安全锁已激活：打印机正在打印中！", ja: "⚠️ 安全ロック作動中：現在造形中です！" },
-    safety_lock_alert_wait: { en: "Wait until the print completes and nozzle cools below 50°C before cutting AC power.", de: "Warten Sie, bis der Druck beendet und die Düse unter 50°C abgekühlt ist.", fr: "Attendez la fin de l'impression et le refroidissement de la buse sous 50°C.", es: "Espera a que termine la impresión y la boquilla baje de 50°C.", it: "Attendi la fine della stampa e il raffreddamento dell'ugello sotto i 50°C.", nl: "Wacht tot de print klaar is en de nozzle onder 50°C is afgekoeld.", pl: "Poczekaj na koniec wydruku i schłodzenie dyszy poniżej 50°C.", pt: "Aguarde o fim da impressão e o resfriamento do bico abaixo de 50°C.", ru: "Дождитесь окончания печати и остывания сопла ниже 50°C перед отключением питания.", zh: "请等待打印完成且喷嘴冷却至 50°C 以下后再切断电源。", ja: "造形が完了し、ノズルが50°C以下に冷えるまで電源を切らないでください。" },
-    hms_wiki_btn: { en: "Bambu Wiki ↗", de: "Bambu Wiki ↗", fr: "Wiki Bambu ↗", es: "Wiki Bambu ↗", it: "Wiki Bambu ↗", nl: "Bambu Wiki ↗", pl: "Wiki Bambu ↗", pt: "Wiki Bambu ↗", ru: "Bambu Wiki ↗", zh: "拓竹百科 ↗", ja: "Bambu Wiki ↗" },
-    cam_live: { en: "● LIVE", de: "● LIVE", fr: "● DIRECT", es: "● EN VIVO", it: "● LIVE", nl: "● LIVE", pl: "● NA ŻYWO", pt: "● AO VIVO", ru: "● ЭФИР", zh: "● 实时", ja: "● ライブ" },
-    cam_liveview_off: { en: "📹 LAN LIVEVIEW OFF", de: "📹 LAN-LIVEVIEW AUS", fr: "📹 LIVEVIEW LAN DÉSACTIVÉ", es: "📹 LIVEVIEW LAN APAGADO", it: "📹 LIVEVIEW LAN OFF", nl: "📹 LAN-LIVEVIEW UIT", pl: "📹 PODGLĄD LAN WYŁ.", pt: "📹 LIVEVIEW LAN DESLIGADO", ru: "📹 LAN-ТРАНСЛЯЦИЯ ВЫКЛ.", zh: "📹 局域网实时监控未开启", ja: "📹 LANライブビュー OFF" },
-    cam_lan_liveview_hint: { en: "Printer Online • Enable 'LAN Only Liveview' on Touchscreen", de: "Drucker Online • 'LAN Only Liveview' am Display aktivieren", fr: "Imprimante en ligne • Activez 'LAN Only Liveview' sur l'écran", es: "Impresora en línea • Activa 'LAN Only Liveview' en pantalla", it: "Stampante online • Attiva 'LAN Only Liveview' sullo schermo", nl: "Printer online • Schakel 'LAN Only Liveview' in op scherm", pl: "Drukarka online • Włącz 'LAN Only Liveview' na ekranie", pt: "Impressora online • Ative 'LAN Only Liveview' na tela", ru: "Принтер в сети • Включите «LAN Only Liveview» на экране принтера", zh: "打印机在线 • 请在屏幕设置中开启“局域网实时监控”", ja: "オンライン • 本体画面で「LAN Only Liveview」をONにしてください" },
-    cam_setup_reconnect: { en: "Tap for 3-Step Guide & Reconnect ➔", de: "Tippen für Anleitung & Neuverbindung ➔", fr: "Appuyez pour le guide & reconnecter ➔", es: "Toca para guía y reconectar ➔", it: "Tocca per guida e riconnetti ➔", nl: "Tik voor gids & opnieuw verbinden ➔", pl: "Kliknij po instrukcję i połącz ➔", pt: "Toque para guia e reconectar ➔", ru: "Инструкция в 3 шага и переподключение ➔", zh: "点击查看 3 步开启指南并重连 ➔", ja: "タップして手順確認＆再接続 ➔" },
-    tel_aux: { en: "Aux", de: "Aux", fr: "Aux", es: "Aux", it: "Aux", nl: "Aux", pl: "Aux", pt: "Aux", ru: "Доп.", zh: "辅助", ja: "補助" },
-    tel_chamb: { en: "Chamb", de: "Kammer", fr: "Chamb", es: "Cám", it: "Cam", nl: "Kamer", pl: "Komora", pt: "Câm", ru: "Кам.", zh: "腔体", ja: "庫内" },
-    tip_smart_plug: { en: "Toggle Smart Plug Power", de: "Smart-Plug umschalten", fr: "Basculer prise connectée", es: "Alternar enchufe inteligente", it: "Commuta presa smart", nl: "Slimme stekker schakelen", pl: "Przełącz inteligentne gniazdko", pt: "Alternar tomada inteligente", ru: "Переключить питание умной розетки", zh: "切换智能插座电源", ja: "スマートプラグ電源切替" },
-    tip_light: { en: "Toggle Chamber Light", de: "Bauraumlicht umschalten", fr: "Basculer éclairage chambre", es: "Alternar luz de cámara", it: "Commuta luce camera", nl: "Kamerverlichting schakelen", pl: "Przełącz oświetlenie komory", pt: "Alternar luz da câmara", ru: "Переключить подсветку камеры", zh: "切换机箱照明灯", ja: "庫内ライト切替" },
-    tip_reload: { en: "Reload Printer Connection", de: "Druckerverbindung neu laden", fr: "Recharger la connexion", es: "Recargar conexión", it: "Ricarica connessione", nl: "Verbinding herladen", pl: "Odśwież połączenie", pt: "Recarregar conexão", ru: "Перезагрузить соединение с принтером", zh: "重新加载打印机连接", ja: "プリンター接続を再読込" },
-    tip_edit: { en: "Edit Printer, AMS & Smart Plug", de: "Drucker, AMS & Smart-Plug bearbeiten", fr: "Modifier imprimante, AMS & prise", es: "Editar impresora, AMS y enchufe", it: "Modifica stampante, AMS e presa", nl: "Printer, AMS & stekker bewerken", pl: "Edytuj drukarkę, AMS i gniazdko", pt: "Editar impressora, AMS e tomada", ru: "Настроить принтер, AMS и умную розетку", zh: "编辑打印机、AMS 与智能插座", ja: "プリンター・AMS・プラグ編集" },
-    tip_delete: { en: "Remove Printer", de: "Drucker entfernen", fr: "Supprimer l'imprimante", es: "Eliminar impresora", it: "Rimuovi stampante", nl: "Printer verwijderen", pl: "Usuń drukarkę", pt: "Remover impressora", ru: "Удалить принтер", zh: "移除打印机", ja: "プリンターを削除" },
-    ff_click_highlight: { en: "Click to highlight", de: "Klicken zum Hervorheben von", fr: "Cliquer pour mettre en évidence", es: "Clic para resaltar", it: "Clicca per evidenziare", nl: "Klik om te markeren", pl: "Kliknij, aby podświetlić", pt: "Clique para destacar", ru: "Нажмите, чтобы выделить", zh: "点击高亮定位", ja: "クリックしてハイライト" },
-    wt_step: { en: "STEP", de: "SCHRITT", fr: "ÉTAPE", es: "PASO", it: "PASSO", nl: "STAP", pl: "KROK", pt: "PASSO", ru: "ШАГ", zh: "步骤", ja: "ステップ" },
-    wt_s1_title: { en: "Find Printer IP", de: "Drucker-IP finden", fr: "Trouver l'IP", es: "Buscar IP", it: "Trova IP stampante", nl: "Vind printer-IP", pl: "Znajdź IP drukarki", pt: "Encontrar IP", ru: "IP-адрес принтера", zh: "查找打印机 IP", ja: "プリンターIP確認" },
-    wt_s1_ams_title: { en: "Connect Bus Cable", de: "Buskabel verbinden", fr: "Brancher le câble bus", es: "Conectar cable bus", it: "Collega cavo bus", nl: "Buskabel aansluiten", pl: "Podłącz kabel magistrali", pt: "Conectar cabo bus", ru: "Подключите кабель шины", zh: "连接总线电缆", ja: "バスケーブル接続" },
-    wt_s2_title: { en: "Get Access Code", de: "Zugangscode abrufen", fr: "Code d'accès LAN", es: "Código de acceso", it: "Codice di accesso", nl: "Toegangscode ophalen", pl: "Kod dostępu LAN", pt: "Código de acesso", ru: "Код доступа LAN", zh: "获取局域网访问码", ja: "アクセスコード取得" },
-    wt_s2_ams_title: { en: "Auto-Detect Spools", de: "Spulen automatisch erkennen", fr: "Détection auto bobines", es: "Detección automática", it: "Rilevamento bobine", nl: "Spoelen auto-detecteren", pl: "Wykrywanie szpul", pt: "Detecção automática", ru: "Автоопределение катушек", zh: "自动识别耗材盘", ja: "スプール自動認識" },
-    wt_s3_title: { en: "Serial Number", de: "Seriennummer", fr: "Numéro de série", es: "Número de serie", it: "Numero di serie", nl: "Serienummer", pl: "Numer seryjny", pt: "Número de série", ru: "Серийный номер", zh: "15 位序列号", ja: "シリアル番号" },
-    wt_s3_ams_title: { en: "Select AMS Artwork", de: "AMS-Modell wählen", fr: "Choisir modèle AMS", es: "Elegir modelo AMS", it: "Seleziona modello AMS", nl: "Kies AMS-model", pl: "Wybierz model AMS", pt: "Selecionar modelo AMS", ru: "Выбор модели AMS", zh: "选择 AMS 型号外观", ja: "AMSモデル選択" },
-    wt_s4_add_prefix: { en: "Add", de: "Verbinden:", fr: "Ajouter", es: "Añadir", it: "Aggiungi", nl: "Toevoegen:", pl: "Dodaj", pt: "Adicionar", ru: "Добавить", zh: "添加", ja: "追加:" },
-    wt_s4_ams_title: { en: "Pair Printer + AMS", de: "Drucker + AMS koppeln", fr: "Associer Imprimante + AMS", es: "Vincular Impresora + AMS", it: "Abbina Stampante + AMS", nl: "Koppel Printer + AMS", pl: "Sparuj Drukarkę + AMS", pt: "Parear Impressora + AMS", ru: "Привязать принтер + AMS", zh: "配对打印机与 AMS", ja: "プリンター＋AMS接続" },
-    wt_s4_desc: { en: "Launch the in-dashboard setup wizard right here.", de: "Starten Sie den Einrichtungsassistenten direkt hier.", fr: "Lancez l'assistant de configuration directement ici.", es: "Inicia el asistente de configuración directamente aquí.", it: "Avvia la configurazione guidata direttamente da qui.", nl: "Start de installatiewizard direct vanaf dit dashboard.", pl: "Uruchom kreatora konfiguracji bezpośrednio tutaj.", pt: "Inicie o assistente de configuração diretamente aqui.", ru: "Запустите мастер настройки прямо с этой панели.", zh: "直接在此处启动局域网打印机配对向导。", ja: "ここから直接セットアップウィザードを起動します。" },
-    empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", ru: "К этому слоту еще не привязан принтер. Подключитесь по локальной сети LAN (порт 8883) для получения телеметрии.", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" }
+    lang_auto: { en: "Auto", de: "Auto", fr: "Auto", es: "Auto", it: "Auto", nl: "Auto", pl: "Auto", pt: "Auto", ru: "Авто", zh: "自动", "zh-tw": "自動", ja: "自動" },
+    safety_lock_alert_title: { en: "⚠️ SAFETY LOCK ACTIVE: Printer is currently PRINTING!", de: "⚠️ SICHERHEITSSPERRE: Drucker druckt gerade!", fr: "⚠️ VERROUILLAGE DE SÉCURITÉ : Impression en cours !", es: "⚠️ BLOQUEO DE SEGURIDAD: ¡Imprimiendo ahora!", it: "⚠️ BLOCCO DI SICUREZZA: Stampa in corso!", nl: "⚠️ VEILIGHEIDSSLOT: Printer is aan het printen!", pl: "⚠️ BLOKADA BEZPIECZEŃSTWA: Trwa drukowanie!", pt: "⚠️ TRAVA DE SEGURANÇA: Impressão em andamento!", ru: "⚠️ БЛОКИРОВКА БЕЗОПАСНОСТИ: Идет печать!", zh: "⚠️ 安全锁已激活：打印机正在打印中！", "zh-tw": "⚠️ 安全鎖已啟動：列印機正在列印中！", ja: "⚠️ 安全ロック作動中：現在造形中です！" },
+    safety_lock_alert_wait: { en: "Wait until the print completes and nozzle cools below 50°C before cutting AC power.", de: "Warten Sie, bis der Druck beendet und die Düse unter 50°C abgekühlt ist.", fr: "Attendez la fin de l'impression et le refroidissement de la buse sous 50°C.", es: "Espera a que termine la impresión y la boquilla baje de 50°C.", it: "Attendi la fine della stampa e il raffreddamento dell'ugello sotto i 50°C.", nl: "Wacht tot de print klaar is en de nozzle onder 50°C is afgekoeld.", pl: "Poczekaj na koniec wydruku i schłodzenie dyszy poniżej 50°C.", pt: "Aguarde o fim da impressão e o resfriamento do bico abaixo de 50°C.", ru: "Дождитесь окончания печати и остывания сопла ниже 50°C перед отключением питания.", zh: "请等待打印完成且喷嘴冷却至 50°C 以下后再切断电源。", "zh-tw": "請等待列印完成且噴嘴冷卻至 50°C 以下後再切斷電源。", ja: "造形が完了し、ノズルが50°C以下に冷えるまで電源を切らないでください。" },
+    hms_wiki_btn: { en: "Bambu Wiki ↗", de: "Bambu Wiki ↗", fr: "Wiki Bambu ↗", es: "Wiki Bambu ↗", it: "Wiki Bambu ↗", nl: "Bambu Wiki ↗", pl: "Wiki Bambu ↗", pt: "Wiki Bambu ↗", ru: "Bambu Wiki ↗", zh: "拓竹百科 ↗", "zh-tw": "拓竹百科 ↗", ja: "Bambu Wiki ↗" },
+    cam_live: { en: "● LIVE", de: "● LIVE", fr: "● DIRECT", es: "● EN VIVO", it: "● LIVE", nl: "● LIVE", pl: "● NA ŻYWO", pt: "● AO VIVO", ru: "● ЭФИР", zh: "● 实时", "zh-tw": "● 即時", ja: "● ライブ" },
+    cam_liveview_off: { en: "📹 LAN LIVEVIEW OFF", de: "📹 LAN-LIVEVIEW AUS", fr: "📹 LIVEVIEW LAN DÉSACTIVÉ", es: "📹 LIVEVIEW LAN APAGADO", it: "📹 LIVEVIEW LAN OFF", nl: "📹 LAN-LIVEVIEW UIT", pl: "📹 PODGLĄD LAN WYŁ.", pt: "📹 LIVEVIEW LAN DESLIGADO", ru: "📹 LAN-ТРАНСЛЯЦИЯ ВЫКЛ.", zh: "📹 局域网实时监控未开启", "zh-tw": "📹 區域網路即時監控未開啟", ja: "📹 LANライブビュー OFF" },
+    cam_lan_liveview_hint: { en: "Printer Online • Enable 'LAN Only Liveview' on Touchscreen", de: "Drucker Online • 'LAN Only Liveview' am Display aktivieren", fr: "Imprimante en ligne • Activez 'LAN Only Liveview' sur l'écran", es: "Impresora en línea • Activa 'LAN Only Liveview' en pantalla", it: "Stampante online • Attiva 'LAN Only Liveview' sullo schermo", nl: "Printer online • Schakel 'LAN Only Liveview' in op scherm", pl: "Drukarka online • Włącz 'LAN Only Liveview' na ekranie", pt: "Impressora online • Ative 'LAN Only Liveview' na tela", ru: "Принтер в сети • Включите «LAN Only Liveview» на экране принтера", zh: "打印机在线 • 请在屏幕设置中开启“局域网实时监控”", "zh-tw": "列印機在線 • 請在螢幕設定中開啟「區域網路即時監控」", ja: "オンライン • 本体画面で「LAN Only Liveview」をONにしてください" },
+    cam_setup_reconnect: { en: "Tap for 3-Step Guide & Reconnect ➔", de: "Tippen für Anleitung & Neuverbindung ➔", fr: "Appuyez pour le guide & reconnecter ➔", es: "Toca para guía y reconectar ➔", it: "Tocca per guida e riconnetti ➔", nl: "Tik voor gids & opnieuw verbinden ➔", pl: "Kliknij po instrukcję i połącz ➔", pt: "Toque para guia e reconectar ➔", ru: "Инструкция в 3 шага и переподключение ➔", zh: "点击查看 3 步开启指南并重连 ➔", "zh-tw": "點擊查看 3 步開啟指南並重連 ➔", ja: "タップして手順確認＆再接続 ➔" },
+    tel_aux: { en: "Aux", de: "Aux", fr: "Aux", es: "Aux", it: "Aux", nl: "Aux", pl: "Aux", pt: "Aux", ru: "Доп.", zh: "辅助", "zh-tw": "輔助", ja: "補助" },
+    tel_chamb: { en: "Chamb", de: "Kammer", fr: "Chamb", es: "Cám", it: "Cam", nl: "Kamer", pl: "Komora", pt: "Câm", ru: "Кам.", zh: "腔体", "zh-tw": "腔體", ja: "庫内" },
+    tip_smart_plug: { en: "Toggle Smart Plug Power", de: "Smart-Plug umschalten", fr: "Basculer prise connectée", es: "Alternar enchufe inteligente", it: "Commuta presa smart", nl: "Slimme stekker schakelen", pl: "Przełącz inteligentne gniazdko", pt: "Alternar tomada inteligente", ru: "Переключить питание умной розетки", zh: "切换智能插座电源", "zh-tw": "切換智慧插座電源", ja: "スマートプラグ電源切替" },
+    tip_light: { en: "Toggle Chamber Light", de: "Bauraumlicht umschalten", fr: "Basculer éclairage chambre", es: "Alternar luz de cámara", it: "Commuta luce camera", nl: "Kamerverlichting schakelen", pl: "Przełącz oświetlenie komory", pt: "Alternar luz da câmara", ru: "Переключить подсветку камеры", zh: "切换机箱照明灯", "zh-tw": "切換機箱照明燈", ja: "庫内ライト切替" },
+    tip_reload: { en: "Reload Printer Connection", de: "Druckerverbindung neu laden", fr: "Recharger la connexion", es: "Recargar conexión", it: "Ricarica connessione", nl: "Verbinding herladen", pl: "Odśwież połączenie", pt: "Recarregar conexão", ru: "Перезагрузить соединение с принтером", zh: "重新加载打印机连接", "zh-tw": "重新載入列印機連線", ja: "プリンター接続を再読込" },
+    tip_edit: { en: "Edit Printer, AMS & Smart Plug", de: "Drucker, AMS & Smart-Plug bearbeiten", fr: "Modifier imprimante, AMS & prise", es: "Editar impresora, AMS y enchufe", it: "Modifica stampante, AMS e presa", nl: "Printer, AMS & stekker bewerken", pl: "Edytuj drukarkę, AMS i gniazdko", pt: "Editar impressora, AMS e tomada", ru: "Настроить принтер, AMS и умную розетку", zh: "编辑打印机、AMS 与智能插座", "zh-tw": "編輯列印機、AMS 與智慧插座", ja: "プリンター・AMS・プラグ編集" },
+    tip_delete: { en: "Remove Printer", de: "Drucker entfernen", fr: "Supprimer l'imprimante", es: "Eliminar impresora", it: "Rimuovi stampante", nl: "Printer verwijderen", pl: "Usuń drukarkę", pt: "Remover impressora", ru: "Удалить принтер", zh: "移除打印机", "zh-tw": "移除列印機", ja: "プリンターを削除" },
+    ff_click_highlight: { en: "Click to highlight", de: "Klicken zum Hervorheben von", fr: "Cliquer pour mettre en évidence", es: "Clic para resaltar", it: "Clicca per evidenziare", nl: "Klik om te markeren", pl: "Kliknij, aby podświetlić", pt: "Clique para destacar", ru: "Нажмите, чтобы выделить", zh: "点击高亮定位", "zh-tw": "點擊高亮定位", ja: "クリックしてハイライト" },
+    ff_mqtt_prog_badge: { en: "📡 LIVE LAN MQTT AMS PROGRAMMER", zh: "📡 局域网 MQTT AMS 实时料槽编程", "zh-tw": "📡 區域網路 MQTT AMS 即時料槽編程" },
+    ff_loaded_spools: { en: "Loaded Spools", zh: "已装料盘", "zh-tw": "已裝料盤" },
+    ff_ready_now: { en: "Ready Now", zh: "立即可打", "zh-tw": "立即可印" },
+    ff_humid_ams: { en: "Humid AMS", zh: "AMS 潮湿", "zh-tw": "AMS 潮濕" },
+    ff_ready_to_print_btn: { en: "🟢 Ready to Print Now", zh: "🟢 立即可打印", "zh-tw": "🟢 立即可列印" },
+    ff_show_empty_btn: { en: "👁️ Show Empty Slots", zh: "👁️ 显示空料槽", "zh-tw": "👁️ 顯示空料槽" },
+    ff_hide_empty_btn: { en: "🙈 Hide Empty Slots", zh: "🙈 隐藏空料槽", "zh-tw": "🙈 隱藏空料槽" },
+    ff_color_all: { en: "🎨 All Colors", zh: "🎨 全部颜色", "zh-tw": "🎨 全部顏色" },
+    ff_color_green: { en: "Green", zh: "绿色系", "zh-tw": "綠色系" },
+    ff_color_blue_cyan: { en: "Blue / Cyan", zh: "蓝/青色系", "zh-tw": "藍/青色系" },
+    ff_color_red_pink: { en: "Red / Pink", zh: "红/粉色系", "zh-tw": "紅/粉色系" },
+    ff_color_orange_gold: { en: "Orange / Gold", zh: "橙/金色系", "zh-tw": "橙/金色系" },
+    ff_color_black_gray: { en: "Black / Gray", zh: "黑/灰色系", "zh-tw": "黑/灰色系" },
+    ff_color_white: { en: "White", zh: "白色系", "zh-tw": "白色系" },
+    ff_color_purple_brown: { en: "Purple / Brown", zh: "紫/棕色系", "zh-tw": "紫/棕色系" },
+    ff_no_match: { en: "No spools match your current filter. Try clearing the search or clicking 🎨 All Colors.", zh: "没有匹配的耗材盘。请尝试清空搜索词或点击“🎨 全部颜色”。", "zh-tw": "沒有符合篩選條件的耗材盤。請嘗試清除搜尋或點擊「🎨 全部顏色」。" },
+    ff_pill_offline: { en: "💤 Offline", zh: "💤 离线", "zh-tw": "💤 離線" },
+    ff_pill_printing: { en: "🖨️ Printing", zh: "🖨️ 打印中", "zh-tw": "🖨️ 列印中" },
+    ff_pill_ready: { en: "🟢 Ready", zh: "🟢 就绪", "zh-tw": "🟢 就緒" },
+    ff_edit_btn: { en: "🎨 Edit", zh: "🎨 编辑", "zh-tw": "🎨 編輯" },
+    top_tab_fleet: { en: "Fleet Studio", zh: "机队总览", "zh-tw": "機隊總覽" },
+    top_tab_filament: { en: "Filament Studio", zh: "耗材工坊", "zh-tw": "耗材工坊" },
+    top_tab_add: { en: "Add Printer", zh: "添加打印机", "zh-tw": "新增列印機" },
+    wt_step: { en: "STEP", de: "SCHRITT", fr: "ÉTAPE", es: "PASO", it: "PASSO", nl: "STAP", pl: "KROK", pt: "PASSO", ru: "ШАГ", zh: "步骤", "zh-tw": "步驟", ja: "ステップ" },
+    wt_s1_title: { en: "Find Printer IP", de: "Drucker-IP finden", fr: "Trouver l'IP", es: "Buscar IP", it: "Trova IP stampante", nl: "Vind printer-IP", pl: "Znajdź IP drukarki", pt: "Encontrar IP", ru: "IP-адрес принтера", zh: "查找打印机 IP", "zh-tw": "尋找列印機 IP", ja: "プリンターIP確認" },
+    wt_s1_ams_title: { en: "Connect Bus Cable", de: "Buskabel verbinden", fr: "Brancher le câble bus", es: "Conectar cable bus", it: "Collega cavo bus", nl: "Buskabel aansluiten", pl: "Podłącz kabel magistrali", pt: "Conectar cabo bus", ru: "Подключите кабель шины", zh: "连接总线电缆", "zh-tw": "連接匯流排電纜", ja: "バスケーブル接続" },
+    wt_s2_title: { en: "Get Access Code", de: "Zugangscode abrufen", fr: "Code d'accès LAN", es: "Código de acceso", it: "Codice di accesso", nl: "Toegangscode ophalen", pl: "Kod dostępu LAN", pt: "Código de acesso", ru: "Код доступа LAN", zh: "获取局域网访问码", "zh-tw": "取得區域網路訪問碼", ja: "アクセスコード取得" },
+    wt_s2_ams_title: { en: "Auto-Detect Spools", de: "Spulen automatisch erkennen", fr: "Détection auto bobines", es: "Detección automática", it: "Rilevamento bobine", nl: "Spoelen auto-detecteren", pl: "Wykrywanie szpul", pt: "Detecção automática", ru: "Автоопределение катушек", zh: "自动识别耗材盘", "zh-tw": "自動識別耗材盤", ja: "スプール自動認識" },
+    wt_s3_title: { en: "Serial Number", de: "Seriennummer", fr: "Numéro de série", es: "Número de serie", it: "Numero di serie", nl: "Serienummer", pl: "Numer seryjny", pt: "Número de série", ru: "Серийный номер", zh: "15 位序列号", "zh-tw": "15 位序號", ja: "シリアル番号" },
+    wt_s3_ams_title: { en: "Select AMS Artwork", de: "AMS-Modell wählen", fr: "Choisir modèle AMS", es: "Elegir modelo AMS", it: "Seleziona modello AMS", nl: "Kies AMS-model", pl: "Wybierz model AMS", pt: "Selecionar modelo AMS", ru: "Выбор модели AMS", zh: "选择 AMS 型号外观", "zh-tw": "選擇 AMS 型號外觀", ja: "AMSモデル選択" },
+    wt_s4_add_prefix: { en: "Add", de: "Verbinden:", fr: "Ajouter", es: "Añadir", it: "Aggiungi", nl: "Toevoegen:", pl: "Dodaj", pt: "Adicionar", ru: "Добавить", zh: "添加", "zh-tw": "新增", ja: "追加:" },
+    wt_s4_ams_title: { en: "Pair Printer + AMS", de: "Drucker + AMS koppeln", fr: "Associer Imprimante + AMS", es: "Vincular Impresora + AMS", it: "Abbina Stampante + AMS", nl: "Koppel Printer + AMS", pl: "Sparuj Drukarkę + AMS", pt: "Parear Impressora + AMS", ru: "Привязать принтер + AMS", zh: "配对打印机与 AMS", "zh-tw": "配對列印機與 AMS", ja: "プリンター＋AMS接続" },
+    wt_s4_desc: { en: "Launch the in-dashboard setup wizard right here.", de: "Starten Sie den Einrichtungsassistenten direkt hier.", fr: "Lancez l'assistant de configuration directement ici.", es: "Inicia el asistente de configuración directamente aquí.", it: "Avvia la configurazione guidata direttamente da qui.", nl: "Start de installatiewizard direct vanaf dit dashboard.", pl: "Uruchom kreatora konfiguracji bezpośrednio tutaj.", pt: "Inicie o assistente de configuração diretamente aqui.", ru: "Запустите мастер настройки прямо с этой панели.", zh: "直接在此处启动局域网打印机配对向导。", "zh-tw": "直接在此處啟動區域網路列印機配對精靈。", ja: "ここから直接セットアップウィザードを起動します。" },
+    empty_no_entry: { en: "No printer entry is paired for this slot yet. Connect over Local LAN (Port 8883) to populate live telemetry.", de: "Für diesen Slot ist noch kein Drucker gekoppelt. Über lokales LAN (Port 8883) verbinden.", fr: "Aucune imprimante associée à cet emplacement. Connectez-la via le réseau local LAN (Port 8883).", es: "Aún no hay ninguna impresora vinculada. Conéctala por LAN local (Puerto 8883).", it: "Nessuna stampante associata. Connetti via LAN locale (Porta 8883).", nl: "Nog geen printer gekoppeld. Verbind via lokaal LAN (Poort 8883).", pl: "Brak sparowanej drukarki. Połącz przez sieć LAN (Port 8883).", pt: "Nenhuma impressora pareada. Conecte via LAN local (Porta 8883).", ru: "К этому слоту еще не привязан принтер. Подключитесь по локальной сети LAN (порт 8883) для получения телеметрии.", zh: "此槽位尚未配对打印机。请通过局域网 (端口 8883) 连接以获取实时遥测数据。", "zh-tw": "此槽位尚未配對列印機。請透過區域網路 (連接埠 8883) 連線以取得即時遙測資料。", ja: "このスロットにはまだプリンターが登録されていません。ローカルLAN (ポート8883) で接続してください。" }
   };
 
   function t(key, lang = "en") {
-    const dict = I18N_DICT[lang] || I18N_DICT.en;
+    const dict = I18N_DICT[lang] || (lang === "zh-tw" ? I18N_DICT.zh : null) || I18N_DICT.en;
     const mapped = I18N_KEY_ALIASES[key] || key;
     if (dict[mapped]) return dict[mapped];
+    if (lang === "zh-tw" && I18N_DICT.zh && I18N_DICT.zh[mapped]) return I18N_DICT.zh[mapped];
     if (I18N_DICT.en[mapped]) return I18N_DICT.en[mapped];
     if (I18N_EXTRA[key]) {
-      return I18N_EXTRA[key][lang] || I18N_EXTRA[key].en || key;
+      return I18N_EXTRA[key][lang] || (lang === "zh-tw" ? I18N_EXTRA[key].zh : null) || I18N_EXTRA[key].en || key;
     }
     return key;
   }
@@ -1830,45 +1924,49 @@
   }
 
   const BAMBU_COLOR_PALETTE = [
-    { hex: "#FFFFFF", name: "Jade White", family: "WHITE" },
-    { hex: "#F5F5F0", name: "Ivory / Bone White", family: "WHITE" },
-    { hex: "#161616", name: "Charcoal Black", family: "BLACK_GRAY" },
-    { hex: "#000000", name: "Matte Black", family: "BLACK_GRAY" },
-    { hex: "#DCDCDC", name: "Ash / Light Gray", family: "BLACK_GRAY" },
-    { hex: "#8E9089", name: "Silver / Slate Gray", family: "BLACK_GRAY" },
-    { hex: "#545454", name: "Dark Titanium Gray", family: "BLACK_GRAY" },
-    { hex: "#00AE42", name: "Bambu Green", family: "GREEN" },
-    { hex: "#68724D", name: "Olive / Army Green", family: "GREEN" },
-    { hex: "#BECF00", name: "Mistletoe / Lime Green", family: "GREEN" },
-    { hex: "#004731", name: "Forest Green", family: "GREEN" },
-    { hex: "#9D2235", name: "Crimson / Scarlet Red", family: "RED_PINK" },
-    { hex: "#C12E1F", name: "Fire Engine Red", family: "RED_PINK" },
-    { hex: "#F65973", name: "Sakura / Coral Pink", family: "RED_PINK" },
-    { hex: "#E8AFCF", name: "Pastel Rose Pink", family: "RED_PINK" },
-    { hex: "#F98C36", name: "Mandarin Orange", family: "ORANGE_YELLOW" },
-    { hex: "#FF6A13", name: "Pumpkin Orange", family: "ORANGE_YELLOW" },
-    { hex: "#F4EE2A", name: "Sunflower Yellow", family: "ORANGE_YELLOW" },
-    { hex: "#E4BD68", name: "Silk Gold", family: "ORANGE_YELLOW" },
-    { hex: "#A4DAE6", name: "Ice / Sky Blue", family: "BLUE_CYAN" },
-    { hex: "#0086D6", name: "Cyan / Ocean Blue", family: "BLUE_CYAN" },
-    { hex: "#0A2989", name: "Cobalt / Navy Blue", family: "BLUE_CYAN" },
-    { hex: "#5E43B7", name: "Indigo Purple", family: "PURPLE_BROWN" },
-    { hex: "#A36AE5", name: "Lilac / Lavender", family: "PURPLE_BROWN" },
-    { hex: "#7D6556", name: "Latte / Desert Tan", family: "PURPLE_BROWN" },
-    { hex: "#4D3324", name: "Espresso Brown", family: "PURPLE_BROWN" }
+    { hex: "#FFFFFF", name: "Jade White", zh: "玉石白", zhTw: "玉石白", family: "WHITE" },
+    { hex: "#F5F5F0", name: "Ivory / Bone White", zh: "象牙白 / 骨白", zhTw: "象牙白 / 骨白", family: "WHITE" },
+    { hex: "#161616", name: "Charcoal Black", zh: "竹炭黑", zhTw: "竹炭黑", family: "BLACK_GRAY" },
+    { hex: "#000000", name: "Matte Black", zh: "哑光黑", zhTw: "霧面黑", family: "BLACK_GRAY" },
+    { hex: "#DCDCDC", name: "Ash / Light Gray", zh: "浅灰 / 银灰", zhTw: "淺灰 / 銀灰", family: "BLACK_GRAY" },
+    { hex: "#8E9089", name: "Silver / Slate Gray", zh: "太空灰 / 金属银", zhTw: "太空灰 / 金屬銀", family: "BLACK_GRAY" },
+    { hex: "#545454", name: "Dark Titanium Gray", zh: "深钛灰", zhTw: "深鈦灰", family: "BLACK_GRAY" },
+    { hex: "#00AE42", name: "Bambu Green", zh: "拓竹绿", zhTw: "拓竹綠", family: "GREEN" },
+    { hex: "#68724D", name: "Olive / Army Green", zh: "橄榄绿 / 军绿", zhTw: "橄欖綠 / 軍綠", family: "GREEN" },
+    { hex: "#BECF00", name: "Mistletoe / Lime Green", zh: "槲寄生绿 / 青柠绿", zhTw: "槲寄生綠 / 青檸綠", family: "GREEN" },
+    { hex: "#004731", name: "Forest Green", zh: "森林绿", zhTw: "森林綠", family: "GREEN" },
+    { hex: "#9D2235", name: "Crimson / Scarlet Red", zh: "绯红 / 猩红", zhTw: "緋紅 / 猩紅", family: "RED_PINK" },
+    { hex: "#C12E1F", name: "Fire Engine Red", zh: "中国红 / 烈焰红", zhTw: "正紅 / 烈焰紅", family: "RED_PINK" },
+    { hex: "#F65973", name: "Sakura / Coral Pink", zh: "樱花粉 / 珊瑚粉", zhTw: "櫻花粉 / 珊瑚粉", family: "RED_PINK" },
+    { hex: "#E8AFCF", name: "Pastel Rose Pink", zh: "柔粉 / 玫瑰粉", zhTw: "柔粉 / 玫瑰粉", family: "RED_PINK" },
+    { hex: "#F98C36", name: "Mandarin Orange", zh: "柑橘橙", zhTw: "柑橘橙", family: "ORANGE_YELLOW" },
+    { hex: "#FF6A13", name: "Pumpkin Orange", zh: "南瓜橙 / 活力橙", zhTw: "南瓜橙 / 活力橙", family: "ORANGE_YELLOW" },
+    { hex: "#F4EE2A", name: "Sunflower Yellow", zh: "向日葵黄 / 柠檬黄", zhTw: "向日葵黃 / 檸檬黃", family: "ORANGE_YELLOW" },
+    { hex: "#E4BD68", name: "Silk Gold", zh: "丝绸金", zhTw: "絲綢金", family: "ORANGE_YELLOW" },
+    { hex: "#A4DAE6", name: "Ice / Sky Blue", zh: "冰蓝 / 天空蓝", zhTw: "冰藍 / 天空藍", family: "BLUE_CYAN" },
+    { hex: "#0086D6", name: "Cyan / Ocean Blue", zh: "青色 / 海洋蓝", zhTw: "青色 / 海洋藍", family: "BLUE_CYAN" },
+    { hex: "#0A2989", name: "Cobalt / Navy Blue", zh: "钴蓝 / 深海蓝", zhTw: "鈷藍 / 深海藍", family: "BLUE_CYAN" },
+    { hex: "#5E43B7", name: "Indigo Purple", zh: "靛紫 / 罗兰紫", zhTw: "靛紫 / 羅蘭紫", family: "PURPLE_BROWN" },
+    { hex: "#A36AE5", name: "Lilac / Lavender", zh: "丁香紫 / 薰衣草紫", zhTw: "丁香紫 / 薰衣草紫", family: "PURPLE_BROWN" },
+    { hex: "#7D6556", name: "Latte / Desert Tan", zh: "拿铁褐 / 沙漠卡其", zhTw: "拿鐵褐 / 沙漠卡其", family: "PURPLE_BROWN" },
+    { hex: "#4D3324", name: "Espresso Brown", zh: "浓缩咖啡棕", zhTw: "濃縮咖啡棕", family: "PURPLE_BROWN" }
   ];
 
-  function resolveSpoolColorInfo(hexStr, arg2 = false, arg3 = "PLA", arg4 = false) {
+  function resolveSpoolColorInfo(hexStr, arg2 = false, arg3 = "PLA", arg4 = false, lang = "en") {
     const isEmpty = typeof arg2 === "boolean" ? arg2 : Boolean(arg4);
     const rawName = typeof arg2 === "string" ? arg2 : "";
     const rawType = typeof arg3 === "string" ? arg3 : "PLA";
+    const isZh = lang === "zh";
+    const isZhTw = lang === "zh-tw";
     if (isEmpty) {
-      return { colorName: "Empty Slot", displayName: "Empty Slot", family: "EMPTY", hex: "#334155" };
+      const emptyLabel = isZh ? "空槽位" : (isZhTw ? "空槽位" : "Empty Slot");
+      return { colorName: emptyLabel, enColorName: "Empty Slot", displayName: emptyLabel, family: "EMPTY", hex: "#334155" };
     }
     const clean = String(hexStr || "#334155").trim().replace(/^#/, "");
     if (clean.length < 6) {
-      const fallbackTitle = rawName && rawName !== "—" ? rawName : ("Custom Color • " + rawType);
-      return { colorName: "Custom Color", displayName: fallbackTitle, family: "BLACK_GRAY", hex: "#334155" };
+      const customLabel = isZh ? "自定义颜色" : (isZhTw ? "自訂顏色" : "Custom Color");
+      const fallbackTitle = rawName && rawName !== "—" ? rawName : (customLabel + " • " + rawType);
+      return { colorName: customLabel, enColorName: "Custom Color", displayName: fallbackTitle, family: "BLACK_GRAY", hex: "#334155" };
     }
     const r = parseInt(clean.slice(0, 2), 16) || 0;
     const g = parseInt(clean.slice(2, 4), 16) || 0;
@@ -1887,14 +1985,17 @@
         best = item;
       }
     }
-    const genericSet = new Set(["", "—", "PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL"]);
+    const genericSet = new Set(["", "—", "PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL", "直接外挂料盘", "直接外掛料盤"]);
     const trimmedRaw = String(rawName || "").trim();
-    const isGeneric = genericSet.has(trimmedRaw.toUpperCase());
+    const isGeneric = genericSet.has(trimmedRaw.toUpperCase()) || genericSet.has(trimmedRaw);
     const matLabel = (rawType && rawType !== "—") ? rawType : (trimmedRaw || "PLA");
-    const displayName = isGeneric ? `${best.name} • ${matLabel}` : trimmedRaw;
+    const localizedColorName = isZh ? (best.zh || best.name) : (isZhTw ? (best.zhTw || best.name) : best.name);
+    const displayName = isGeneric ? `${localizedColorName} • ${matLabel}` : trimmedRaw;
 
     return {
-      colorName: best.name,
+      colorName: localizedColorName,
+      enColorName: best.name,
+      zhColorName: (best.zh || "") + " " + (best.zhTw || ""),
       displayName,
       family: best.family,
       hex: "#" + clean.slice(0, 6).toUpperCase()
@@ -1902,10 +2003,11 @@
   }
 
   // Feature 2: Collect all loaded spools across the fleet for the Cross-Fleet Filament Finder
-  function collectFleetSpools(allPrinters) {
+  function collectFleetSpools(allPrinters, lang = "en") {
     const spools = [];
     const overrides = loadSpoolOverrides();
-    const genericNames = new Set(["PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL"]);
+    const genericNames = new Set(["PLA", "PLA BASIC", "PLA MATTE", "PETG", "PETG BASIC", "ABS", "ASA", "TPU", "PA-CF", "EXTERNAL SPOOL", "DIRECT EXTERNAL SPOOL", "直接外挂料盘", "直接外掛料盤"]);
+    const slotWord = (lang === "zh" || lang === "zh-tw") ? "槽位 " : "Slot ";
 
     for (const p of allPrinters) {
       const isReadyNow = Boolean(p.online && (p.printStatus === "idle" || p.printStatus === "finish"));
@@ -1922,10 +2024,11 @@
             const rawColor = (ov && ov.color) ? ov.color : (tr.color || "#334155");
             const rawType = ((ov && ov.type) ? ov.type : (tr.type || (isUnavailable ? "—" : "PLA"))).toUpperCase();
             const rawName = (ov && ov.name) ? ov.name : (tr.name || rawType);
-            const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable);
-            const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
+            const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
+            const trimmedRaw = String(rawName || "").trim();
+            const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
             const displayTitle = isUnavailable
-              ? rawName
+              ? colorInfo.displayName
               : (isGeneric ? (colorInfo.colorName + " • " + rawName) : rawName);
             const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : tr.remain;
             const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
@@ -1943,11 +2046,12 @@
               unitNum: unit.unitNum || 1,
               slotNum: tr.slot || 1,
               isExt: false,
-              location: unit.model + " • Slot " + slotBadge,
+              location: unit.model + " • " + slotWord + slotBadge,
               slotBadge,
               name: displayTitle,
               rawName,
               colorName: colorInfo.colorName,
+              searchKeywords: (colorInfo.enColorName || "") + " " + (colorInfo.zhColorName || ""),
               colorFamily: colorInfo.family,
               type: rawType,
               color: colorInfo.hex,
@@ -1972,10 +2076,11 @@
         const rawColor = (ov && ov.color) ? ov.color : (p.extSpool.color || "#f59e0b");
         const rawType = ((ov && ov.type) ? ov.type : (p.extSpool.type || "PLA")).toUpperCase();
         const rawName = (ov && ov.name) ? ov.name : p.extSpool.name;
-        const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable);
-        const isGeneric = !isUnavailable && genericNames.has(String(rawName || "").trim().toUpperCase());
+        const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
+        const trimmedRaw = String(rawName || "").trim();
+        const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
         const displayTitle = isUnavailable
-          ? rawName
+          ? colorInfo.displayName
           : (isGeneric ? (colorInfo.colorName + " • " + rawType) : rawName);
         const remainVal = (ov && typeof ov.remain === "number") ? ov.remain : null;
         const weightGrams = (ov && ov.weightGrams) ? ov.weightGrams : (typeof remainVal === "number" ? Math.round(remainVal * 10) : null);
@@ -1993,11 +2098,12 @@
           unitNum: 255,
           slotNum: 254,
           isExt: true,
-          location: "Direct External Spool",
+          location: t("ext_spool_badge", lang),
           slotBadge: "EXT",
           name: displayTitle,
           rawName,
           colorName: colorInfo.colorName,
+          searchKeywords: (colorInfo.enColorName || "") + " " + (colorInfo.zhColorName || ""),
           colorFamily: colorInfo.family,
           type: rawType,
           color: colorInfo.hex,
@@ -2133,7 +2239,7 @@
     }
   }
 
-  function enhanceLovelaceTopTabs(hostEl, allPrinters, loadedSpoolCount) {
+  function enhanceLovelaceTopTabs(hostEl, allPrinters, loadedSpoolCount, lang = "en") {
     const huiShadow = findHuiRootShadow(hostEl);
     if (!huiShadow) return;
 
@@ -2218,13 +2324,13 @@
       {
         match: ["fleet-overview", "fleet studio"],
         iconHtml: SVG_ICONS.fleetCube,
-        label: "Fleet Studio",
+        label: t("top_tab_fleet", lang),
         badgeHtml: `<span class="bfs-top-tab-dot" style="background:${onlineTotal > 0 ? '#10b981' : '#64748b'};box-shadow:${onlineTotal > 0 ? '0 0 8px #10b981' : 'none'};"></span>`
       },
       {
         match: ["filament-studio", "filament"],
         iconHtml: SVG_ICONS.filamentSpool,
-        label: "Filament Studio",
+        label: t("top_tab_filament", lang),
         badgeHtml: loadedSpoolCount > 0 ? `<span class="bfs-top-tab-badge">${loadedSpoolCount}</span>` : ""
       },
       {
@@ -2254,7 +2360,7 @@
       {
         match: ["add-printer-guide", "add printer"],
         iconHtml: SVG_ICONS.addSparkle,
-        label: "Add Printer",
+        label: t("top_tab_add", lang),
         badgeHtml: ""
       }
     ];
@@ -4406,7 +4512,7 @@
                 const effType = ov.type || tr.type || "PLA";
                 const effRemain = ov.remain !== undefined && ov.remain !== "" ? Number(ov.remain) : tr.remain;
                 const isEmpty = ov.type ? (ov.type === "—") : tr.empty;
-                const colorInfo = resolveSpoolColorInfo(effColor, ov.name || tr.name, effType, isEmpty);
+                const colorInfo = resolveSpoolColorInfo(effColor, ov.name || tr.name, effType, isEmpty, activeLang);
                 const effName = ov.name || colorInfo.displayName;
                 return `
                 <div class="spool-card ${tr.active ? 'active-spool' : ''}" data-spool-edit="${ovKey}" title="Click to edit ${slotCode} filament color, material & label (${effName})" style="cursor:pointer;">
@@ -4436,7 +4542,7 @@
       const effColor = ov.color || p.extSpool.color || "#f59e0b";
       const effType = ov.type || p.extSpool.type || "—";
       const isEmpty = ov.type ? (ov.type === "—") : p.extSpool.empty;
-      const colorInfo = resolveSpoolColorInfo(effColor, ov.name || p.extSpool.name, effType, isEmpty);
+      const colorInfo = resolveSpoolColorInfo(effColor, ov.name || p.extSpool.name, effType, isEmpty, activeLang);
       const effName = ov.name || colorInfo.displayName;
       filamentHtml = `
         <div class="ext-spool-deck" data-spool-edit="${ovKey}" title="Click to configure External Spool holder (${effName})" style="cursor:pointer;">
@@ -4558,7 +4664,7 @@
     const readyOnly = Boolean(options.readyOnly);
     const hideEmpty = options.hideEmpty !== false;
 
-    const allSpools = collectFleetSpools(allPrinters);
+    const allSpools = collectFleetSpools(allPrinters, activeLang);
     const loadedSpools = allSpools.filter(s => !s.empty);
     const readySpools = loadedSpools.filter(s => s.isReadyNow);
     const emptySlots = allSpools.filter(s => s.empty);
@@ -4569,14 +4675,14 @@
     const q = (searchQuery || "").trim().toLowerCase();
 
     const colorFamilies = [
-      { id: "ALL", label: "🎨 All Colors", dot: "linear-gradient(135deg,#ef4444,#f59e0b,#10b981,#38bdf8,#a855f7)" },
-      { id: "GREEN", label: "Green", dot: "#00AE42" },
-      { id: "BLUE_CYAN", label: "Blue / Cyan", dot: "#38BDF8" },
-      { id: "RED_PINK", label: "Red / Pink", dot: "#EC4899" },
-      { id: "ORANGE_YELLOW", label: "Orange / Gold", dot: "#F97316" },
-      { id: "BLACK_GRAY", label: "Black / Gray", dot: "#334155" },
-      { id: "WHITE", label: "White", dot: "#F8FAFC" },
-      { id: "PURPLE_BROWN", label: "Purple / Brown", dot: "#9333EA" }
+      { id: "ALL", label: t("ff_color_all", activeLang), dot: "linear-gradient(135deg,#ef4444,#f59e0b,#10b981,#38bdf8,#a855f7)" },
+      { id: "GREEN", label: t("ff_color_green", activeLang), dot: "#00AE42" },
+      { id: "BLUE_CYAN", label: t("ff_color_blue", activeLang), dot: "#38BDF8" },
+      { id: "RED_PINK", label: t("ff_color_red", activeLang), dot: "#EC4899" },
+      { id: "ORANGE_YELLOW", label: t("ff_color_orange", activeLang), dot: "#F97316" },
+      { id: "BLACK_GRAY", label: t("ff_color_black", activeLang), dot: "#334155" },
+      { id: "WHITE", label: t("ff_color_white", activeLang), dot: "#F8FAFC" },
+      { id: "PURPLE_BROWN", label: t("ff_color_purple", activeLang), dot: "#9333EA" }
     ];
 
     const filtered = allSpools.filter(s => {
@@ -4585,7 +4691,7 @@
       if (curMat !== "ALL" && s.type !== curMat) return false;
       if (curColorFam !== "ALL" && s.colorFamily !== curColorFam) return false;
       if (q) {
-        const hay = (s.name + " " + s.colorName + " " + s.type + " " + s.printerName + " " + s.location + " " + s.slotBadge + " " + s.color).toLowerCase();
+        const hay = (s.name + " " + s.colorName + " " + (s.searchKeywords || "") + " " + s.type + " " + s.printerName + " " + s.location + " " + s.slotBadge + " " + s.color).toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -4597,7 +4703,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <span class="wt-badge">${t("ff_badge", activeLang)}</span>
-              <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);padding:2px 8px;border-radius:999px;">📡 LIVE LAN MQTT AMS PROGRAMMER</span>
+              <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);padding:2px 8px;border-radius:999px;">${t("ff_live_lan_badge", activeLang)}</span>
             </div>
             <div class="wt-title">${t("ff_title", activeLang)}</div>
           </div>
@@ -4605,16 +4711,16 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;">
               <span style="font-size:14px;font-weight:800;color:#f8fafc;">${loadedSpools.length}</span>
-              <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Loaded Spools</span>
+              <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;">${t("ff_loaded_spools", activeLang)}</span>
             </div>
             <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.28);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;">
               <span style="font-size:14px;font-weight:800;color:#10b981;">${readySpools.length}</span>
-              <span style="font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;">Ready Now</span>
+              <span style="font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;">${t("ff_ready_now", activeLang)}</span>
             </div>
             ${wetSpools.length > 0 ? `
               <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px;" title="Spools in AMS units with >50% RH humidity">
                 <span style="font-size:14px;font-weight:800;color:#f59e0b;">💧 ${wetSpools.length}</span>
-                <span style="font-size:10px;font-weight:700;color:#fde68a;text-transform:uppercase;">Humid AMS</span>
+                <span style="font-size:10px;font-weight:700;color:#fde68a;text-transform:uppercase;">${t("ff_humid_ams", activeLang)}</span>
               </div>
             ` : ''}
           </div>
@@ -4622,12 +4728,12 @@
 
         <div class="ff-controls" style="margin-bottom:10px;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;">
-            <input id="ffSearchInp" class="ff-search" type="text" placeholder="🔍 Search color (Green, Pink, Blue, Red, Black), PLA/PETG, or printer..." value="${searchQuery || ''}" style="flex:1;min-width:220px;" />
+            <input id="ffSearchInp" class="ff-search" type="text" placeholder="${t("ff_search_ph", activeLang)}" value="${searchQuery || ''}" style="flex:1;min-width:220px;" />
             <button type="button" class="wt-pill ${readyOnly ? 'active' : ''}" id="ffReadyOnlyBtn" title="Show only spools loaded in online, idle printers ready to start a job immediately">
-              🟢 Ready to Print Now (${readySpools.length})
+              🟢 ${t("ff_ready_btn", activeLang)} (${readySpools.length})
             </button>
             <button type="button" class="wt-pill ${!hideEmpty ? 'active' : ''}" id="ffToggleEmptyBtn" title="Show or hide empty AMS slots (${emptySlots.length} empty)">
-              ${hideEmpty ? `👁️ Show Empty Slots (${emptySlots.length})` : `🙈 Hide Empty Slots`}
+              ${hideEmpty ? `👁️ ${t("ff_show_empty", activeLang)} (${emptySlots.length})` : `🙈 ${t("ff_hide_empty", activeLang)}`}
             </button>
           </div>
           <div class="wt-pills">
@@ -4649,16 +4755,16 @@
 
         ${filtered.length === 0 ? `
           <div style="text-align:center;padding:26px 16px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.12);border-radius:14px;color:#94a3b8;font-size:13px;">
-            No spools match your current filter. Try clearing the search or clicking <strong>🎨 All Colors</strong>.
+            ${t("ff_no_match", activeLang)} <strong>${t("ff_color_all", activeLang)}</strong>.
           </div>
         ` : `
           <div class="ff-grid" style="grid-template-columns:repeat(auto-fill, minmax(min(100%, 255px), 1fr));">
             ${filtered.map(s => {
               const statusPill = !s.online
-                ? `<span style="font-size:9px;font-weight:800;color:#94a3b8;background:rgba(148,163,184,0.14);padding:2px 6px;border-radius:999px;">💤 Offline</span>`
+                ? `<span style="font-size:9px;font-weight:800;color:#94a3b8;background:rgba(148,163,184,0.14);padding:2px 6px;border-radius:999px;">${t("ff_status_offline", activeLang)}</span>`
                 : (s.printStatus === "running" || s.printStatus === "prepare" || s.printStatus === "pause"
-                    ? `<span style="font-size:9px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.16);padding:2px 6px;border-radius:999px;">🖨️ Printing</span>`
-                    : `<span style="font-size:9px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);padding:2px 6px;border-radius:999px;">🟢 Ready</span>`);
+                    ? `<span style="font-size:9px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.16);padding:2px 6px;border-radius:999px;">${t("ff_status_printing", activeLang)}</span>`
+                    : `<span style="font-size:9px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);padding:2px 6px;border-radius:999px;">${t("ff_status_ready", activeLang)}</span>`);
               const humBadge = s.humidityPct !== null
                 ? `<span style="font-size:9px;font-weight:800;color:${s.isWet ? '#fde68a' : '#94a3b8'};background:${s.isWet ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)'};padding:2px 6px;border-radius:999px;" title="AMS Relative Humidity">💧 ${s.humidityPct}%</span>`
                 : "";
@@ -4684,7 +4790,7 @@
                       </span>
                       <span style="display:inline-flex;gap:4px;flex-shrink:0;">
                         <button type="button" class="ff-mini-btn" data-ff-locate="${s.printerPrefix}" title="Scroll to & highlight ${s.printerName}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
-                        <button type="button" class="ff-mini-btn" data-ff-edit-btn="${s.ovKey}" title="Edit filament color, type & custom label via LAN MQTT" style="background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);color:#fde68a;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎨 Edit</button>
+                        <button type="button" class="ff-mini-btn" data-ff-edit-btn="${s.ovKey}" title="Edit filament color, type & custom label via LAN MQTT" style="background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.4);color:#fde68a;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">${t("ff_edit_btn", activeLang)}</button>
                       </span>
                     </div>
                   </div>
@@ -4698,94 +4804,96 @@
   }
 
   const HARDWARE_SHOWCASE_MODELS = [
-    { code: "A1", label: "A1", sub: "Bed Slinger" },
-    { code: "A1MINI", label: "A1 Mini", sub: "Compact" },
-    { code: "A2L", label: "A2L", sub: "Large Format" },
-    { code: "P1S", label: "P1S", sub: "Enclosed CoreXY" },
-    { code: "P1P", label: "P1P", sub: "Open CoreXY" },
-    { code: "P2S", label: "P2S", sub: "Next-Gen P-Series" },
-    { code: "X1C", label: "X1 Carbon", sub: "Flagship CoreXY" },
-    { code: "X1E", label: "X1E", sub: "Enterprise" },
-    { code: "X2D", label: "X2D", sub: "Dual Extruder" },
-    { code: "H2C", label: "H2C", sub: "Pro Chamber" },
-    { code: "H2D", label: "H2D", sub: "Dual Nozzle Pro" },
-    { code: "H2S", label: "H2S", sub: "High-Speed H-Series" },
-    { code: "R1", label: "R1 Laser", sub: "55W CO2 Laser" },
-    { code: "AMSLITE", label: "AMS Lite", sub: "4-Spool Rotary", addTarget: "A1" },
-    { code: "AMS", label: "AMS", sub: "4-Slot Enclosed", addTarget: "P1S" },
-    { code: "AMS2PRO", label: "AMS 2 Pro", sub: "Active Drying", addTarget: "X1C" },
-    { code: "AMSHT", label: "AMS HT", sub: "85°C High-Temp", addTarget: "H2D" }
+    { code: "A1", label: "A1", sub: "Bed Slinger", subZh: "龙门架结构", subZhTw: "龍門架結構" },
+    { code: "A1MINI", label: "A1 Mini", sub: "Compact", subZh: "小巧紧凑", subZhTw: "小巧緊湊" },
+    { code: "A2L", label: "A2L", sub: "Large Format", subZh: "大尺寸幅面", subZhTw: "大尺寸幅面" },
+    { code: "P1S", label: "P1S", sub: "Enclosed CoreXY", subZh: "封闭式 CoreXY", subZhTw: "封閉式 CoreXY" },
+    { code: "P1P", label: "P1P", sub: "Open CoreXY", subZh: "开放式 CoreXY", subZhTw: "開放式 CoreXY" },
+    { code: "P2S", label: "P2S", sub: "Next-Gen P-Series", subZh: "新一代 P 系列", subZhTw: "新一代 P 系列" },
+    { code: "X1C", label: "X1 Carbon", sub: "Flagship CoreXY", subZh: "旗舰级 CoreXY", subZhTw: "旗艦級 CoreXY" },
+    { code: "X1E", label: "X1E", sub: "Enterprise", subZh: "企业级", subZhTw: "企業級" },
+    { code: "X2D", label: "X2D", sub: "Dual Extruder", subZh: "双挤出机", subZhTw: "雙擠出機" },
+    { code: "H2C", label: "H2C", sub: "Pro Chamber", subZh: "专业恒温腔", subZhTw: "專業恆溫腔" },
+    { code: "H2D", label: "H2D", sub: "Dual Nozzle Pro", subZh: "双喷头专业级", subZhTw: "雙噴頭專業級" },
+    { code: "H2S", label: "H2S", sub: "High-Speed H-Series", subZh: "高速 H 系列", subZhTw: "高速 H 系列" },
+    { code: "R1", label: "R1 Laser", sub: "55W CO2 Laser", subZh: "55W CO2 激光", subZhTw: "55W CO2 雷射" },
+    { code: "AMSLITE", label: "AMS Lite", sub: "4-Spool Rotary", subZh: "4 槽开放旋转式", subZhTw: "4 槽開放旋轉式", addTarget: "A1" },
+    { code: "AMS", label: "AMS", sub: "4-Slot Enclosed", subZh: "4 槽封闭供料", subZhTw: "4 槽封閉供料", addTarget: "P1S" },
+    { code: "AMS2PRO", label: "AMS 2 Pro", sub: "Active Drying", subZh: "主动加热烘干", subZhTw: "主動加熱烘乾", addTarget: "X1C" },
+    { code: "AMSHT", label: "AMS HT", sub: "85°C High-Temp", subZh: "85°C 高温烘干", subZhTw: "85°C 高溫烘乾", addTarget: "H2D" }
   ];
 
   function buildWalkthroughDeckHtml(selectedSeries, lang) {
     const activeLang = lang || "en";
+    const isZh = activeLang === "zh";
+    const isZhTw = activeLang === "zh-tw";
     const s = selectedSeries || "a1";
     const specs = ({
       a1: {
         title: "Bambu A1, A1 Mini & A2L",
         defaultModel: "A1",
         modelImg: getPrinterImage("A1"),
-        step1Path: "Settings (⚙️) ➔ Wi-Fi",
-        step1Detail: "Read IPv4 Address (e.g. 192.168.1.xxx)",
-        step2Path: "Settings (⚙️) ➔ LAN Only Mode",
-        step2Detail: "Copy 8-Char Access Code on touchscreen",
-        step3Path: "Settings (⚙️) ➔ Device",
-        step3Detail: "A1 starts with 039... • A1 Mini starts with 030... • A2L starts with 039..."
+        step1Path: isZh ? "设置 (⚙️) ➔ WLAN / Wi-Fi" : (isZhTw ? "設定 (⚙️) ➔ WLAN / Wi-Fi" : "Settings (⚙️) ➔ Wi-Fi"),
+        step1Detail: isZh ? "查看局域网 IPv4 地址 (例如 192.168.1.xxx)" : (isZhTw ? "查看區網 IPv4 位址 (例如 192.168.1.xxx)" : "Read IPv4 Address (e.g. 192.168.1.xxx)"),
+        step2Path: isZh ? "设置 (⚙️) ➔ 局域网模式 (LAN Only)" : (isZhTw ? "設定 (⚙️) ➔ 區網模式 (LAN Only)" : "Settings (⚙️) ➔ LAN Only Mode"),
+        step2Detail: isZh ? "在触控屏上复制 8 位访问码 (Access Code)" : (isZhTw ? "在觸控螢幕上複製 8 位存取碼 (Access Code)" : "Copy 8-Char Access Code on touchscreen"),
+        step3Path: isZh ? "设置 (⚙️) ➔ 设备信息" : (isZhTw ? "設定 (⚙️) ➔ 裝置資訊" : "Settings (⚙️) ➔ Device"),
+        step3Detail: isZh ? "A1 以 039 开头 • A1 Mini 以 030 开头 • A2L 以 039 开头" : (isZhTw ? "A1 以 039 開頭 • A1 Mini 以 030 開頭 • A2L 以 039 開頭" : "A1 starts with 039... • A1 Mini starts with 030... • A2L starts with 039...")
       },
       p1s: {
         title: "Bambu P1S, P1P & P2S",
         defaultModel: "P2S",
         modelImg: getPrinterImage("P2S"),
-        step1Path: "Screen ➔ Settings (⚙️) ➔ WLAN",
-        step1Detail: "Read IPv4 Address (Serial Number auto-populates from IP!)",
-        step2Path: "Settings (⚙️) ➔ LAN Only",
-        step2Detail: "Copy 8-Char Access Code & toggle ON 'LAN Only Liveview' (P2S)",
-        step3Path: "Auto-Detected over Port 8883 TLS",
-        step3Detail: "P2S starts with 22E... • P1S starts with 01P... • P1P starts with 01S..."
+        step1Path: isZh ? "屏幕 ➔ 设置 (⚙️) ➔ WLAN" : (isZhTw ? "螢幕 ➔ 設定 (⚙️) ➔ WLAN" : "Screen ➔ Settings (⚙️) ➔ WLAN"),
+        step1Detail: isZh ? "读取 IPv4 地址（输入 IP 可自动探测序列号！）" : (isZhTw ? "讀取 IPv4 位址（輸入 IP 可自動偵測序號！）" : "Read IPv4 Address (Serial Number auto-populates from IP!)"),
+        step2Path: isZh ? "设置 (⚙️) ➔ 局域网模式 (LAN Only)" : (isZhTw ? "設定 (⚙️) ➔ 區網模式 (LAN Only)" : "Settings (⚙️) ➔ LAN Only"),
+        step2Detail: isZh ? "复制 8 位访问码并开启“局域网实时画面” (P2S)" : (isZhTw ? "複製 8 位存取碼並開啟「區網即時畫面」 (P2S)" : "Copy 8-Char Access Code & toggle ON 'LAN Only Liveview' (P2S)"),
+        step3Path: isZh ? "通过 8883 端口 TLS 自动探测" : (isZhTw ? "透過 8883 連接埠 TLS 自動偵測" : "Auto-Detected over Port 8883 TLS"),
+        step3Detail: isZh ? "P2S 以 22E 开头 • P1S 以 01P 开头 • P1P 以 01S 开头" : (isZhTw ? "P2S 以 22E 開頭 • P1S 以 01P 開頭 • P1P 以 01S 開頭" : "P2S starts with 22E... • P1S starts with 01P... • P1P starts with 01S...")
       },
       x1c: {
         title: "Bambu X1C, X1E & X2D",
         defaultModel: "X2D",
         modelImg: getPrinterImage("X2D"),
-        step1Path: "Touchscreen ➔ Settings ➔ Network",
-        step1Detail: "Read local IPv4 Address on WLAN tab",
-        step2Path: "Settings ➔ Network ➔ LAN Only",
-        step2Detail: "Copy 8-Char Access Code & Enable Live View",
-        step3Path: "Settings ➔ General ➔ Device Info",
-        step3Detail: "X1C / X2D starts with 00M... • X1E starts with 03W..."
+        step1Path: isZh ? "触控屏 ➔ 设置 ➔ 网络" : (isZhTw ? "觸控螢幕 ➔ 設定 ➔ 網路" : "Touchscreen ➔ Settings ➔ Network"),
+        step1Detail: isZh ? "在 WLAN 页签查看本地 IPv4 地址" : (isZhTw ? "在 WLAN 分頁查看本地 IPv4 位址" : "Read local IPv4 Address on WLAN tab"),
+        step2Path: isZh ? "设置 ➔ 网络 ➔ 局域网模式" : (isZhTw ? "設定 ➔ 網路 ➔ 區網模式" : "Settings ➔ Network ➔ LAN Only"),
+        step2Detail: isZh ? "复制 8 位访问码并启用实时视频" : (isZhTw ? "複製 8 位存取碼並啟用即時影像" : "Copy 8-Char Access Code & Enable Live View"),
+        step3Path: isZh ? "设置 ➔ 通用 ➔ 设备信息" : (isZhTw ? "設定 ➔ 一般 ➔ 裝置資訊" : "Settings ➔ General ➔ Device Info"),
+        step3Detail: isZh ? "X1C / X2D 以 00M 开头 • X1E 以 03W 开头" : (isZhTw ? "X1C / X2D 以 00M 開頭 • X1E 以 03W 開頭" : "X1C / X2D starts with 00M... • X1E starts with 03W...")
       },
       h2: {
         title: "Bambu H2C, H2D, H2D Pro & H2S",
         defaultModel: "H2C",
         modelImg: getPrinterImage("H2C"),
-        step1Path: "Touchscreen ➔ Settings ➔ Network",
-        step1Detail: "Read local IPv4 Address on Wi-Fi / Ethernet tab",
-        step2Path: "Settings ➔ Network ➔ LAN Only Mode",
-        step2Detail: "Copy 8-Char Access Code & Enable Live Camera",
-        step3Path: "Settings ➔ General ➔ Device Info",
-        step3Detail: "H2C / H2D / H2S 15-character Serial Number on Device screen"
+        step1Path: isZh ? "触控屏 ➔ 设置 ➔ 网络" : (isZhTw ? "觸控螢幕 ➔ 設定 ➔ 網路" : "Touchscreen ➔ Settings ➔ Network"),
+        step1Detail: isZh ? "在 Wi-Fi / 以太网页签查看本地 IPv4 地址" : (isZhTw ? "在 Wi-Fi / 乙太網路分頁查看本地 IPv4 位址" : "Read local IPv4 Address on Wi-Fi / Ethernet tab"),
+        step2Path: isZh ? "设置 ➔ 网络 ➔ 局域网模式" : (isZhTw ? "設定 ➔ 網路 ➔ 區網模式" : "Settings ➔ Network ➔ LAN Only Mode"),
+        step2Detail: isZh ? "复制 8 位访问码并启用实时摄像头" : (isZhTw ? "複製 8 位存取碼並啟用即時攝影機" : "Copy 8-Char Access Code & Enable Live Camera"),
+        step3Path: isZh ? "设置 ➔ 通用 ➔ 设备信息" : (isZhTw ? "設定 ➔ 一般 ➔ 裝置資訊" : "Settings ➔ General ➔ Device Info"),
+        step3Detail: isZh ? "在设备信息界面查看 15 位 H2C / H2D / H2S 序列号" : (isZhTw ? "在裝置資訊畫面查看 15 位 H2C / H2D / H2S 序號" : "H2C / H2D / H2S 15-character Serial Number on Device screen")
       },
       r1: {
         title: "Bambu R1 — 55W CO2 Laser Cutter & Engraver",
         defaultModel: "R1",
         modelImg: getPrinterImage("R1"),
-        step1Path: "Touchscreen ➔ Settings ➔ Network / WLAN",
-        step1Detail: "Read local IPv4 Address on network status screen",
-        step2Path: "Settings ➔ Network ➔ LAN Only Mode",
-        step2Detail: "Copy 8-Char Access Code & Enable Chamber Camera Stream",
-        step3Path: "Settings ➔ Device Info (or Rear Chassis Label)",
-        step3Detail: "Enter 15-character R1 Laser Serial Number & select R1 in dropdown"
+        step1Path: isZh ? "触控屏 ➔ 设置 ➔ 网络 / WLAN" : (isZhTw ? "觸控螢幕 ➔ 設定 ➔ 網路 / WLAN" : "Touchscreen ➔ Settings ➔ Network / WLAN"),
+        step1Detail: isZh ? "在网络状态界面读取本地 IPv4 地址" : (isZhTw ? "在網路狀態畫面讀取本地 IPv4 位址" : "Read local IPv4 Address on network status screen"),
+        step2Path: isZh ? "设置 ➔ 网络 ➔ 局域网模式" : (isZhTw ? "設定 ➔ 網路 ➔ 區網模式" : "Settings ➔ Network ➔ LAN Only Mode"),
+        step2Detail: isZh ? "复制 8 位访问码并启用内腔摄像头视频流" : (isZhTw ? "複製 8 位存取碼並啟用內腔攝影機串流" : "Copy 8-Char Access Code & Enable Chamber Camera Stream"),
+        step3Path: isZh ? "设置 ➔ 设备信息（或机身背面铭牌）" : (isZhTw ? "設定 ➔ 裝置資訊（或機身背面銘牌）" : "Settings ➔ Device Info (or Rear Chassis Label)"),
+        step3Detail: isZh ? "输入 15 位 R1 激光雕刻机序列号并在下拉菜单选择 R1" : (isZhTw ? "輸入 15 位 R1 雷射雕刻機序號並在下拉選單選擇 R1" : "Enter 15-character R1 Laser Serial Number & select R1 in dropdown")
       },
       ams: {
         title: "AMS Lite, AMS HT & AMS 2 Pro",
         defaultModel: "P1S",
         modelImg: getPrinterImage("AMSLITE"),
-        step1Path: "Plug 4-Pin / 6-Pin Bus Cable into Printer",
-        step1Detail: "AMS Lite (A1/Mini/A2L) • AMS / AMS 2 Pro • AMS HT (85°C High-Temp)",
-        step2Path: "Automatic MQTT Telemetry Discovery",
-        step2Detail: "All 4 RFID spool slots, colors, remaining %, humidity & 85°C drying sync automatically",
-        step3Path: "Card Header ➔ ✏️ Edit Device ➔ AMS Unit",
-        step3Detail: "Switch between Auto-Detect, AMS Lite, AMS, AMS 2 Pro, or AMS HT artwork anytime"
+        step1Path: isZh ? "将 4 针 / 6 针总线连接线插入打印机" : (isZhTw ? "將 4 針 / 6 針匯流排連接線插入列印機" : "Plug 4-Pin / 6-Pin Bus Cable into Printer"),
+        step1Detail: isZh ? "AMS Lite (A1/Mini/A2L) • AMS / AMS 2 Pro • AMS HT (85°C 高温烘干)" : (isZhTw ? "AMS Lite (A1/Mini/A2L) • AMS / AMS 2 Pro • AMS HT (85°C 高溫烘乾)" : "AMS Lite (A1/Mini/A2L) • AMS / AMS 2 Pro • AMS HT (85°C High-Temp)"),
+        step2Path: isZh ? "MQTT 遥测自动发现" : (isZhTw ? "MQTT 遙測自動探索" : "Automatic MQTT Telemetry Discovery"),
+        step2Detail: isZh ? "全部 4 个 RFID 料槽、颜色、剩余百分比、湿度及 85°C 烘干状态自动同步" : (isZhTw ? "全部 4 個 RFID 料槽、顏色、剩餘百分比、濕度及 85°C 烘乾狀態自動同步" : "All 4 RFID spool slots, colors, remaining %, humidity & 85°C drying sync automatically"),
+        step3Path: isZh ? "卡片顶部 ➔ ✏️ 编辑设备 ➔ AMS 型号" : (isZhTw ? "卡片頂部 ➔ ✏️ 編輯裝置 ➔ AMS 型號" : "Card Header ➔ ✏️ Edit Device ➔ AMS Unit"),
+        step3Detail: isZh ? "随时在自动检测、AMS Lite、AMS、AMS 2 Pro 或 AMS HT 之间切换外观渲染图" : (isZhTw ? "隨時在自動偵測、AMS Lite、AMS、AMS 2 Pro 或 AMS HT 之間切換外觀渲染圖" : "Switch between Auto-Detect, AMS Lite, AMS, AMS 2 Pro, or AMS HT artwork anytime")
       }
     })[s] || {
       title: "Bambu A1, A1 Mini & A2L",
@@ -4811,8 +4919,8 @@
             <button class="wt-pill wt-series-pill ${s === 'p1s' ? 'active' : ''}" data-series="p1s">P1S / P1P / P2S</button>
             <button class="wt-pill wt-series-pill ${s === 'x1c' ? 'active' : ''}" data-series="x1c">X1C / X1E / X2D</button>
             <button class="wt-pill wt-series-pill ${s === 'h2' ? 'active' : ''}" data-series="h2">H2C / H2D / H2S</button>
-            <button class="wt-pill wt-series-pill ${s === 'r1' ? 'active' : ''}" data-series="r1">🔥 R1 CO2 Laser</button>
-            <button class="wt-pill wt-series-pill ${s === 'ams' ? 'active' : ''}" data-series="ams">🎨 AMS Lite / AMS HT</button>
+            <button class="wt-pill wt-series-pill ${s === 'r1' ? 'active' : ''}" data-series="r1">${t("wt_pill_r1", activeLang)}</button>
+            <button class="wt-pill wt-series-pill ${s === 'ams' ? 'active' : ''}" data-series="ams">${t("wt_pill_ams", activeLang)}</button>
           </div>
         </div>
 
@@ -4866,13 +4974,16 @@
             <span>${t("wt_gallery_hdr", activeLang)}</span>
           </div>
           <div class="hw-gallery-grid">
-            ${HARDWARE_SHOWCASE_MODELS.map(m => `
+            ${HARDWARE_SHOWCASE_MODELS.map(m => {
+              const subLabel = isZh ? (m.subZh || m.sub) : (isZhTw ? (m.subZhTw || m.sub) : m.sub);
+              return `
               <button class="hw-chip" data-add-model="${m.addTarget || m.code}" title="Click to pair Bambu Lab ${m.label}">
                 <img src="${getPrinterImage(m.code)}" alt="${m.label}" />
                 <div class="hw-chip-name">${m.label}</div>
-                <div class="hw-chip-sub">${m.sub}</div>
+                <div class="hw-chip-sub">${subLabel}</div>
               </button>
-            `).join("")}
+              `;
+            }).join("")}
           </div>
         </div>
       </div>
@@ -6687,7 +6798,7 @@
       const scrollCtx = this._captureScrollContext(this._lastInteractedPrefix);
 
       const allPrinters = resolveAllPrinters(this._hass, this._config.smart_plugs, lang);
-      const allSpools = collectFleetSpools(allPrinters);
+      const allSpools = collectFleetSpools(allPrinters, lang);
       const filterPrefix = this._config.printer_prefix || this._config.prefix || "";
       const filterModel = (this._config.printer_model || "").toUpperCase().replace(/\s+/g, "");
 
@@ -6764,7 +6875,7 @@
                     <div class="cmd-sub ${isAnyPrinting ? 'live-ticker' : ''}">${subText}</div>
                   </div>
                 </div>
-                <select class="lang-select" id="langSelectBtn" title="Switch Language / Sprache / Langue / Idioma / Язык">
+                <select class="lang-select" id="langSelectBtn" title="Switch Language / 切换语言 / 切換語言 / Sprache / Langue / Idioma / Язык">
                   <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${lang.toUpperCase()} (${t("lang_auto", lang)})</option>
                   ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${savedLangPref === l.code ? "selected" : ""}>${l.flag} ${l.label}</option>`).join("")}
                 </select>
@@ -6854,9 +6965,9 @@
       this._restoreScrollContext(scrollCtx);
 
       // Upgrade top Home Assistant Lovelace header tabs with multi-color neon SVGs & 3D printer renders
-      enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount);
-      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount), 180);
-      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount), 600);
+      enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang);
+      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang), 180);
+      setTimeout(() => enhanceLovelaceTopTabs(this, allPrinters, loadedSpoolCount, lang), 600);
 
       const openSpoolEditorByKey = (ovKey) => {
         if (!ovKey) return;
