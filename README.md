@@ -35,7 +35,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 - **📹 1080p RTSPS & MJPEG Live Camera Viewport + P2S Liveview Assistant**: Side-by-side model artwork and flicker-free live camera feed with double-buffered 1920×1080 RTSPS stream decoding for `P2S`, `H2`, `X1`, and `R1`, native Port `6000` TLS streaming for `A1`, `A1 Mini`, `P1S`, and `P1P`, DOM-preserved `<img>` viewports with scroll-anchored card controls, and an interactive **Enable LAN Only Liveview** setup helper when a P2S camera stream is disabled on the printer touchscreen.
 - **➕ Built-In Fleet Manager (Add / Edit / Reload / Delete)**: Add new Bambu Lab printers or R1 Lasers directly via the standalone LAN engine (`/api/bambu_fleet_studio/printers`) with 1-click LAN Auto-Discovery, customize printer & AMS hardware artwork, reconnect streams, or remove devices directly from the dashboard UI.
 - **📖 4-Card Visual Onboarding Walkthrough & Clickable Hardware Lineup**: Interactive 4-step card grid with 6 series tabs (`A1 / Mini / A2L`, `P1S / P1P / P2S`, `X1C / X1E / X2D`, `H2C / H2D / H2S`, `🔥 R1 CO2 Laser`, `🎨 AMS Lite / AMS HT`) plus a clickable 17-tile **Supported Hardware Lineup** gallery.
-- **🌐 10-Language Internationalization (`i18n`)**: Built-in support for **English (`en`)**, **Deutsch (`de`)**, **Français (`fr`)**, **Español (`es`)**, **Italiano (`it`)**, **Nederlands (`nl`)**, **Polski (`pl`)**, **Português (`pt`)**, **简体中文 (`zh`)**, and **日本語 (`ja`)**. Automatically detects your Home Assistant profile language (`hass.language`), supports `language:` in card YAML / visual editor, and includes an instant **`🌐`** language selector right in the Command Bar.
+- **🌐 11-Language Internationalization (`i18n`)**: Built-in support for **English (`en`)**, **Deutsch (`de`)**, **Français (`fr`)**, **Español (`es`)**, **Italiano (`it`)**, **Nederlands (`nl`)**, **Polski (`pl`)**, **Português (`pt`)**, **Русский (`ru` — *untested; community feedback needed!*)**, **简体中文 (`zh`)**, and **日本語 (`ja`)**. Automatically detects your Home Assistant profile language (`hass.language`), supports `language:` in card YAML / visual editor, and includes an instant **`🌐`** language selector right in the Command Bar.
 - **📱 Mobile & Home Assistant Companion App Optimized**: Built with modern CSS `@container` size queries, dynamic viewport (`dvh`) bottom-sheet modals, 2×2 touch-friendly Command Bar & AMS Spool grids on narrow viewports, swipeable filter pills, and 16px mobile inputs (preventing unwanted iOS Safari auto-zoom).
 - **🔒 100% Self-Contained, Standalone & Privacy-First**: Zero third-party integration dependencies (`ha-bambulab` is **not** required), zero external CDN dependencies, and zero hardcoded tokens or IP addresses.
 
@@ -188,7 +188,7 @@ cards:
 | `prefix` | `string` | Optional | Printer identifier prefix (`<model>_<serial>`, e.g. `a1_03900a100000001` or `p2s_22e8aj5c2800735`). |
 | `name` | `string` | Auto-detected | Display name shown in the card header (e.g. `Bambu A1`, `Bambu P2S`, `Bambu R1 Laser`). |
 | `printer_model` | `string` | `auto` | Hardware model filter / artwork selector: `A1`, `A1MINI`, `A2L`, `P1S`, `P1P`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2DPRO`, `H2S`, or `R1`. |
-| `language` | `string` | `auto` | UI language override (`auto`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `zh`, `ja`). |
+| `language` | `string` | `auto` | UI language override (`auto`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`, `ru`, `zh`, `ja`). |
 | `ams_mode` | `string` | `auto` | AMS display behavior: `auto` (shows AMS deck **only** if AMS hardware is detected), `show` (force show), or `hide` (force hide). |
 
 ---
@@ -197,7 +197,7 @@ cards:
 
 ```text
 bambu-fleet-studio/
-├── bambu-fleet-cards.js              # Self-contained HACS Lovelace bundle (Custom Cards + Embedded Model Art + 10-Language i18n)
+├── bambu-fleet-cards.js              # Self-contained HACS Lovelace bundle (Custom Cards + Embedded Model Art + 11-Language i18n)
 ├── custom_components/
 │   └── bambu_fleet_studio/           # 100% Standalone Home Assistant Local LAN Backend (Zero External Dependencies)
 │       ├── __init__.py               # Direct Port 8883 TLS MQTT client, Port 6000 TLS & Port 322 RTSPS camera engine, LAN scanner
