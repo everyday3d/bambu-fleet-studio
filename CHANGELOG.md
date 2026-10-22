@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Boxerdawg3D maker logo** in the Fleet Studio Command Center header, embedded as a transparent PNG (no extra file to install), with a faint light outline so it stays readable on dark glass.
+
 ## [1.3.1] - 2026-10-12
 
 ### Added
