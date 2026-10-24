@@ -10,5 +10,11 @@
     "abort": {
       "already_configured": "Bambu Lab Fleet Studio is already configured."
     }
+  },
+  "issues": {
+    "bad_access_code": {
+      "title": "Authentication failed for {printer_name}",
+      "description": "Failed to connect to {printer_name} ({serial}) via Local LAN MQTT. The 8-character LAN Access Code is incorrect or has been rotated on the printer screen. Please verify and update the printer's LAN Access Code in Fleet Studio."
+    }
   }
 }

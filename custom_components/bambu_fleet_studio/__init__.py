@@ -20,7 +20,7 @@ import ssl
 import struct
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
@@ -30,10 +30,17 @@ from urllib.parse import urlparse
 from aiohttp import web
 import paho.mqtt.client as mqtt
 
-from homeassistant.components.http import HomeAssistantView
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import HomeAssistantView, StaticPathConfig
+from homeassistant.components.http.auth import async_sign_path
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.issue_registry import (
+    IssueSeverity,
+    async_create_issue,
+    async_delete_issue,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
@@ -2477,6 +2484,14 @@ async def async_scan_bambu_network(hass: HomeAssistant, subnet_override: str = "
     }
 
 
+def _require_admin(request: web.Request) -> Optional[web.Response]:
+    """Verify that the requesting user has administrator privileges."""
+    user = request.get("hass_user")
+    if not user or not user.is_admin:
+        return web.json_response({"error": "Admin privileges required"}, status=403)
+    return None
+
+
 class FleetStatusAPIView(HomeAssistantView):
     """Return live standalone telemetry for all configured Bambu Lab printers."""
 
@@ -2528,6 +2543,8 @@ class FleetNotificationsAPIView(HomeAssistantView):
         })
 
     async def post(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
         try:
             mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
             if not mgr:
@@ -2621,6 +2638,8 @@ class FleetPrintersAPIView(HomeAssistantView):
         return web.json_response({"printers": printers})
 
     async def post(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
         try:
             mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
             if not mgr:
@@ -2632,6 +2651,8 @@ class FleetPrintersAPIView(HomeAssistantView):
             return web.json_response({"error": str(err)}, status=400)
 
     async def delete(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
         try:
             mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
             if not mgr:
@@ -2660,6 +2681,8 @@ class FleetCommandAPIView(HomeAssistantView):
         self.hass = hass
 
     async def post(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
         try:
             mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
             if not mgr:
@@ -2689,7 +2712,7 @@ class FleetCameraSnapshotAPIView(HomeAssistantView):
 
     url = "/api/bambu_fleet_studio/camera/{serial}"
     name = "api:bambu_fleet_studio:camera"
-    requires_auth = False
+    requires_auth = True
 
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
@@ -2714,7 +2737,7 @@ class FleetCameraStreamAPIView(HomeAssistantView):
 
     url = "/api/bambu_fleet_studio/camera_stream/{serial}"
     name = "api:bambu_fleet_studio:camera_stream"
-    requires_auth = False
+    requires_auth = True
 
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
@@ -2764,6 +2787,8 @@ class FleetDiscoverSerialAPIView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
         try:
             host = (request.query.get("host") or "").strip()
             scan = (request.query.get("scan") or "").strip()
@@ -2805,11 +2830,19 @@ async def _async_ensure_initialized(hass: HomeAssistant) -> BambuFleetStudioMana
         hass.http.register_view(FleetDiscoverSerialAPIView(hass))
         domain_data["views_registered"] = True
 
+    card_path = Path(__file__).parent / "bambu-fleet-cards.js"
+    if card_path.is_file() and not domain_data.get("static_path_registered"):
+        await hass.http.async_register_static_paths([
+            StaticPathConfig("/bambu_fleet_studio/bambu-fleet-cards.js", str(card_path), cache_headers=True)
+        ])
+        add_extra_js_url(hass, f"/bambu_fleet_studio/bambu-fleet-cards.js?v={VERSION}")
+        domain_data["static_path_registered"] = True
+
     return mgr
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up Bambu Lab Fleet Studio standalone integration from YAML or startup."""
+    """Set up Bambu Lab Fleet Studio standalone integration."""
     await _async_ensure_initialized(hass)
     return True
 
@@ -2822,8 +2855,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    mgr: Optional[BambuFleetStudioManager] = hass.data.get(DOMAIN, {}).get("manager")
+    domain_data = hass.data.get(DOMAIN, {})
+    mgr: Optional[BambuFleetStudioManager] = domain_data.pop("manager", None)
     if mgr:
         for rt in list(mgr.runtimes.values()):
             await hass.async_add_executor_job(rt.stop)
+        mgr.runtimes.clear()
+    hass.data.pop(DOMAIN, None)
     return True

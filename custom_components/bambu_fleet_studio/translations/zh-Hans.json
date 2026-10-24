@@ -1,14 +1,20 @@
 {
-  "title": "拓竹机队控制中心 (Bambu Lab Fleet Studio)",
+  "title": "拓竹打印机机队中心 (Bambu Lab Fleet Studio)",
   "config": {
     "step": {
       "user": {
-        "title": "拓竹机队控制中心（独立局域网引擎）",
-        "description": "启用零外部依赖的本地局域网 MQTT 与 TLS 实时视频流引擎，支持拓竹全系列 3D 打印机、R1 CO2 激光雕刻机及 AMS 供料系统。"
+        "title": "拓竹机队中心（局域网独立引擎）",
+        "description": "启用零依赖局域网 MQTT 与 TLS 摄像头引擎，支持拓竹 3D 打印机、R1 CO2 激光雕刻机及 AMS 供料系统。"
       }
     },
     "abort": {
-      "already_configured": "拓竹机队控制中心 (Bambu Lab Fleet Studio) 已完成配置。"
+      "already_configured": "拓竹机队中心 (Bambu Lab Fleet Studio) 已经配置完成。"
+    }
+  },
+  "issues": {
+    "bad_access_code": {
+      "title": "{printer_name} 身份验证失败",
+      "description": "无法通过局域网 MQTT 连接到 {printer_name} ({serial})。8 位局域网访问码不正确或已在打印机屏幕上重置。请在机队中心更新访问码。"
     }
   }
 }

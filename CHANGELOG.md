@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security & Compliance (HACS Review Feedback — Fixes #38)
+- **Authenticated Camera Views**: Set `requires_auth = True` on camera snapshot and stream endpoints; automatically generate and pass temporary HMAC-signed URLs (`async_sign_path`) with 4-hour validity for dashboard viewing and 24-hour validity for Companion App notifications.
+- **Strict Administrator Privilege Enforcement**: Guarded all state-modifying REST endpoints (`/printers`, `/command`, `/notifications`, `/discover_serial`) with an administrator check (`request["hass_user"].is_admin`), returning HTTP 403 for non-admin sessions.
+- **Service & Entity Validation**: Restricted notification dispatches strictly to `notify` and `persistent_notification` domains; validated target entities for cooldown plugs (`switch.*`), RGB lighting (`light.*`), and voice alerts (`media_player.*`).
+- **MQTT Auth Failure Circuit Breaker**: Detected bad access code responses (`rc in (4, 5, 134, 135)`), suspended tight reconnect loops, and created an issue in Home Assistant's Issue Registry (`issues.bad_access_code`) to notify the user until credentials are updated.
+- **XSS Prevention in Frontend Cards**: Added universal HTML escaping across all interpolated dynamic values (printer names, print task names, HMS messages, spool types and colors).
+- **Static Card Serving & De-duplication**: Removed duplicate root `bambu-fleet-cards.js`, added `frontend` to integration dependencies in `manifest.json`, and registered the card via `async_register_static_paths` and `add_extra_js_url`.
+- **Cleaned Hardcoded Device References**: Removed all hardcoded `jims_iphone` occurrences from the frontend card.
+- **Integration Unload Cleanup**: Ensured `async_unload_entry` stops all runtimes and clears `hass.data[DOMAIN]`.
+- **Documentation Refinement**: Removed obsolete `configuration.yaml` recommendation from `README.md`.
+
 ### Added
 - **Boxerdawg3D maker logo** in the Fleet Studio Command Center header, embedded as a transparent PNG (no extra file to install), with a faint light outline so it stays readable on dark glass.
 

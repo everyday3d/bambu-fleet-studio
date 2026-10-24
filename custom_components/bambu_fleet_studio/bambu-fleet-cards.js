@@ -22,6 +22,16 @@
 const BOXERDAWG3D_LOGO = 'data:image/png;base64,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';
 (function() {
   const CARD_VERSION = "1.3.1";
+
+  const escapeHtml = (str) => {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
   const PLUG_STORAGE_KEY = "bambu_fleet_smart_plugs_v1";
   const MODEL_STORAGE_KEY = "bambu_fleet_model_overrides_v1";
   const AMS_STORAGE_KEY = "bambu_fleet_ams_overrides_v1";
@@ -2928,7 +2938,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     const snapImgUrl = "/api/bambu_fleet_studio/camera/" + pSerial;
     const cleanNotify = (notifyService && notifyService !== "notify.send_message" && notifyService !== "notify.notify")
       ? notifyService
-      : "notify.mobile_app_jims_iphone";
+      : "notify.persistent_notification";
     const svc = cleanNotify || "notify.persistent_notification";
     const [svcDomain, svcName] = svc.includes(".") ? svc.split(".", 2) : ["notify", svc];
     const isPersistent = svcName === "persistent_notification";
@@ -3771,7 +3781,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           <div class="dialog wide">
             <div class="hdr">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <div class="hdr-title">📹 ${payload.name} — Live Camera</div>
+                <div class="hdr-title">📹 ${escapeHtml(payload.name)} — Live Camera</div>
                 ${payload.online && payload.camAvailable ? `
                   <span style="font-size:10px;font-weight:800;color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);padding:3px 9px;border-radius:999px;">
                     ● ${payload.isRtspCam ? "1080P RTSPS LIVE FEED" : "LIVE STREAM"}
@@ -3795,12 +3805,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                       <div style="display:flex;align-items:center;gap:10px;">
                         <span style="font-size:24px;">📹</span>
                         <div>
-                          <div style="font-size:15px;font-weight:800;color:#fde68a;">Enable "LAN Only Liveview" on ${payload.name} (${payload.model})</div>
-                          <div style="font-size:11px;color:#94a3b8;">Home Assistant is connected (${payload.ipAddress}), but the printer's local RTSP stream is currently disabled (<code>rtsp_url: disable</code>).</div>
+                          <div style="font-size:15px;font-weight:800;color:#fde68a;">Enable "LAN Only Liveview" on ${escapeHtml(payload.name)} (${escapeHtml(payload.model)})</div>
+                          <div style="font-size:11px;color:#94a3b8;">Home Assistant is connected (${escapeHtml(payload.ipAddress)}), but the printer's local RTSP stream is currently disabled (<code>rtsp_url: disable</code>).</div>
                         </div>
                       </div>
                       <div style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 12px;font-size:12px;color:#e0f2fe;line-height:1.5;">
-                        <strong>How to enable on your ${payload.model} touchscreen:</strong><br/>
+                        <strong>How to enable on your ${escapeHtml(payload.model)} touchscreen:</strong><br/>
                         1. On the printer screen, open <strong>Settings (⚙️) ➔ LAN Only</strong>.<br/>
                         2. Inside <strong>LAN Only</strong>, you will see two toggles: <strong>"LAN Only"</strong> and <strong>"LAN Only Liveview"</strong>.<br/>
                         3. Turn <strong>ON</strong> the second toggle: <strong>"LAN Only Liveview"</strong> <em>(you can leave the first "LAN Only" toggle OFF to keep Bambu Cloud & Bambu Handy active)</em>.<br/>
@@ -3966,11 +3976,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           notifySvcs.push("notify." + k);
         }
       }
-      // Sort mobile_app_* services first, prioritizing jims_iphone
+      // Sort mobile_app_* services first
       notifySvcs.sort((a, b) => {
-        const aJim = a.includes("jims_iphone") ? 0 : (a.startsWith("notify.mobile_app_") ? 1 : 2);
-        const bJim = b.includes("jims_iphone") ? 0 : (b.startsWith("notify.mobile_app_") ? 1 : 2);
-        if (aJim !== bJim) return aJim - bJim;
+        const aMobile = a.startsWith("notify.mobile_app_") ? 0 : 1;
+        const bMobile = b.startsWith("notify.mobile_app_") ? 0 : 1;
+        if (aMobile !== bMobile) return aMobile - bMobile;
         return a.localeCompare(b);
       });
       if (!notifySvcs.includes("notify.persistent_notification")) {
@@ -4007,7 +4017,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       switchEntities.sort((a, b) => a.label.localeCompare(b.label));
 
       const savedPrefs = loadNotifyPrefs();
-      const preferredMobileApp = notifySvcs.find(s => s.includes("jims_iphone")) || notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
+      const preferredMobileApp = notifySvcs.find(s => s.startsWith("notify.mobile_app_"));
       const initialNotifySvc = (savedPrefs.notify_service && notifySvcs.includes(savedPrefs.notify_service))
         ? savedPrefs.notify_service
         : (preferredMobileApp || notifySvcs[0] || "notify.persistent_notification");
@@ -4017,7 +4027,6 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       let isCurrentlySaved = Boolean(savedPrefs.saved && savedPrefs.notify_service === initialNotifySvc);
 
       const formatNotifyOptionLabel = (svc) => {
-        if (svc === "notify.mobile_app_jims_iphone") return "📱 Jim's iPhone (" + svc + ")";
         if (svc.startsWith("notify.mobile_app_")) {
           const slug = svc.replace("notify.mobile_app_", "");
           const entSt = hass.states && hass.states["notify." + slug];
@@ -4135,7 +4144,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 <label>Target Bambu Lab Printer</label>
                 <select id="autoPrinterSel">
                   <option value="__ALL__" ${initialTargetPrinter === "__ALL__" ? "selected" : ""}>All Fleet Printers (${printers.length} Printers)</option>
-                  ${printers.map(p => `<option value="${p.prefix}" ${(initialTargetPrinter === p.prefix || initialTargetPrinter === p.serial) ? "selected" : ""}>${p.name} (${p.model} • ${p.serial})</option>`).join("")}
+                  ${printers.map(p => `<option value="${escapeHtml(p.prefix)}" ${(initialTargetPrinter === p.prefix || initialTargetPrinter === p.serial) ? "selected" : ""}>${escapeHtml(p.name)} (${escapeHtml(p.model)} • ${escapeHtml(p.serial)})</option>`).join("")}
                 </select>
                 <div class="sub-hint">Deploy automations for a single printer or your entire fleet at once</div>
               </div>
@@ -4148,11 +4157,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 </div>
                 <div style="display:flex;gap:8px;align-items:stretch;">
                   <select id="autoNotifySel" style="flex:1;">
-                    ${notifySvcs.map(s => `<option value="${s}" ${s === initialNotifySvc ? "selected" : ""}>${formatNotifyOptionLabel(s)}</option>`).join("")}
+                    ${notifySvcs.map(s => `<option value="${escapeHtml(s)}" ${s === initialNotifySvc ? "selected" : ""}>${escapeHtml(formatNotifyOptionLabel(s))}</option>`).join("")}
                   </select>
                   <button class="btn btn-green" id="saveNotifyInlineBtn" style="padding:8px 14px;white-space:nowrap;font-size:12px;">💾 Save</button>
                 </div>
-                <div class="sub-hint">Select your Home Assistant Mobile App (e.g., Jim's iPhone) and click Save</div>
+                <div class="sub-hint">Select your Home Assistant Mobile App or Notification Service and click Save</div>
               </div>
             </div>
 
@@ -4174,7 +4183,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               <div style="display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;">
                 <select id="rgbLightEntitySel" class="bp-cfg-select" style="flex:1;min-width:220px;font-size:12px;padding:7px 10px;">
                   <option value="">— Select WLED Strip or Smart RGB Light (light.*) —</option>
-                  ${lightEntities.map(l => `<option value="${l.id}" ${initialRgbLight === l.id ? "selected" : ""}>${l.label}</option>`).join("")}
+                  ${lightEntities.map(l => `<option value="${escapeHtml(l.id)}" ${initialRgbLight === l.id ? "selected" : ""}>${escapeHtml(l.label)}</option>`).join("")}
                 </select>
                 <button class="btn btn-green" id="enableWledTopBtn" type="button" style="padding:7px 14px;font-size:12px;white-space:nowrap;">⚡ 1-Click Enable &amp; Save WLED</button>
               </div>
@@ -4699,12 +4708,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             <div class="hero-strip">
               <img src="${getPrinterImage(payload.modelNorm || payload.model)}" />
               <div>
-                <div style="font-size:17px;font-weight:800;">${payload.name}</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:3px;">Bambu Lab ${payload.model} • SN: ${payload.serial}</div>
+                <div style="font-size:17px;font-weight:800;">${escapeHtml(payload.name)}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:3px;">Bambu Lab ${escapeHtml(payload.model)} • SN: ${escapeHtml(payload.serial)}</div>
               </div>
             </div>
             <div style="font-size:14px;color:#cbd5e1;line-height:1.5;">
-              Confirm removing <strong>${payload.name}</strong> (SN: <code>${payload.serial}</code>) from Bambu Lab Fleet Studio?
+              Confirm removing <strong>${escapeHtml(payload.name)}</strong> (SN: <code>${escapeHtml(payload.serial)}</code>) from Bambu Lab Fleet Studio?
             </div>
             <div id="alertBox" class="alert"></div>
             <div class="ftr">
@@ -4906,10 +4915,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               <img class="disc-img" src="${getPrinterImage(modNorm)}" alt="${modNorm}" />
               <div class="disc-info">
                 <div class="disc-top">
-                  <span class="disc-name">${item.name || ('Bambu Lab ' + modNorm)}</span>
+                  <span class="disc-name">${escapeHtml(item.name || ('Bambu Lab ' + modNorm))}</span>
                   ${badgeHtml}
                 </div>
-                <div class="disc-meta">🌐 ${item.host || 'No IP'} • SN: ${item.serial} • Model: ${modNorm}${!isOnline && lastFmt ? ' • 🕒 Last Online: ' + lastFmt : ''}</div>
+                <div class="disc-meta">🌐 ${escapeHtml(item.host || 'No IP')} • SN: ${escapeHtml(item.serial)} • Model: ${escapeHtml(modNorm)}${!isOnline && lastFmt ? ' • 🕒 Last Online: ' + escapeHtml(lastFmt) : ''}</div>
               </div>
               <span class="disc-cta">${isNew ? '➕ Pair ➔' : (ipChanged ? '🔄 Update IP ➔' : 'Select ➔')}</span>
             </div>
@@ -5227,7 +5236,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         <div class="overlay">
           <div class="dialog">
             <div class="hdr">
-              <div class="hdr-title">✏️ Edit Device — ${payload.name}</div>
+              <div class="hdr-title">✏️ Edit Device — ${escapeHtml(payload.name)}</div>
               <button class="x-btn" id="xBtn">✕</button>
             </div>
 
@@ -5235,8 +5244,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               <img id="editPreviewImg" src="${getPrinterImage(curModelNorm)}" title="Printer Artwork" />
               <img id="editAmsPreviewImg" src="${getPrinterImage(previewAmsCode)}" style="width:62px;height:62px;object-fit:contain;border-left:1px solid rgba(255,255,255,0.1);padding-left:10px;${curAmsOverride === 'NONE' ? 'display:none;' : ''}" title="AMS Unit Artwork" />
               <div style="flex:1;min-width:0;">
-                <div style="font-size:16px;font-weight:800;">${payload.name}</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${payload.serial} • ${payload.hasAms ? '✓ ' + (payload.amsUnits?.length > 1 ? payload.amsUnits.length + 'x ' + payload.amsInfo.modelNorm : payload.amsInfo.model) + ' Attached' : 'External Spool / Direct Mode'}</div>
+                <div style="font-size:16px;font-weight:800;">${escapeHtml(payload.name)}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${escapeHtml(payload.serial)} • ${payload.hasAms ? '✓ ' + (payload.amsUnits?.length > 1 ? payload.amsUnits.length + 'x ' + payload.amsInfo.modelNorm : payload.amsInfo.model) + ' Attached' : 'External Spool / Direct Mode'}</div>
                 <div class="grid-2" style="margin-top:8px;gap:8px;">
                   <div class="fld" style="margin:0;">
                     <label>Printer / Laser Model</label>
@@ -5262,7 +5271,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             <div class="grid-2">
               <div class="fld">
                 <label>Display Name</label>
-                <input id="nameInp" type="text" value="${payload.name || ''}" />
+                <input id="nameInp" type="text" value="${escapeHtml(payload.name || '')}" />
               </div>
               <div class="fld">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
@@ -5627,11 +5636,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           <div class="hms-alert-left">
             <span class="hms-icon">🚨</span>
             <div>
-              <div class="hms-title">${a.title}</div>
-              <div class="hms-msg">${a.message}</div>
+              <div class="hms-title">${escapeHtml(a.title)}</div>
+              <div class="hms-msg">${escapeHtml(a.message)}</div>
             </div>
           </div>
-          <a class="hms-wiki-btn" href="${a.wikiUrl}" target="_blank" rel="noopener noreferrer">${t("hms_wiki_btn", activeLang)}</a>
+          <a class="hms-wiki-btn" href="${escapeHtml(a.wikiUrl)}" target="_blank" rel="noopener noreferrer">${t("hms_wiki_btn", activeLang)}</a>
         </div>
       `).join("");
     }
@@ -5742,14 +5751,14 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 const colorInfo = resolveSpoolColorInfo(effColor, tr.name, effType, isEmpty, activeLang);
                 const effName = colorInfo.displayName;
                 return `
-                <div class="spool-card ${tr.active ? 'active-spool' : ''}" title="${slotCode} • ${effName}">
+                <div class="spool-card ${tr.active ? 'active-spool' : ''}" title="${escapeHtml(slotCode)} • ${escapeHtml(effName)}">
                   <div class="spool-top">
-                    <span class="slot-num">${slotCode}</span>
-                    <span class="spool-type">${effType}</span>
+                    <span class="slot-num">${escapeHtml(slotCode)}</span>
+                    <span class="spool-type">${escapeHtml(effType)}</span>
                   </div>
                   <div class="spool-swatch-row">
                     <span class="spool-ring" style="background:${effColor};"></span>
-                    <div class="spool-name" title="${effName}">${effName}</div>
+                    <div class="spool-name" title="${escapeHtml(effName)}">${escapeHtml(effName)}</div>
                   </div>
                   ${effRemain !== null && effRemain !== undefined ? `
                     <div class="spool-Mini-bar">
@@ -5770,12 +5779,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const colorInfo = resolveSpoolColorInfo(effColor, p.extSpool.name, effType, isEmpty, activeLang);
       const effName = colorInfo.displayName;
       filamentHtml = `
-        <div class="ext-spool-deck" title="${t('ext_spool_title', activeLang)} (${effName})">
+        <div class="ext-spool-deck" title="${t('ext_spool_title', activeLang)} (${escapeHtml(effName)})">
           <div class="ext-spool-left">
             <span class="spool-ring" style="background:${effColor};"></span>
             <div>
               <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">${t("ext_spool_title", activeLang)}</div>
-              <div style="font-size:13px;font-weight:700;color:#f8fafc;">${effName}</div>
+              <div style="font-size:13px;font-weight:700;color:#f8fafc;">${escapeHtml(effName)}</div>
             </div>
           </div>
           <span class="ext-badge" style="display:inline-flex;align-items:center;gap:5px;">${SVG_ICONS.filamentSpool} ${t("ext_spool_badge", activeLang)}</span>
@@ -5805,8 +5814,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${p.smartPlug.powerVal}${p.smartPlug.powerUnit}</span>` : ''}
             </div>
             <div class="p-title-wrap">
-              <div class="p-name">${p.name}</div>
-              <div class="p-sub">Bambu Lab ${p.model} • SN: ${p.serial}</div>
+              <div class="p-name">${escapeHtml(p.name)}</div>
+              <div class="p-sub">Bambu Lab ${escapeHtml(p.model)} • SN: ${escapeHtml(p.serial)}</div>
             </div>
           </div>
           <div class="p-hdr-actions">
@@ -5840,7 +5849,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
 
         <div class="p-job-card">
           <div class="job-row-top">
-            <div class="job-title" title="${p.taskName}">📄 ${p.taskName}</div>
+            <div class="job-title" title="${escapeHtml(p.taskName)}">📄 ${escapeHtml(p.taskName)}</div>
             <div class="job-pct">${p.progress}%</div>
           </div>
           <div class="job-bar-bg">
@@ -5996,21 +6005,21 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 ? `${s.remain}%${s.weightGrams !== null ? ' (~' + s.weightGrams + 'g)' : ''}`
                 : "";
               return `
-                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-locate="${s.printerPrefix}" title="${t('ff_click_highlight', activeLang)} ${s.printerName} (${s.slotBadge})">
+                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-locate="${s.printerPrefix}" title="${t('ff_click_highlight', activeLang)} ${escapeHtml(s.printerName)} (${escapeHtml(s.slotBadge)})">
                   <div class="ff-swatch" style="background:${s.color};width:38px;height:38px;"></div>
                   <div class="ff-info">
                     <div class="ff-top-row" style="flex-wrap:wrap;">
-                      <span class="ff-mat-badge">${s.type}</span>
-                      <span class="ff-slot-badge">${s.slotBadge}</span>
+                      <span class="ff-mat-badge">${escapeHtml(s.type)}</span>
+                      <span class="ff-slot-badge">${escapeHtml(s.slotBadge)}</span>
                       ${statusPill}
                       ${humBadge}
                       ${remLabel ? `<span class="ff-rem">${remLabel}</span>` : ''}
                     </div>
-                    <div class="ff-name" title="${s.name}">${s.name}</div>
+                    <div class="ff-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>
                     <div class="ff-printer" style="justify-content:space-between;margin-top:4px;">
                       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         <span class="p-dot" style="background:${s.online ? '#10b981' : '#64748b'};display:inline-block;"></span>
-                        <strong>${s.printerName}</strong> • ${s.location}
+                        <strong>${escapeHtml(s.printerName)}</strong> • ${escapeHtml(s.location)}
                       </span>
                       <span style="display:inline-flex;gap:4px;flex-shrink:0;">
                         <button type="button" class="ff-mini-btn" data-ff-locate="${s.printerPrefix}" title="Scroll to & highlight ${s.printerName}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
@@ -7814,7 +7823,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         <div class="ed-wrap">
           <div>
             <label>Studio Header Title</label>
-            <input id="titleInp" type="text" value="${title}" />
+            <input id="titleInp" type="text" value="${escapeHtml(title)}" />
           </div>
           <div>
             <label>🌐 Language (Auto-Detects Home Assistant Profile Language by Default)</label>
@@ -7825,7 +7834,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           </div>
           <div>
             <label>Filter by Printer Model (Optional — e.g. A1, A1MINI, A2L, P1S, P2S, X1C, X2D, H2C, H2S, R1)</label>
-            <input id="modelInp" type="text" value="${filterModel}" placeholder="All Bambu Printers & Lasers" />
+            <input id="modelInp" type="text" value="${escapeHtml(filterModel)}" placeholder="All Bambu Printers & Lasers" />
           </div>
           <div class="chk-row">
             <input id="ffChk" type="checkbox" ${showFf ? "checked" : ""} />
@@ -8257,11 +8266,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   </div>
                   <div class="cmd-brand-text">
                     <div class="cmd-title-row">
-                      <div class="cmd-title">${studioTitle}</div>
+                      <div class="cmd-title">${escapeHtml(studioTitle)}</div>
                       <span class="cmd-proto-pill">LAN • TLS</span>
                       ${versionBadgeHtml}
                     </div>
-                    <div class="cmd-sub ${isAnyPrinting ? 'live-ticker' : ''}">${subText}</div>
+                    <div class="cmd-sub ${isAnyPrinting ? 'live-ticker' : ''}">${escapeHtml(subText)}</div>
                   </div>
                 </div>
                 <select class="lang-select" id="langSelectBtn" title="Switch Language / 切换语言 / 切換語言 / Sprache / Langue / Idioma / Язык">

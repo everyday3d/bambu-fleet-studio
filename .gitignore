@@ -9,3 +9,6 @@ GEMINI.md
 CLAUDE.md
 .agents/
 graphify-out/
+.codegraph/
+__pycache__/
+*.pyc

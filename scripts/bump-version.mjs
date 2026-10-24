@@ -265,19 +265,13 @@ function syncGitHubDiscussions(currentTag) {
 }
 
 if (!discussionsOnly) {
-  // 1. Update bambu-fleet-cards.js
-  replaceInFile("bambu-fleet-cards.js", (txt) =>
+  // 1. Update custom_components/bambu_fleet_studio/bambu-fleet-cards.js
+  replaceInFile("custom_components/bambu_fleet_studio/bambu-fleet-cards.js", (txt) =>
     txt
       .replace(/const CARD_VERSION = "[^"]+";/, `const CARD_VERSION = "${rawVer}";`)
       .replace(/(@version\s+)[0-9]+\.[0-9]+\.[0-9]+/, `$1${rawVer}`)
   );
-
-  // 2. Sync custom_components/bambu_fleet_studio/bambu-fleet-cards.js
-  fs.copyFileSync(
-    path.join(ROOT_DIR, "bambu-fleet-cards.js"),
-    path.join(ROOT_DIR, "custom_components/bambu_fleet_studio/bambu-fleet-cards.js")
-  );
-  console.log(`[bump] Synced custom_components/bambu_fleet_studio/bambu-fleet-cards.js`);
+  console.log(`[bump] Updated custom_components/bambu_fleet_studio/bambu-fleet-cards.js`);
 
   // 3. Update custom_components/bambu_fleet_studio/__init__.py
   replaceInFile("custom_components/bambu_fleet_studio/__init__.py", (txt) =>
@@ -349,12 +343,12 @@ if (doPublish) {
   try {
     execSync(`gh release view ${tag} --repo ${REPO}`, { stdio: "ignore" });
     execSync(`gh release edit ${tag} --repo ${REPO} --notes-file "${notesFile}" --latest`, { stdio: "inherit" });
-    execSync(`gh release upload ${tag} "${path.join(ROOT_DIR, "bambu-fleet-cards.js")}" --repo ${REPO} --clobber`, {
+    execSync(`gh release upload ${tag} "${path.join(ROOT_DIR, "custom_components/bambu_fleet_studio/bambu-fleet-cards.js")}" --repo ${REPO} --clobber`, {
       stdio: "inherit"
     });
   } catch {
     execSync(
-      `gh release create ${tag} "${path.join(ROOT_DIR, "bambu-fleet-cards.js")}" --repo ${REPO} --title "${releaseTitle}" --notes-file "${notesFile}" --latest`,
+      `gh release create ${tag} "${path.join(ROOT_DIR, "custom_components/bambu_fleet_studio/bambu-fleet-cards.js")}" --repo ${REPO} --title "${releaseTitle}" --notes-file "${notesFile}" --latest`,
       { stdio: "inherit" }
     );
   }

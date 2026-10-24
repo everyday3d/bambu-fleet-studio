@@ -109,20 +109,18 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 
 #### Option A: Install via HACS
 1. Open **HACS** in your Home Assistant sidebar.
-2. Click the **three-dot menu (`⋮`)** in the top-right corner and select **Custom repositories**.
+2. Click the **three-dot menu (⋮)** in the top-right corner and select **Custom repositories**.
 3. Enter the repository URL:
-   ```text
+   `	ext
    https://github.com/everyday3d/bambu-fleet-studio
-   ```
-4. Select category **Dashboard** (or copy `custom_components/bambu_fleet_studio` into `/config/custom_components/bambu_fleet_studio`) and click **Download**.
+   `
+4. Select category **Integration** and click **Download**, then restart Home Assistant.
+5. In Home Assistant, go to **Settings → Devices & Services → Add Integration** and select **Bambu Lab Fleet Studio** (the integration automatically registers and serves the frontend dashboard card).
 
 #### Option B: Direct Copy Installation
-1. Copy the `custom_components/bambu_fleet_studio/` folder into your Home Assistant `/config/custom_components/bambu_fleet_studio/` directory and add `bambu_fleet_studio:` to your `configuration.yaml` (or add **Bambu Lab Fleet Studio** under **Settings → Devices & Services → Add Integration**).
-2. Copy [`bambu-fleet-cards.js`](https://github.com/everyday3d/bambu-fleet-studio/releases/latest/download/bambu-fleet-cards.js) into `/config/www/bambu-fleet-cards.js`.
-3. In Home Assistant, go to **Settings → Dashboards → `⋮` (top right) → Resources → Add Resource**:
-   - **URL**: `/local/bambu-fleet-cards.js`
-   - **Resource type**: `JavaScript Module`
-4. Restart Home Assistant Core once to activate the standalone `/api/bambu_fleet_studio/*` engine, then click **`➕ Add Printer`** on your dashboard to auto-discover and pair your printers on Port `8883` TLS!
+1. Copy the custom_components/bambu_fleet_studio/ folder into your Home Assistant /config/custom_components/bambu_fleet_studio/ directory and restart Home Assistant.
+2. In Home Assistant, go to **Settings → Devices & Services → Add Integration** and select **Bambu Lab Fleet Studio** (the integration automatically registers and serves the frontend dashboard card at /bambu_fleet_studio/bambu-fleet-cards.js).
+3. Click **➕ Add Printer** on your dashboard to auto-discover and pair your printers on Port 8883 TLS!
 
 ---
 
