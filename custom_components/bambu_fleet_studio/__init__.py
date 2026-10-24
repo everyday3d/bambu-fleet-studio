@@ -46,7 +46,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"

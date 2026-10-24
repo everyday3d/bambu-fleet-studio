@@ -1,6 +1,6 @@
-# 🖨️ Bambu Lab Fleet Studio `[v1.4.0]` — Home Assistant Dashboard & Custom Cards
+# 🖨️ Bambu Lab Fleet Studio `[v1.4.1]` — Home Assistant Dashboard & Custom Cards
 
-[![Release v1.4.0](https://img.shields.io/badge/Release-v1.4.0%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![Release v1.4.1](https://img.shields.io/badge/Release-v1.4.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 [![HACS Default](https://img.shields.io/badge/HACS-Default%20Store-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/default)
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
@@ -14,14 +14,17 @@
 
 ---
 
-## 🆕 What's New in `v1.4.0`
+## 🆕 What's New in `v1.4.1`
 
+- **🛠️ Printer Maintenance Reminders & 1-Click Reset Log**:
+  - Keeping up with routine maintenance across multiple printers is easy to forget until a print starts acting up. Each printer now keeps track of its own print hours and reminds you when it's time to **wipe down carbon rods or lubricate linear rails** (every `250h`), **clean and regrease the Z lead screws** (every `500h`), **brush out the extruder gears and check the nozzle** (every `500h`, or clean the optics on an `R1` Laser), and **swap out the carbon air filter** on enclosed printers (every `400h`).
+  - You'll see a small **`🛠️ OK`** or **`🛠️ Due`** badge right inside the Odometer box on each printer card. When you finish cleaning or greasing a printer, just open **✏️ Edit Device** and click **✓ Reset** next to that item (or **✓ Reset All**) to start the countdown fresh!
 - **🔧 Bambu Lab H2C 7-Nozzle Changer & H2D / X2D Dual-Nozzle Support (*Untested — Community Feedback Needed!*)**:
-  - **H2C Vortek 7-Nozzle Changer Rack**: H2C printer cards now include a dedicated **Vortek 7-Nozzle Changer** section showing the **fixed Left nozzle** alongside all **6 swappable Right induction hotends (`R1`–`R6`)**, including which nozzle is currently mounted, which slots are docked or empty, nozzle sizes (`0.2mm`–`0.8mm`), flow types (`Standard` or `High-Flow`), and print hours.
-  - **Dual-Nozzle Temperatures (`L + R`)**: `H2C`, `H2D`, `H2D Pro`, and `X2D` cards now show both **Left (`L`)** and **Right (`R`)** nozzle temperatures and targets side-by-side, and Smart Plug safety locks now wait until **both** nozzles cool below `60°C` before allowing power-off.
+  - **H2C 7-Nozzle Changer Rack**: H2C printer cards now show the **fixed Left nozzle** alongside all **6 swappable Right hotends (`R1`–`R6`)**, including which nozzle is currently loaded, which slots are parked or empty, nozzle sizes (`0.2mm`–`0.8mm`), and print hours.
+  - **Dual-Nozzle Temperatures (`L + R`)**: `H2C`, `H2D`, `H2D Pro`, and `X2D` cards now display both **Left (`L`)** and **Right (`R`)** nozzle temperatures side-by-side, and Smart Plug safety locks wait until **both** nozzles cool below `60°C` before allowing power-off.
   - **🧪 Help Us Test `H2C` & `X2D`**: I don't have a physical `H2C` or `X2D` in my shop yet, so this support is marked **Beta / Untested**. If you own an `H2C` or `X2D`, please try it out and let me know in **[GitHub Issues](https://github.com/everyday3d/bambu-fleet-studio/issues)** or **[Discussions](https://github.com/everyday3d/bambu-fleet-studio/discussions)** how it looks and if anything needs tweaking!
 - **🎉 Now Available in the Official HACS Store**:
-  - **Bambu Lab Fleet Studio** has been reviewed and merged into the official **HACS Default Store**! You can now search for **Bambu Lab Fleet Studio** directly inside HACS and install it in one click, with improved camera streaming security and automatic repair alerts if a printer's LAN Access Code ever changes.
+  - **Bambu Lab Fleet Studio** is now in the official **HACS Default Store**! Just search for **Bambu Lab Fleet Studio** inside HACS and install it in one click.
 
 ---
 

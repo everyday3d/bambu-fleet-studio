@@ -5,12 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.1] - 2026-10-24
 
 ### Added
-- **🛠️ Preventative Maintenance Tracker & 1-Click Service Reset Log (`#42`)**:
-  - **Model-Aware Maintenance Intervals**: Tracks elapsed print hours for **🧹 X/Y Carbon Rods / Linear Rails** (`250h`), **🔩 Z-Axis Lead Screws** (`500h`), **⚙️ Extruder Gears & Nozzle** (`500h`, or **Laser Lens & Mirrors** on `R1`), and **🌬️ Chamber Carbon Filter** (`400h` on enclosed models).
-  - **Odometer Status Badge & Service Reset Modal**: Displays a compact **`🛠️ OK`** or **`🛠️ X Due`** status badge inside each printer's Odometer tile, plus a full **🛠️ Preventative Maintenance & Service Log** section inside **✏️ Edit Device** with progress bars, last-serviced dates, individual **✓ Reset** buttons, and a **✓ Reset All Intervals** button persisted in Home Assistant storage.
+- **🛠️ Printer Maintenance Reminders & 1-Click Reset Log (`#42`)**:
+  - Keeping up with routine maintenance across multiple printers is easy to forget until a print starts acting up. Each printer now keeps track of its own print hours and reminds you when it's time to **wipe down carbon rods or lubricate linear rails** (every `250h`), **clean and regrease the Z lead screws** (every `500h`), **brush out the extruder gears and check the nozzle** (every `500h`, or clean the optics on an `R1` Laser), and **swap out the carbon air filter** on enclosed printers (every `400h`).
+  - Added a small **`🛠️ OK`** or **`🛠️ Due`** badge right inside the Odometer box on each printer card, plus a maintenance tracker inside **✏️ Edit Device** where you can click **✓ Reset** on any item (or **✓ Reset All**) whenever you finish servicing a printer.
 
 ## [1.4.0] - 2026-10-24
 
