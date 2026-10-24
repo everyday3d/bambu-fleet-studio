@@ -131,36 +131,36 @@ function syncGitHubDiscussions(currentTag) {
   );
 
   const disc30Body = [
-    `## 🗳️ Vote on the Bambu Lab Fleet Studio Local-LAN Roadmap! (\`${currentTag}\`)`,
+    `## 🗳️ Help Pick What I Build Next for Bambu Lab Fleet Studio! (\`${currentTag}\`)`,
     "",
     `[![Release ${currentTag}](https://img.shields.io/badge/Release-${currentTag}%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)`,
     "",
-    "We want to build what matters most to your workshop and print farm! Below are the upcoming **100% Local-LAN** feature modules planned for **Bambu Lab Fleet Studio**, followed by all roadmap items we've **already shipped (`~~...~~ ✅`)** at the bottom.",
+    "Hey everyone! I'm building this dashboard for my own print room and sharing it with the community, so I'd love your help deciding what to work on next. Below is my to-do list of upcoming features, followed by everything that's **already been built and shipped (`~~...~~ ✅`)** at the bottom.",
     "",
-    "### 👇 How to Vote on What We Build Next",
-    `Scroll down to the **${upcomingItems.length} feature comments below** and click the **👍 (Thumbs Up)** reaction on the feature(s) you want us to prioritize next! You can vote for multiple options or reply with specific requests.`,
+    "### 👇 How to Vote",
+    `Just scroll down to the **${upcomingItems.length} comments below** and click the **👍 (Thumbs Up)** button on the feature(s) you'd use the most in your shop! Feel free to vote for more than one or reply if you have another idea.`,
     "",
     "---",
     "",
-    "### 🗺️ Candidate Local-LAN Roadmap Features",
+    "### 🗺️ What's on the To-Do List",
     "",
-    "| Option | Feature Module | Status & What It Does |",
+    "| # | Feature Idea | What It Does |",
     "| :--- | :--- | :--- |",
     ...tableRows,
     "",
-    "> **☁️ Note on Cloud-Only / Touchscreen Firmware Restrictions**:",
-    "> Because **Bambu Lab Fleet Studio** runs **100% over Local LAN (`Port 8883 TLS`)**, features restricted by Bambu Lab firmware to Bambu Cloud or physical printer touchscreen confirmation — specifically **Remote AMS Active Drying Initiation** and **Custom Non-RFID AMS Slot Writing** — are marked **Cloud / Touchscreen Only** and excluded from the Local LAN roadmap. *(Passive AMS humidity `%`, temperature `°C`, and official Bambu RFID spool telemetry remain 100% supported over Local LAN!)*",
+    "> **☁️ Quick Note on Bambu Firmware Limits**:",
+    "> Because **Bambu Lab Fleet Studio** talks directly to your printers over your home network without using Bambu Cloud, a couple of things that Bambu locks to the printer's physical screen—specifically **starting an active AMS drying cycle remotely** and **editing custom non-RFID spool slots**—still have to be started on the printer itself. *(Reading live AMS humidity, temperature, and Bambu RFID spools works 100% locally!)*",
     "",
     "---",
     "",
-    "### ✅ Completed & Shipped Roadmap Milestones",
+    "### ✅ Already Built & Shipped",
     ...completedLines,
     "",
     "---",
-    "*Vote with 👍 on the comments below, or drop a new comment if you have another killer Local-LAN feature idea!*"
+    "*Click 👍 on the comments below to vote, or drop a reply if there's something else that would make your print room easier to run!*"
   ].join("\n");
 
-  const disc30Title = `📊 [Roadmap Poll] Which upcoming Bambu Lab Fleet Studio (${currentTag}) feature should we build next?`;
+  const disc30Title = `📊 [Roadmap Poll] What should I build next for Bambu Lab Fleet Studio (${currentTag})?`;
 
   runGraphQL({
     query: `mutation($id: ID!, $title: String!, $body: String!) {
@@ -197,7 +197,7 @@ function syncGitHubDiscussions(currentTag) {
       `### ${item.emojiNum} Vote Option ${item.numInt}: ${item.title}${item.extraTag}`,
       `- ${item.desc}`,
       "",
-      `👉 **React with 👍 on this comment to vote for ${item.title}!**`
+      `👉 **Click 👍 on this comment if you want me to build ${item.title} next!**`
     ].join("\n");
 
     if (existing) {
@@ -227,30 +227,34 @@ function syncGitHubDiscussions(currentTag) {
 
   // 3. Build & Update Discussion #29 (Welcome & Roadmap Overview — Title + Body)
   const disc29Id = existingRes?.data?.repository?.disc29?.id || "D_kwDOVFBKKc4Ap-ZU";
-  const disc29Title = `👋 Welcome to Bambu Lab Fleet Studio! — What It Is, What's Live in ${currentTag} & Where We're Headed 🧭`;
+  const disc29Title = `👋 Welcome to Bambu Lab Fleet Studio! — What It Is, What's New in ${currentTag} & What's Coming Next`;
   const disc29Body = [
-    `## 👋 Welcome to the Bambu Lab Fleet Studio Community! (\`${currentTag}\`)`,
+    `## 👋 Hey Makers — Welcome to Bambu Lab Fleet Studio! (\`${currentTag}\`)`,
     "",
     `[![Release ${currentTag}](https://img.shields.io/badge/Release-${currentTag}%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)`,
     "",
-    "Thank you for checking out **Bambu Lab Fleet Studio** — the 100% Standalone Local-LAN, zero-YAML Command Center and Lovelace Dashboard for Bambu Lab 3D printers & lasers (**X1C, X1E, X2D, P1S, P1P, P2S, A1, A1 Mini, A2L, H2C, H2D, H2D Pro, H2S, R1 Laser**) in Home Assistant!",
+    "Thanks for checking out **Bambu Lab Fleet Studio**! This is a project I've been working on for my own shop, and I'm really excited to share it with the community.",
     "",
-    "### 🚀 Quick Links",
-    `- 📦 **[Latest Release (\`${currentTag}\`) & HACS Install Guide](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)**`,
-    "- 📌 **[Live Release Feed & Changelog (Issue #1)](https://github.com/everyday3d/bambu-fleet-studio/issues/1)**",
-    "- 🗳️ **[Vote on the Local-LAN Feature Roadmap Poll (Discussion #30)](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)**",
-    "- 🐛 **[Report a Bug or Hardware Issue](https://github.com/everyday3d/bambu-fleet-studio/issues/new/choose)**",
+    "Having every Bambu Lab printer in my shop (`A1`, `A1 Mini`, `A2L`, `P1P`, `P1S`, `P2S`, `X1C`, `X1E`, `X2D`, `H2C`, `H2D`, `H2D Pro`, `H2S`, and the `R1` Laser) on a single, clean Home Assistant screen has been a total game-changer—glancing at live camera streams, checking nozzle and bed temperatures, seeing exact layer progress and finish times, and immediately spotting which filament colors and materials are loaded in each AMS without bouncing between apps is ridiculously handy.",
+    "",
+    "Since this is an actively growing project, **expect some bugs!** If you run into anything weird or have an idea that would make your print room easier to run, please let me know in the **[Issue Tracker](https://github.com/everyday3d/bambu-fleet-studio/issues)** and I'll get it fixed.",
+    "",
+    "### 🚀 Helpful Links",
+    `- 📦 **[Latest Release (\`${currentTag}\`) & Install Guide](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)**`,
+    "- 📌 **[Release Updates & What's New (Issue #1)](https://github.com/everyday3d/bambu-fleet-studio/issues/1)**",
+    "- 🗳️ **[Vote on What I Build Next (Discussion #30)](https://github.com/everyday3d/bambu-fleet-studio/discussions/30)**",
+    "- 🐛 **[Report a Bug or Ask for a Feature](https://github.com/everyday3d/bambu-fleet-studio/issues/new/choose)**",
     "",
     "---",
     "",
-    "### 🚧 Upcoming Local-LAN Roadmap ([Vote in Discussion #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))",
+    "### 🚧 What's on the To-Do List ([Vote in Discussion #30](https://github.com/everyday3d/bambu-fleet-studio/discussions/30))",
     ...upcomingItems.map((item) => item.rawLine),
     "",
-    "### ✅ Completed & Shipped Roadmap Milestones",
+    "### ✅ Already Built & Shipped",
     ...completedLines,
     "",
     "---",
-    "Drop a comment below to introduce yourself and let us know what printers are in your fleet! 🖨️🔥"
+    "Drop a comment below to say hi and let me know what printers you're running in your shop! 🖨️"
   ].join("\n");
 
   runGraphQL({
