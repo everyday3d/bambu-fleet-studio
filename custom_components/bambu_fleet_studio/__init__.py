@@ -45,7 +45,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.3.2"
+VERSION = "1.3.3"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -727,7 +727,12 @@ class BambuPrinterRuntime:
 
     def _mqtt_loop(self) -> None:
         """Persistent MQTT TLS connection loop to <host>:8883."""
+        retry_delay = 2.0
         while not self._stop_event.is_set():
+            if self.auth_failed:
+                # Stop reconnect loop on authentication failure; user must update access code via UI
+                break
+
             try:
                 try:
                     client = mqtt.Client(
@@ -758,6 +763,15 @@ class BambuPrinterRuntime:
                         if self.print_status == "offline":
                             self.print_status = "idle"
                             self.current_stage = "idle"
+                        try:
+                            self.hass.loop.call_soon_threadsafe(
+                                async_delete_issue,
+                                self.hass,
+                                DOMAIN,
+                                f"bad_access_code_{self.serial.lower()}",
+                            )
+                        except Exception:
+                            pass
                         cli.subscribe(f"device/{self.serial}/report")
                         cli.publish(
                             f"device/{self.serial}/request",
@@ -785,6 +799,23 @@ class BambuPrinterRuntime:
                         if rc_val in (4, 5, 134, 135) or "not authorized" in rc_str or "bad user name or password" in rc_str:
                             self.auth_failed = True
                             self._mark_offline()
+                            try:
+                                self.hass.loop.call_soon_threadsafe(
+                                    async_create_issue,
+                                    self.hass,
+                                    DOMAIN,
+                                    f"bad_access_code_{self.serial.lower()}",
+                                    is_fixable=False,
+                                    severity=IssueSeverity.ERROR,
+                                    translation_key="bad_access_code",
+                                    translation_placeholders={
+                                        "printer_name": self.name,
+                                        "serial": self.serial,
+                                    },
+                                    learn_more_url="https://github.com/everyday3d/bambu-fleet-studio#troubleshooting",
+                                )
+                            except Exception as issue_err:
+                                LOGGER.debug("Failed to create bad_access_code issue: %s", issue_err)
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
 
                 def on_disconnect(cli, userdata, *args):
@@ -827,15 +858,30 @@ class BambuPrinterRuntime:
                     client.disconnect()
                 except Exception:
                     pass
-                for _ in range(4):
-                    if self._stop_event.is_set():
+
+                if self.auth_failed:
+                    break
+
+                if self.online:
+                    retry_delay = 2.0
+                else:
+                    retry_delay = min(retry_delay * 2.0, 60.0)
+
+                sleep_iters = max(1, int(retry_delay / 0.5))
+                for _ in range(sleep_iters):
+                    if self._stop_event.is_set() or self.auth_failed:
                         break
                     time.sleep(0.5)
+
             except Exception as err:
                 self._mark_offline()
                 LOGGER.warning("MQTT loop error for %s (%s): %s", self.serial, self.host, err)
-                for _ in range(10):
-                    if self._stop_event.is_set():
+                if self.auth_failed:
+                    break
+                retry_delay = min(retry_delay * 2.0, 60.0)
+                sleep_iters = max(1, int(retry_delay / 0.5))
+                for _ in range(sleep_iters):
+                    if self._stop_event.is_set() or self.auth_failed:
                         break
                     time.sleep(0.5)
 
@@ -1213,6 +1259,8 @@ class BambuPrinterRuntime:
     def _port6000_cam_loop(self) -> None:
         """Background TCP Port 6000 TLS binary JPEG stream reader for A1, A1 Mini, P1P, P1S."""
         while not self._stop_event.is_set():
+            if self.auth_failed:
+                break
             if not self.online:
                 time.sleep(2.0)
                 continue
@@ -1333,6 +1381,13 @@ class BambuPrinterRuntime:
         m_str = self._fmt_num(meters, 1) if meters > 0.0 else "0.0"
         return g_str, m_str
 
+    def _sign_camera_url(self, path: str) -> str:
+        """Return a signed Home Assistant HTTP path (4-hour TTL) for camera endpoints."""
+        try:
+            return async_sign_path(self.hass, path, timedelta(hours=4))
+        except Exception:
+            return path
+
     def to_status_dict(self) -> dict[str, Any]:
         """Serialize runtime state for /api/bambu_fleet_studio/status."""
         recent_cam = self._last_jpeg_ts > 0 and (time.monotonic() - self._last_jpeg_ts) < 15.0
@@ -1393,8 +1448,8 @@ class BambuPrinterRuntime:
             "lightOn": self.light_on,
             "camAvailable": cam_available,
             "isRtspCam": self.model in RTSP_MODELS,
-            "cameraPic": f"/api/bambu_fleet_studio/camera/{self.serial}",
-            "cameraStreamUrl": f"/api/bambu_fleet_studio/camera_stream/{self.serial}",
+            "cameraPic": self._sign_camera_url(f"/api/bambu_fleet_studio/camera/{self.serial}"),
+            "cameraStreamUrl": self._sign_camera_url(f"/api/bambu_fleet_studio/camera_stream/{self.serial}"),
             "hasAms": self.ams_override != "NONE" and len(self.ams_units) > 0,
             "amsUnits": self.ams_units,
             "extSpool": self.ext_spool,
@@ -1534,7 +1589,7 @@ class BambuFleetStudioManager:
             pass
 
     async def async_initialize(self) -> None:
-        """Load saved printers (and auto-import any existing printer credentials on first run)."""
+        """Load saved printers and notification settings from storage."""
         stored = await self.store.async_load()
         if isinstance(stored, dict):
             if isinstance(stored.get("printers"), dict):
@@ -1542,53 +1597,7 @@ class BambuFleetStudioManager:
             if isinstance(stored.get("notifications"), dict):
                 self.notifications.update(stored["notifications"])
 
-        # Auto-import any printer credentials from Home Assistant config_entries so existing printers work immediately
-        imported = False
-        for entry in self.hass.config_entries.async_entries():
-            if entry.domain == "bambu_lab":
-                sn = str(entry.data.get("serial") or entry.unique_id or "").strip().upper()
-                host = str(entry.options.get("host") or entry.data.get("host") or "").strip()
-                code = str(entry.options.get("access_code") or entry.data.get("access_code") or "").strip()
-                mod = normalize_model_code(
-                    str(entry.data.get("device_type") or entry.options.get("device_type") or ""),
-                    sn,
-                )
-                opt_name = str(entry.options.get("name") or "").strip()
-                title_name = str(entry.title or "").strip()
-                if opt_name and opt_name.upper() != sn:
-                    name = opt_name
-                elif title_name and title_name.upper() != sn:
-                    name = title_name
-                else:
-                    name = f"Bambu {mod}"
-                usage_hours = str(entry.options.get("usage_hours") or entry.data.get("usage_hours") or "0")
-                if sn and host and code:
-                    if sn not in self.configs:
-                        self.configs[sn] = {
-                            "serial": sn,
-                            "host": host,
-                            "access_code": code,
-                            "model": mod,
-                            "name": name,
-                            "usage_hours": usage_hours,
-                            "extruded_meters": 0.0,
-                            "extruded_grams": 0.0,
-                            "ams_override": "AUTO",
-                        }
-                        imported = True
-                    else:
-                        if not self.configs[sn].get("access_code"):
-                            self.configs[sn]["access_code"] = code
-                            self.configs[sn]["host"] = host
-                            imported = True
-                        if self.configs[sn].get("name", "").upper() == sn and name.upper() != sn:
-                            self.configs[sn]["name"] = name
-                            imported = True
-                        if not self.configs[sn].get("usage_hours") or self.configs[sn].get("usage_hours") == "0":
-                            if usage_hours != "0":
-                                self.configs[sn]["usage_hours"] = usage_hours
-                                imported = True
-
+        changed = False
         for sn, cfg in list(self.configs.items()):
             if not cfg.get("last_online_ts"):
                 mod_norm = normalize_model_code(str(cfg.get("model", "")), sn).lower()
@@ -1598,7 +1607,7 @@ class BambuFleetStudioManager:
                     if st_obj and getattr(st_obj, "last_changed", None):
                         try:
                             cfg["last_online_ts"] = round(float(st_obj.last_changed.timestamp()), 1)
-                            imported = True
+                            changed = True
                             break
                         except Exception:
                             pass
@@ -1607,14 +1616,14 @@ class BambuFleetStudioManager:
         prev_svc = self.notifications.get("notify_service", "")
         resolved_svc = self._resolve_default_notify_service()
         if resolved_svc and resolved_svc != prev_svc:
-            imported = True
+            changed = True
 
         # Pre-select light.wled if available and rgb_light_entity is unset
         if not self.notifications.get("rgb_light_entity") and self.hass.states.get("light.wled"):
             self.notifications["rgb_light_entity"] = "light.wled"
-            imported = True
+            changed = True
 
-        if imported:
+        if changed:
             await self.async_save()
 
         for sn, cfg in list(self.configs.items()):
@@ -1633,8 +1642,20 @@ class BambuFleetStudioManager:
             if str_key in payload:
                 default_val = "__ALL__" if str_key == "target_printer" else ""
                 val = str(payload.get(str_key) or default_val).strip()
-                if str_key == "notify_service" and val in ("", "notify.send_message", "send_message"):
-                    val = self._resolve_default_notify_service()
+                if str_key == "notify_service":
+                    if val in ("", "notify.send_message", "send_message"):
+                        val = self._resolve_default_notify_service()
+                    elif not (val.startswith("notify.") or val.startswith("persistent_notification.")):
+                        continue
+                elif str_key == "cooldown_switch_entity":
+                    if val and not (val.startswith("switch.") or val.startswith("input_boolean.")):
+                        continue
+                elif str_key == "rgb_light_entity":
+                    if val and not val.startswith("light."):
+                        continue
+                elif str_key == "tts_media_player":
+                    if val and not val.startswith("media_player."):
+                        continue
                 self.notifications[str_key] = val
         for bool_key in (
             "print_complete",
@@ -1689,19 +1710,24 @@ class BambuFleetStudioManager:
                 return True
 
             domain, svc_name = svc_full.split(".", 1) if "." in svc_full else ("notify", svc_full)
-            notify_svcs = (self.hass.services.async_services() or {}).get("notify", {})
+            if domain not in ("notify", "persistent_notification"):
+                LOGGER.warning("Refusing to call unapproved domain in async_send_notification: %s", domain)
+                return False
 
-            # If user selected a notify.<slug> entity name that maps to mobile_app_<slug>, prefer mobile_app_<slug> for rich push data
-            if domain == "notify" and svc_name not in notify_svcs and f"mobile_app_{svc_name}" in notify_svcs:
-                svc_name = f"mobile_app_{svc_name}"
-
-            if domain == "notify" and svc_name not in notify_svcs and self.hass.states.get(f"notify.{svc_name}"):
-                await self.hass.services.async_call(
-                    "notify",
-                    "send_message",
-                    {"entity_id": f"notify.{svc_name}", "title": title, "message": message},
-                )
-                return True
+            if not self.hass.services.has_service(domain, svc_name):
+                # If user selected a notify.<slug> entity name that maps to mobile_app_<slug>, prefer mobile_app_<slug>
+                if domain == "notify" and self.hass.services.has_service("notify", f"mobile_app_{svc_name}"):
+                    svc_name = f"mobile_app_{svc_name}"
+                elif domain == "notify" and self.hass.states.get(f"notify.{svc_name}") and self.hass.services.has_service("notify", "send_message"):
+                    await self.hass.services.async_call(
+                        "notify",
+                        "send_message",
+                        {"entity_id": f"notify.{svc_name}", "title": title, "message": message},
+                    )
+                    return True
+                else:
+                    LOGGER.warning("Notification service %s.%s does not exist", domain, svc_name)
+                    return False
 
             svc_payload: dict[str, Any] = {"title": title, "message": message}
             if extra_data:
@@ -2051,8 +2077,16 @@ class BambuFleetStudioManager:
                 except Exception:
                     pass
             if rt._last_jpeg is not None:
-                ext_base = str(self.hass.config.external_url).rstrip("/")
-                data["image"] = f"{ext_base}/api/bambu_fleet_studio/camera/{rt.serial}?t={int(time.time())}"
+                cam_path = f"/api/bambu_fleet_studio/camera/{rt.serial}"
+                try:
+                    signed_path = async_sign_path(self.hass, cam_path, timedelta(hours=24))
+                except Exception:
+                    signed_path = cam_path
+                if getattr(self.hass.config, "external_url", None):
+                    ext_base = str(self.hass.config.external_url).rstrip("/")
+                    data["image"] = f"{ext_base}{signed_path}"
+                else:
+                    data["image"] = signed_path
         return data
 
     async def async_handle_printer_event(
@@ -2154,9 +2188,12 @@ class BambuFleetStudioManager:
                             if 0 < cur_nozzle <= target_temp:
                                 # Wait 120s safety buffer after reaching target temp, then power off
                                 await asyncio.sleep(120)
-                                if rt.print_status in ("finish", "idle"):
+                                if rt.print_status in ("finish", "idle") and (
+                                    plug_ent.startswith("switch.") or plug_ent.startswith("input_boolean.")
+                                ):
+                                    plug_domain = plug_ent.split(".", 1)[0]
                                     await self.hass.services.async_call(
-                                        "switch",
+                                        plug_domain,
                                         "turn_off",
                                         {"entity_id": plug_ent},
                                     )
@@ -2339,6 +2376,10 @@ class BambuFleetStudioManager:
         rt = self.runtimes.pop(matched_sn, None)
         if rt:
             await self.hass.async_add_executor_job(rt.stop)
+        try:
+            async_delete_issue(self.hass, DOMAIN, f"bad_access_code_{matched_sn.lower()}")
+        except Exception:
+            pass
         self.configs.pop(matched_sn, None)
         await self.async_save()
         return True
@@ -2779,7 +2820,7 @@ class FleetDiscoverSerialAPIView(HomeAssistantView):
     """Standalone Port 8883 TLS serial number discovery & /24 LAN network scanner."""
 
     url = "/api/bambu_fleet_studio/discover_serial"
-    extra_urls = ["/api/bambu_fleet_studio/scan_network", "/api/bambu_lab/discover_serial", "/api/bambu_lab/scan_network"]
+    extra_urls = ["/api/bambu_fleet_studio/scan_network"]
     name = "api:bambu_fleet_studio:discover_serial"
     requires_auth = True
 

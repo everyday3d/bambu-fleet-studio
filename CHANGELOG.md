@@ -5,6 +5,15 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-10-24
+
+### Security & HACS Compliance (Frenck Review Round 2 — Fixes #39)
+- **Universal HTML Escaping in Frontend Cards**: Ran every interpolated value in `bambu-fleet-cards.js` through `escapeHtml()`, including dropdown option labels/values, entity pickers (`friendly_name`), hardware cards, serial badges, and bed plate options.
+- **MQTT Access Code Auth Circuit-Breaker & Exponential Backoff**: On invalid LAN access codes (`rc in (4, 5, 134, 135)`), halted loop retries and registered repair issues in Home Assistant's Issue Registry (`bad_access_code_{serial}`) via `async_create_issue`. Added exponential backoff (up to 60s) on general network disconnects. Automatically cleared repair issues on successful connection (`rc == 0`).
+- **Authenticated Camera Views with HMAC Path Signing**: Applied `async_sign_path` in `to_status_dict` for live camera snapshots (4-hour expiration) and camera streams (4-hour expiration). Applied `async_sign_path` with 24-hour expiration to push notification snapshot attachments. Updated frontend card `<img src>` elements to consume signed URLs.
+- **Zero Foreign Namespace / Integration Tampering**: Completely removed background auto-importing of `bambu_lab` (`ha-bambulab`) config entries, removed `/api/bambu_lab/*` routes from discovery views, removed foreign config entry deletion in frontend modal, removed foreign entry reloads, and removed `handler: "bambu_lab"` fallback flows.
+- **Notification Domain Whitelist & Entity Verification**: Added prefix validation in `async_update_notifications` (`notify.`, `switch.`, `light.`, `media_player.`) and validated target service existence in `async_send_notification` before calling `hass.services.async_call`.
+
 ## [1.3.2] - 2026-10-24
 
 ### Security & Compliance (HACS Review Feedback — Fixes #38)

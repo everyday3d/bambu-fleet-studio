@@ -21,7 +21,7 @@
 // Boxerdawg3D maker logo (transparent PNG), shown in the card header.
 const BOXERDAWG3D_LOGO = 'data:image/png;base64,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';
 (function() {
-  const CARD_VERSION = "1.3.2";
+  const CARD_VERSION = "1.3.3";
 
   const escapeHtml = (str) => {
     if (str === null || str === undefined) return "";
@@ -1446,11 +1446,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         STANDALONE_FLEET_STATE.active = true;
         const now = Date.now();
         STANDALONE_FLEET_STATE.lastFetch = now;
+        const isAdmin = Boolean(hass && hass.user && hass.user.is_admin);
         let hasOfflinePrinter = false;
         for (const p of res.printers) {
           if (p && p.serial && !p.online) {
             hasOfflinePrinter = true;
-            if (p.nozzleTemp && p.nozzleTemp !== "—") {
+            if (isAdmin && p.nozzleTemp && p.nozzleTemp !== "—") {
               const lastRel = STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] || 0;
               if (now - lastRel > 30000) {
                 STANDALONE_FLEET_STATE.lastReloadBySerial[p.serial] = now;
@@ -1459,7 +1460,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             }
           }
         }
-        if (hasOfflinePrinter && (now - STANDALONE_FLEET_STATE.lastLanScan > 45000)) {
+        if (isAdmin && hasOfflinePrinter && (now - STANDALONE_FLEET_STATE.lastLanScan > 45000)) {
           STANDALONE_FLEET_STATE.lastLanScan = now;
           hass.callApi("GET", "bambu_fleet_studio/scan_network").then(scanRes => {
             if (scanRes && Array.isArray(scanRes.printers)) {
@@ -1929,7 +1930,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     };
 
     const isRtspCam = Boolean(sp.isRtspCam);
-    const cameraPic = sp.cameraPic || ("/api/bambu_fleet_studio/camera/" + serial);
+    const cameraPic = sp.cameraPic || "";
+    const cameraStreamUrl = sp.cameraStreamUrl || "";
 
     // Enrich coverPic / totalUsage / odometer / bedType from HA states & local overrides
     const stCover = hass?.states?.["image." + prefix + "_cover_image"];
@@ -2017,6 +2019,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       camAvailable: Boolean(sp.camAvailable || (online && cameraPic)),
       isRtspCam,
       cameraPic,
+      cameraStreamUrl,
       cameraSwitchEntityId: "",
       cameraSwitchOn: true,
       coverEntityId: "",
@@ -2935,7 +2938,6 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     const pSerial = printer.serial || pref;
     const cardUrl = "/bambu-fleet/fleet-overview?printer=" + pSerial + "&prefix=" + pref + "#printer-card-" + pref;
     const camModalUrl = "/bambu-fleet/fleet-overview?printer=" + pSerial + "&prefix=" + pref + "&camera=1#printer-card-" + pref;
-    const snapImgUrl = "/api/bambu_fleet_studio/camera/" + pSerial;
     const cleanNotify = (notifyService && notifyService !== "notify.send_message" && notifyService !== "notify.notify")
       ? notifyService
       : "notify.persistent_notification";
@@ -3343,12 +3345,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         clearInterval(activeCamPollTimer);
         activeCamPollTimer = null;
       }
-      if (activeOptionsFlowId) {
-        try {
-          await hass.callApi("DELETE", "config/config_entries/options/flow/" + activeOptionsFlowId);
-        } catch (e) {}
-        activeOptionsFlowId = null;
-      }
+
       host.remove();
     };
 
@@ -3762,11 +3759,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     `;
 
     if (mode === "camera") {
-      const mjpegUrl = payload.cameraPic
+      const mjpegUrl = payload.cameraStreamUrl || (payload.cameraPic
         ? (payload.cameraPic.includes("/api/camera_proxy/")
             ? payload.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/")
-            : payload.cameraPic.replace("/api/bambu_fleet_studio/camera/", "/api/bambu_fleet_studio/camera_stream/"))
-        : "";
+            : payload.cameraPic)
+        : "");
       const initialCamSrc = payload.cameraPic
         ? (payload.isRtspCam
             ? (payload.cameraPic + (payload.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
@@ -3797,10 +3794,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
 
             <div id="camStreamMount" style="background:#05070b;border:1px solid rgba(255,255,255,0.1);border-radius:14px;overflow:hidden;aspect-ratio:16/9;position:relative;display:flex;align-items:center;justify-content:center;">
               ${payload.online && payload.camAvailable
-                ? `<img id="camMjpegImg" src="${initialCamSrc}" style="width:100%;height:100%;object-fit:contain;" />`
+                ? `<img id="camMjpegImg" src="${escapeHtml(initialCamSrc)}" style="width:100%;height:100%;object-fit:contain;" />`
                 : payload.online
                   ? `
-                    ${fallbackImg ? `<img src="${fallbackImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0.22;filter:blur(2px);" />` : ""}
+                    ${fallbackImg ? `<img src="${escapeHtml(fallbackImg)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0.22;filter:blur(2px);" />` : ""}
                     <div style="position:relative;z-index:2;max-width:520px;margin:16px;padding:18px 20px;border-radius:14px;background:rgba(15,18,25,0.92);border:1px solid rgba(245,158,11,0.45);display:flex;flex-direction:column;gap:10px;text-align:left;">
                       <div style="display:flex;align-items:center;gap:10px;">
                         <span style="font-size:24px;">📹</span>
@@ -3818,7 +3815,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                       </div>
                     </div>
                   `
-                  : `<div style="color:#64748b;font-size:15px;">Camera Offline — Power on ${payload.name} to view live stream</div>`
+                  : `<div style="color:#64748b;font-size:15px;">Camera Offline — Power on ${escapeHtml(payload.name)} to view live stream</div>`
               }
             </div>
 
@@ -3895,7 +3892,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             const liveSrc = payload.isRtspCam
               ? (payload.cameraPic + (payload.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
               : mjpegUrl;
-            mount.innerHTML = `<img id="camMjpegImg" src="${liveSrc}" style="width:100%;height:100%;object-fit:contain;" />`;
+            mount.innerHTML = `<img id="camMjpegImg" src="${escapeHtml(liveSrc)}" style="width:100%;height:100%;object-fit:contain;" />`;
             usingWebRtc = false;
             camModeBtn.textContent = "⚡ Switch to WebRTC / HLS Player";
             startModalFramePolling();
@@ -3942,11 +3939,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             if (payload.cameraSwitchEntityId && !payload.cameraSwitchOn && hass.states && hass.states[payload.cameraSwitchEntityId]) {
               await hass.callService("switch", "turn_on", { entity_id: payload.cameraSwitchEntityId });
             }
-            if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
-              try {
-                await hass.callApi("POST", "config/config_entries/entry/" + payload.entryId + "/reload");
-              } catch (e) {}
-            }
+
             alertBox.className = "alert ok";
             alertBox.textContent = "✓ Camera stream reconnected! Re-open Live Camera in 3 seconds once stream connects.";
             camReconnectBtn.textContent = "✓ Reloaded";
@@ -4152,7 +4145,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                   <label style="margin:0;">Notification Target Service</label>
                   <span id="notifySaveStatusBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;${isCurrentlySaved ? "color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.35);" : "color:#f59e0b;background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.35);"}">
-                    ${isCurrentlySaved ? "✓ Saved: " + initialNotifySvc : "● Unsaved — Click Save"}
+                    ${isCurrentlySaved ? "✓ Saved: " + escapeHtml(initialNotifySvc) : "● Unsaved — Click Save"}
                   </span>
                 </div>
                 <div style="display:flex;gap:8px;align-items:stretch;">
@@ -4176,7 +4169,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   </div>
                 </div>
                 <span id="wledActiveBadge" style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:999px;color:#10b981;background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.38);">
-                  ✓ Active: ${initialRgbLight || "light.wled"} (5m Auto-Off)
+                  ✓ Active: ${escapeHtml(initialRgbLight || "light.wled")} (5m Auto-Off)
                 </span>
               </div>
 
@@ -4269,7 +4262,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   <span class="bp-cfg-lbl">Select Smart Speaker (<code>media_player.*</code>)</span>
                   <select id="ttsMediaPlayerSel" class="bp-cfg-select">
                     <option value="">— Select a Smart Speaker / Media Player —</option>
-                    ${mediaPlayerEntities.map(m => `<option value="${m.id}" ${savedPrefs.tts_media_player === m.id ? "selected" : ""}>${m.label}</option>`).join("")}
+                    ${mediaPlayerEntities.map(m => `<option value="${escapeHtml(m.id)}" ${savedPrefs.tts_media_player === m.id ? "selected" : ""}>${escapeHtml(m.label)}</option>`).join("")}
                   </select>
                   <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#cbd5e1;margin-top:4px;cursor:pointer;text-transform:none;letter-spacing:0;">
                     <input type="checkbox" id="ttsQuietHoursChk" ${savedPrefs.tts_quiet_hours !== false ? "checked" : ""} style="width:auto;margin:0;" />
@@ -4299,7 +4292,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                       <span class="bp-cfg-lbl">Smart Plug (<code>switch.*</code>)</span>
                       <select id="cooldownSwitchSel" class="bp-cfg-select">
                         <option value="">⚡ Use Printer's Assigned Smart Plug</option>
-                        ${switchEntities.map(s => `<option value="${s.id}" ${savedPrefs.cooldown_switch_entity === s.id ? "selected" : ""}>${s.label}</option>`).join("")}
+                        ${switchEntities.map(s => `<option value="${escapeHtml(s.id)}" ${savedPrefs.cooldown_switch_entity === s.id ? "selected" : ""}>${escapeHtml(s.label)}</option>`).join("")}
                       </select>
                     </div>
                     <div>
@@ -4734,11 +4727,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           try {
             await hass.callApi("DELETE", "bambu_fleet_studio/printers?serial=" + encodeURIComponent(payload.serial));
           } catch (e) {}
-          if (payload.entryId && !String(payload.entryId).startsWith("standalone_")) {
-            try {
-              await hass.callApi("DELETE", "config/config_entries/entry/" + payload.entryId);
-            } catch (e) {}
-          }
+
           alertBox.className = "alert ok";
           alertBox.textContent = "Printer deleted.";
           fetchStandaloneFleet(hass, null, true);
@@ -4785,7 +4774,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 <div class="fld" style="margin-bottom:0;">
                   <label>Printer / Laser Series & Model</label>
                   <select id="modelSel">
-                    ${MODEL_OPTIONS_LIST.map(opt => `<option value="${opt.value}" ${opt.value === initialModel ? 'selected' : ''}>${opt.label}</option>`).join("")}
+                    ${MODEL_OPTIONS_LIST.map(opt => `<option value="${escapeHtml(opt.value)}" ${opt.value === initialModel ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join("")}
                   </select>
                 </div>
               </div>
@@ -4904,15 +4893,15 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           if (isNew) {
             badgeHtml = `<span class="disc-badge" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.5);color:#34d399;">✨ NEW ON LAN</span>`;
           } else if (ipChanged) {
-            badgeHtml = `<span class="disc-badge" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.5);color:#fbbf24;">⚠️ NEW IP (${item.host})</span>`;
+            badgeHtml = `<span class="disc-badge" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.5);color:#fbbf24;">⚠️ NEW IP (${escapeHtml(item.host)})</span>`;
           } else if (isOnline) {
             badgeHtml = `<span class="disc-badge" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;">✅ PAIRED • ONLINE</span>`;
           } else {
-            badgeHtml = `<span class="disc-badge" style="background:rgba(148,163,184,0.14);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;">💤 PAIRED • OFFLINE${lastFmt ? ' • Last Online: ' + lastFmt : ''}</span>`;
+            badgeHtml = `<span class="disc-badge" style="background:rgba(148,163,184,0.14);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;">💤 PAIRED • OFFLINE${lastFmt ? ' • Last Online: ' + escapeHtml(lastFmt) : ''}</span>`;
           }
           return `
             <div class="disc-card ${isNew ? 'is-new' : ''}" data-disc-idx="${idx}">
-              <img class="disc-img" src="${getPrinterImage(modNorm)}" alt="${modNorm}" />
+              <img class="disc-img" src="${getPrinterImage(modNorm)}" alt="${escapeHtml(modNorm)}" />
               <div class="disc-info">
                 <div class="disc-top">
                   <span class="disc-name">${escapeHtml(item.name || ('Bambu Lab ' + modNorm))}</span>
@@ -4949,16 +4938,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         scanLanBtn.textContent = "⏳ Scanning...";
         netScanSub.textContent = "Scanning local /24 subnet on TCP Port 8883 TLS (~1.5s)...";
         try {
-          let data = null;
-          try {
-            data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
-          } catch (e0) {
-            try {
-              data = await hass.callApi("GET", "bambu_lab/scan_network");
-            } catch (e1) {
-              data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
-            }
-          }
+          const data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
           scanLanBtn.disabled = false;
           scanLanBtn.textContent = "🔄 Scan LAN";
           if (data && Array.isArray(data.printers)) {
@@ -5015,12 +4995,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         snDetectHint.textContent = "⏳ Probing " + ip + ":8883 TLS certificate for Serial Number...";
         detectSnBtn.textContent = "⏳ Probing...";
         try {
-          let res = null;
-          try {
-            res = await hass.callApi("GET", "bambu_fleet_studio/discover_serial?host=" + encodeURIComponent(ip));
-          } catch (e0) {
-            res = await hass.callApi("GET", "bambu_lab/discover_serial?host=" + encodeURIComponent(ip));
-          }
+          const res = await hass.callApi("GET", "bambu_fleet_studio/discover_serial?host=" + encodeURIComponent(ip));
           detectSnBtn.textContent = "🔍 Auto-Detect";
           if (res && res.serial) {
             applyDiscoveredModelAndSerial(res.serial, res.model);
@@ -5094,6 +5069,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         try {
           // 1. Primary: Standalone Bambu Fleet Studio Backend API (Zero external dependencies!)
           let standaloneRes = null;
+          let standaloneErrMsg = "";
           try {
             standaloneRes = await hass.callApi("POST", "bambu_fleet_studio/printers", {
               host: hostVal,
@@ -5105,6 +5081,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             });
           } catch (standaloneErr) {
             standaloneRes = null;
+            standaloneErrMsg = standaloneErr?.message || (standaloneErr?.body && standaloneErr.body.error) || "";
           }
 
           if (standaloneRes && standaloneRes.ok) {
@@ -5120,60 +5097,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             return;
           }
 
-          // 2. Fallback: Legacy config_entries flow if standalone backend not active yet
-          const f1 = await hass.callApi("POST", "config/config_entries/flow", {
-            handler: "bambu_lab",
-            show_advanced_options: true
-          });
-          const f2 = await hass.callApi("POST", "config/config_entries/flow/" + f1.flow_id, {
-            printer_mode: "lan"
-          });
-          const f3 = await hass.callApi("POST", "config/config_entries/flow/" + f2.flow_id, {
-            host: hostVal,
-            serial: serialVal || "AUTO",
-            access_code: codeVal,
-            print_cache_count: "100",
-            timelapse_cache_count: "1",
-            usage_hours: String(hoursVal),
-            advanced: {
-              disable_ssl_verify: false,
-              enable_firmware_update: false
-            }
-          });
-
-          if (f3.errors && Object.keys(f3.errors).length > 0) {
-            alertBox.className = "alert err";
-            alertBox.textContent = "Connection rejected (" + JSON.stringify(f3.errors) + "). Ensure device is ON and IP/Access Code match.";
-            await hass.callApi("DELETE", "config/config_entries/flow/" + f2.flow_id);
-            btn.disabled = false;
-            btn.textContent = "➕ Connect Device";
-            return;
-          }
-
-          const finalSerial = (f3.title || serialVal || "").toUpperCase();
-          if (finalSerial) {
-            saveModelOverride(finalSerial, chosenModel);
-          }
-
-          if (nameVal) {
-            setTimeout(async () => {
-              try {
-                const devs = await hass.callWS({ type: "config/device_registry/list" });
-                const found = devs.find(d => String(d.serial_number || "").toUpperCase() === finalSerial);
-                if (found) {
-                  await hass.callWS({
-                    type: "config/device_registry/update",
-                    device_id: found.id,
-                    name_by_user: nameVal
-                  });
-                }
-              } catch (e) {}
-            }, 1000);
-          }
-
-          alertBox.className = "alert ok";
-          alertBox.textContent = "Device connected and added!";
-          setTimeout(() => { close(); if (onComplete) onComplete(); }, 750);
+          alertBox.className = "alert err";
+          alertBox.textContent = "Connection rejected (" + (standaloneErrMsg || "Ensure device is ON and IP/Access Code match") + ").";
+          btn.disabled = false;
+          btn.textContent = "➕ Connect Device";
+          return;
         } catch (err) {
           alertBox.className = "alert err";
           alertBox.textContent = "Error: " + (err.message || JSON.stringify(err));
@@ -5219,12 +5147,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         const selPlate = currentPlate && allKnown.includes(currentPlate) ? currentPlate : (currentPlate || cat.defaultPlate);
         let html = "";
         if (selPlate && !allKnown.includes(selPlate)) {
-          html += `<option value="${selPlate}" selected>✨ ${selPlate}</option>`;
+          html += `<option value="${escapeHtml(selPlate)}" selected>✨ ${escapeHtml(selPlate)}</option>`;
         }
         for (const grp of cat.groups) {
-          html += `<optgroup label="${grp.groupLabel}">`;
+          html += `<optgroup label="${escapeHtml(grp.groupLabel)}">`;
           for (const opt of grp.options) {
-            html += `<option value="${opt}" ${opt === selPlate ? "selected" : ""}>${opt}</option>`;
+            html += `<option value="${escapeHtml(opt)}" ${opt === selPlate ? "selected" : ""}>${escapeHtml(opt)}</option>`;
           }
           html += `</optgroup>`;
         }
@@ -5245,12 +5173,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               <img id="editAmsPreviewImg" src="${getPrinterImage(previewAmsCode)}" style="width:62px;height:62px;object-fit:contain;border-left:1px solid rgba(255,255,255,0.1);padding-left:10px;${curAmsOverride === 'NONE' ? 'display:none;' : ''}" title="AMS Unit Artwork" />
               <div style="flex:1;min-width:0;">
                 <div style="font-size:16px;font-weight:800;">${escapeHtml(payload.name)}</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${escapeHtml(payload.serial)} • ${payload.hasAms ? '✓ ' + (payload.amsUnits?.length > 1 ? payload.amsUnits.length + 'x ' + payload.amsInfo.modelNorm : payload.amsInfo.model) + ' Attached' : 'External Spool / Direct Mode'}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:2px;">SN: ${escapeHtml(payload.serial)} • ${payload.hasAms ? '✓ ' + escapeHtml((payload.amsUnits?.length > 1 ? payload.amsUnits.length + 'x ' + (payload.amsInfo?.modelNorm || '') : (payload.amsInfo?.model || 'AMS')) + ' Attached') : 'External Spool / Direct Mode'}</div>
                 <div class="grid-2" style="margin-top:8px;gap:8px;">
                   <div class="fld" style="margin:0;">
                     <label>Printer / Laser Model</label>
                     <select id="editModelSel">
-                      ${MODEL_OPTIONS_LIST.map(opt => `<option value="${opt.value}" ${opt.value === curModelNorm ? 'selected' : ''}>${opt.label}</option>`).join("")}
+                      ${MODEL_OPTIONS_LIST.map(opt => `<option value="${escapeHtml(opt.value)}" ${opt.value === curModelNorm ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join("")}
                     </select>
                   </div>
                   <div class="fld" style="margin:0;">
@@ -5278,7 +5206,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   <label style="margin:0;">15-Char Serial Number (Auto-Populated)</label>
                   <button type="button" id="copySnBtn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#cbd5e1;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;cursor:pointer;">📋 Copy</button>
                 </div>
-                <input id="editSerialInp" type="text" value="${payload.serial || ''}" readonly style="opacity:0.9;font-family:monospace;letter-spacing:0.04em;" />
+                <input id="editSerialInp" type="text" value="${escapeHtml(payload.serial || '')}" readonly style="opacity:0.9;font-family:monospace;letter-spacing:0.04em;" />
               </div>
             </div>
 
@@ -5288,7 +5216,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   <label style="margin:0;">Local IP Address (Host)</label>
                   <button type="button" id="findIpLanBtn" style="background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:800;cursor:pointer;">📡 Find IP on LAN</button>
                 </div>
-                <input id="hostInp" type="text" value="${payload.ipAddress !== '—' ? payload.ipAddress : ''}" placeholder="Loading saved IP..." />
+                <input id="hostInp" type="text" value="${escapeHtml(payload.ipAddress !== '—' ? payload.ipAddress : '')}" placeholder="Loading saved IP..." />
               </div>
               <div class="fld">
                 <label>8-Char LAN Access Code</label>
@@ -5328,17 +5256,17 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             <div class="grid-2">
               <div class="fld">
                 <label>Smart Plug Switch Entity</label>
-                <input id="plugSwitchInp" list="switchList" type="text" value="${curPlug.switchEntity || ''}" placeholder="e.g. switch.bambu_plug" />
+                <input id="plugSwitchInp" list="switchList" type="text" value="${escapeHtml(curPlug.switchEntity || '')}" placeholder="e.g. switch.bambu_plug" />
                 <datalist id="switchList">
-                  ${switchEntities.map(s => `<option value="${s}">${hass.states[s]?.attributes?.friendly_name || s}</option>`).join("")}
+                  ${switchEntities.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(hass.states[s]?.attributes?.friendly_name || s)}</option>`).join("")}
                 </datalist>
                 <div class="sub-hint">Auto-locks power off while active or nozzle &gt; 60°C</div>
               </div>
               <div class="fld">
                 <label>Live Power / Wattage Sensor</label>
-                <input id="plugPowerInp" list="powerList" type="text" value="${curPlug.powerEntity || ''}" placeholder="e.g. sensor.bambu_power" />
+                <input id="plugPowerInp" list="powerList" type="text" value="${escapeHtml(curPlug.powerEntity || '')}" placeholder="e.g. sensor.bambu_power" />
                 <datalist id="powerList">
-                  ${powerEntities.map(s => `<option value="${s}">${hass.states[s]?.attributes?.friendly_name || s}</option>`).join("")}
+                  ${powerEntities.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(hass.states[s]?.attributes?.friendly_name || s)}</option>`).join("")}
                 </datalist>
                 <div class="sub-hint">Displays live Watts (W) badge in card header</div>
               </div>
@@ -5378,16 +5306,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           findIpLanBtn.disabled = true;
           findIpLanBtn.textContent = "⏳ Scanning LAN...";
           try {
-            let data = null;
-            try {
-              data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
-            } catch (e0) {
-              try {
-                data = await hass.callApi("GET", "bambu_lab/scan_network");
-              } catch (e1) {
-                data = await hass.callApi("GET", "bambu_lab/discover_serial?scan=1");
-              }
-            }
+            const data = await hass.callApi("GET", "bambu_fleet_studio/scan_network");
             findIpLanBtn.disabled = false;
             findIpLanBtn.textContent = "📡 Find IP on LAN";
             const targetSn = String(editSerialInp.value || payload.serial || "").toUpperCase();
@@ -5564,33 +5483,9 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             fetchStandaloneFleet(hass, null, true);
           } catch (stErr) {}
 
-          // 2. Also update legacy device_registry / options flow if present
-          if (payload.deviceId && newName) {
-            try {
-              await hass.callWS({
-                type: "config/device_registry/update",
-                device_id: payload.deviceId,
-                name_by_user: newName
-              });
-            } catch (e) {}
-          }
 
-          if (activeOptionsFlowId && hostVal && codeVal) {
-            try {
-              await hass.callApi("POST", "config/config_entries/options/flow/" + activeOptionsFlowId, {
-                host: hostVal,
-                access_code: codeVal,
-                print_cache_count: String(cacheVal),
-                timelapse_cache_count: "1",
-                usage_hours: String(hoursVal),
-                advanced: {
-                  disable_ssl_verify: false,
-                  enable_firmware_update: false
-                }
-              });
-            } catch (e) {}
-            activeOptionsFlowId = null;
-          }
+
+
 
           alertBox.className = "alert ok";
           alertBox.textContent = "Printer, Build Plate, Odometer & Smart Plug settings saved!";
@@ -5620,10 +5515,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     if (p.smartPlug) {
       const sp = p.smartPlug;
       const wattBadge = sp.powerVal !== null
-        ? `<span class="watt-pill" title="Live Smart Plug Power (${sp.powerEntity})">⚡ ${sp.powerVal}${sp.powerUnit}</span>`
+        ? `<span class="watt-pill" title="Live Smart Plug Power (${escapeHtml(sp.powerEntity)})">⚡ ${escapeHtml(sp.powerVal)}${escapeHtml(sp.powerUnit)}</span>`
         : "";
       const plugBtn = sp.switchEntity
-        ? `<button class="icon-btn ${sp.isOn ? 'plug-on' : 'plug-off'} ${sp.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${sp.safetyLocked ? ('🔒 ' + sp.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + sp.switchEntity + ')')}">${sp.safetyLocked ? '🔒' : '🔌'}</button>`
+        ? `<button class="icon-btn ${sp.isOn ? 'plug-on' : 'plug-off'} ${sp.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${escapeHtml(p.prefix)}" title="${escapeHtml(sp.safetyLocked ? ('🔒 ' + sp.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + sp.switchEntity + ')'))}">${sp.safetyLocked ? '🔒' : '🔌'}</button>`
         : "";
       smartPlugHeaderHtml = wattBadge + plugBtn;
     }
@@ -5649,17 +5544,17 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     if (mode === "cover") {
       const previewImg = p.coverPic || p.pickPic;
       stageRightHtml = previewImg && p.online
-        ? `<img class="stage-media-img" src="${previewImg}" alt="3MF Cover" />`
+        ? `<img class="stage-media-img" src="${escapeHtml(previewImg)}" alt="3MF Cover" />`
         : `<div class="stage-offline-box"><span>🖼️</span><div>${t("no_3mf_preview", activeLang)}</div></div>`;
     } else if (mode === "controls") {
       stageRightHtml = `
         <div class="quick-ctrl-grid">
-          <button type="button" class="q-btn" data-ctrl="light" data-prefix="${p.prefix}">${p.lightOn ? t("ctrl_light_on", activeLang) : t("ctrl_light_off", activeLang)}</button>
-          <button type="button" class="q-btn" data-ctrl="refresh" data-prefix="${p.prefix}">${t("ctrl_force_sync", activeLang)}</button>
-          <button type="button" class="q-btn" data-ctrl="pause" data-prefix="${p.prefix}">${t("ctrl_pause", activeLang)}</button>
-          <button type="button" class="q-btn" data-ctrl="resume" data-prefix="${p.prefix}">${t("ctrl_resume", activeLang)}</button>
-          <button type="button" class="q-btn warn" data-ctrl="stop" data-prefix="${p.prefix}">${t("ctrl_stop_job", activeLang)}</button>
-          <button type="button" class="q-btn" data-ctrl="speed" data-prefix="${p.prefix}">⚡ ${p.speedProfile}</button>
+          <button type="button" class="q-btn" data-ctrl="light" data-prefix="${escapeHtml(p.prefix)}">${p.lightOn ? t("ctrl_light_on", activeLang) : t("ctrl_light_off", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="refresh" data-prefix="${escapeHtml(p.prefix)}">${t("ctrl_force_sync", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="pause" data-prefix="${escapeHtml(p.prefix)}">${t("ctrl_pause", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="resume" data-prefix="${escapeHtml(p.prefix)}">${t("ctrl_resume", activeLang)}</button>
+          <button type="button" class="q-btn warn" data-ctrl="stop" data-prefix="${escapeHtml(p.prefix)}">${t("ctrl_stop_job", activeLang)}</button>
+          <button type="button" class="q-btn" data-ctrl="speed" data-prefix="${escapeHtml(p.prefix)}">⚡ ${escapeHtml(p.speedProfile)}</button>
         </div>
       `;
     } else {
@@ -5668,21 +5563,21 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const camFeedUrl = (p.camAvailable && p.cameraPic)
         ? (useFrameLoop
             ? (p.cameraPic + (p.cameraPic.includes("?") ? "&" : "?") + "_ts=" + Date.now())
-            : p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/"))
+            : (p.cameraStreamUrl || p.cameraPic.replace("/api/camera_proxy/", "/api/camera_proxy_stream/")))
         : "";
       const fallbackPreview = p.pickPic || p.coverPic || "";
       if (p.online && camFeedUrl) {
         stageRightHtml = `
-          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click to open live camera player">
-            <img class="stage-media-img" data-cam-key="${p.prefix}" ${useFrameLoop ? `data-rtsp-proxy="${p.cameraPic}"` : ''} src="${camFeedUrl}" alt="Live Cam" />
+          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${escapeHtml(p.prefix)}" title="Click to open live camera player">
+            <img class="stage-media-img" data-cam-key="${escapeHtml(p.prefix)}" ${useFrameLoop ? `data-rtsp-proxy="${escapeHtml(p.cameraPic)}"` : ''} src="${escapeHtml(camFeedUrl)}" alt="Live Cam" />
             <span class="live-tag">${t("cam_live", activeLang)}</span>
             <span class="expand-tag">⛶</span>
           </div>
         `;
       } else if (p.online && !p.camAvailable) {
         stageRightHtml = `
-          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${p.prefix}" title="Click for P2S / LAN Only Liveview Setup & Reconnect" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center;">
-            ${fallbackPreview ? `<img class="stage-media-img" src="${fallbackPreview}" alt="Preview" style="position:absolute;inset:0;opacity:0.22;filter:blur(1px);" />` : ''}
+          <div class="cam-live-wrap" data-act="fullscreen-cam" data-prefix="${escapeHtml(p.prefix)}" title="Click for P2S / LAN Only Liveview Setup & Reconnect" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center;">
+            ${fallbackPreview ? `<img class="stage-media-img" src="${escapeHtml(fallbackPreview)}" alt="Preview" style="position:absolute;inset:0;opacity:0.22;filter:blur(1px);" />` : ''}
             <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;">
               <span style="font-size:9px;font-weight:800;color:#fde68a;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.45);padding:2px 7px;border-radius:999px;">${t("cam_liveview_off", activeLang)}</span>
               <div style="font-size:11px;font-weight:800;color:#f8fafc;line-height:1.25;">${t("cam_lan_liveview_hint", activeLang)}</div>
@@ -5695,8 +5590,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           <div class="stage-offline-box">
             <span style="opacity:0.75;transform:scale(1.4);display:inline-flex;">${SVG_ICONS.camLens}</span>
             <div style="font-weight:700;font-size:12px;color:#94a3b8;">${t("cam_offline", activeLang)}</div>
-            <div style="font-size:11px;color:#64748b;">IP: ${p.ipAddress}</div>
-            <div style="font-size:10.5px;color:#cbd5e1;margin-top:2px;font-weight:700;">🕒 ${t("last_online", activeLang)}: ${p.lastOnlineDisplay || 'Unknown'}</div>
+            <div style="font-size:11px;color:#64748b;">IP: ${escapeHtml(p.ipAddress)}</div>
+            <div style="font-size:10.5px;color:#cbd5e1;margin-top:2px;font-weight:700;">🕒 ${t("last_online", activeLang)}: ${escapeHtml(p.lastOnlineDisplay || 'Unknown')}</div>
           </div>
         `;
       }
@@ -5723,20 +5618,20 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           <div class="ams-deck">
             <div class="ams-hdr">
               <div class="ams-title">
-                <img class="ams-unit-thumb" src="${amsImg}" alt="${ams.model}" />
+                <img class="ams-unit-thumb" src="${amsImg}" alt="${escapeHtml(ams.model)}" />
                 <div>
                   <div style="display:flex;align-items:center;gap:6px;">
                     <span class="ams-dot"></span>
-                    <strong>Bambu ${ams.model}</strong>
+                    <strong>Bambu ${escapeHtml(ams.model)}</strong>
                   </div>
-                  <div class="ams-sub">${ams.subLabel || t("ams_4slot", activeLang)}</div>
+                  <div class="ams-sub">${escapeHtml(ams.subLabel || t("ams_4slot", activeLang))}</div>
                 </div>
               </div>
               <div class="ams-Readouts">
                 ${ams.isOpenAir
                   ? `<span class="ams-chip" title="AMS Lite Open-Air Rotary Feeder">${t("ams_open_air", activeLang)}</span>`
-                  : `<span class="ams-chip">🌡️ ${ams.temperature}${ams.tempUnit}</span>
-                     <span class="${humChipClass}" title="${humTitle}">${humIcon} ${humText}</span>
+                  : `<span class="ams-chip">🌡️ ${escapeHtml(ams.temperature)}${escapeHtml(ams.tempUnit)}</span>
+                     <span class="${humChipClass}" title="${escapeHtml(humTitle)}">${humIcon} ${escapeHtml(humText)}</span>
                      ${ams.drying ? `<span class="ams-chip drying">${t("ams_drying", activeLang)}</span>` : ''}`
                 }
               </div>
@@ -5757,12 +5652,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                     <span class="spool-type">${escapeHtml(effType)}</span>
                   </div>
                   <div class="spool-swatch-row">
-                    <span class="spool-ring" style="background:${effColor};"></span>
+                    <span class="spool-ring" style="background:${escapeHtml(effColor)};"></span>
                     <div class="spool-name" title="${escapeHtml(effName)}">${escapeHtml(effName)}</div>
                   </div>
                   ${effRemain !== null && effRemain !== undefined ? `
                     <div class="spool-Mini-bar">
-                      <div class="spool-Mini-fill" style="width:${effRemain}%;background:${effColor};"></div>
+                      <div class="spool-Mini-fill" style="width:${escapeHtml(effRemain)}%;background:${escapeHtml(effColor)};"></div>
                     </div>
                   ` : ''}
                 </div>
@@ -5781,7 +5676,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       filamentHtml = `
         <div class="ext-spool-deck" title="${t('ext_spool_title', activeLang)} (${escapeHtml(effName)})">
           <div class="ext-spool-left">
-            <span class="spool-ring" style="background:${effColor};"></span>
+            <span class="spool-ring" style="background:${escapeHtml(effColor)};"></span>
             <div>
               <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">${t("ext_spool_title", activeLang)}</div>
               <div style="font-size:13px;font-weight:700;color:#f8fafc;">${escapeHtml(effName)}</div>
@@ -5801,17 +5696,17 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       : (`${t("tel_mode", activeLang)}: ${p.speedProfile}`);
 
     return `
-      <div class="p-card ${p.online ? 'is-online' : 'is-offline'} ${isHighlighted ? 'is-highlighted' : ''}" id="printer-card-${p.prefix}" data-prefix="${p.prefix}">
+      <div class="p-card ${p.online ? 'is-online' : 'is-offline'} ${isHighlighted ? 'is-highlighted' : ''}" id="printer-card-${escapeHtml(p.prefix)}" data-prefix="${escapeHtml(p.prefix)}">
         <div class="p-hdr">
           <div class="p-hdr-left">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <span class="p-status-pill" style="color:${stateColor};border-color:${stateColor}55;background:${stateColor}18;">
                 <span class="p-dot" style="background:${stateColor};"></span>
-                ${stateBadgeText}
+                ${escapeHtml(stateBadgeText)}
               </span>
-              ${!p.online ? `<span class="watt-pill" style="color:#cbd5e1;border-color:rgba(148,163,184,0.32);background:rgba(15,23,42,0.75);font-weight:700;" title="${t("last_online", activeLang)}: ${p.lastOnlineFull || p.lastOnlineDisplay || 'Unknown'}">🕒 ${t("last_online", activeLang)}: ${p.lastOnlineDisplay || 'Unknown'}</span>` : ''}
+              ${!p.online ? `<span class="watt-pill" style="color:#cbd5e1;border-color:rgba(148,163,184,0.32);background:rgba(15,23,42,0.75);font-weight:700;" title="${t("last_online", activeLang)}: ${escapeHtml(p.lastOnlineFull || p.lastOnlineDisplay || 'Unknown')}">🕒 ${t("last_online", activeLang)}: ${escapeHtml(p.lastOnlineDisplay || 'Unknown')}</span>` : ''}
               ${p.doorOpen ? `<span class="watt-pill" title="Printer Enclosure Door">${t("door_open", activeLang)}</span>` : ''}
-              ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${p.smartPlug.powerVal}${p.smartPlug.powerUnit}</span>` : ''}
+              ${p.smartPlug && p.smartPlug.powerVal !== null ? `<span class="watt-pill" title="Live Smart Plug Power">⚡ ${escapeHtml(p.smartPlug.powerVal)}${escapeHtml(p.smartPlug.powerUnit)}</span>` : ''}
             </div>
             <div class="p-title-wrap">
               <div class="p-name">${escapeHtml(p.name)}</div>
@@ -5819,11 +5714,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             </div>
           </div>
           <div class="p-hdr-actions">
-            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${p.prefix}" title="${p.smartPlug.safetyLocked ? ('🔒 ' + p.smartPlug.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + p.smartPlug.switchEntity + ')')}">${p.smartPlug.safetyLocked ? SVG_ICONS.thermalShield : SVG_ICONS.powerPlug}</button>` : ''}
-            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${p.prefix}" title="${t("tip_light", activeLang)}">${SVG_ICONS.lightBulb}</button>
-            <button type="button" class="icon-btn" data-act="reload" data-prefix="${p.prefix}" title="${t("tip_reload", activeLang)}">${SVG_ICONS.syncTurbine}</button>
-            <button type="button" class="icon-btn" data-act="edit" data-prefix="${p.prefix}" title="${t("tip_edit", activeLang)}">${SVG_ICONS.editTuner}</button>
-            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${p.prefix}" title="${t("tip_delete", activeLang)}">${SVG_ICONS.laserTrash}</button>
+            ${p.smartPlug && p.smartPlug.switchEntity ? `<button type="button" class="icon-btn ${p.smartPlug.isOn ? 'plug-on' : 'plug-off'} ${p.smartPlug.safetyLocked ? 'plug-locked' : ''}" data-act="smart-plug" data-prefix="${escapeHtml(p.prefix)}" title="${escapeHtml(p.smartPlug.safetyLocked ? ('🔒 ' + p.smartPlug.lockReason) : (t('tip_smart_plug', activeLang) + ' (' + p.smartPlug.switchEntity + ')'))}">${p.smartPlug.safetyLocked ? SVG_ICONS.thermalShield : SVG_ICONS.powerPlug}</button>` : ''}
+            <button type="button" class="icon-btn ${p.lightOn ? 'lit' : ''}" data-act="light" data-prefix="${escapeHtml(p.prefix)}" title="${t("tip_light", activeLang)}">${SVG_ICONS.lightBulb}</button>
+            <button type="button" class="icon-btn" data-act="reload" data-prefix="${escapeHtml(p.prefix)}" title="${t("tip_reload", activeLang)}">${SVG_ICONS.syncTurbine}</button>
+            <button type="button" class="icon-btn" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" title="${t("tip_edit", activeLang)}">${SVG_ICONS.editTuner}</button>
+            <button type="button" class="icon-btn del" data-act="delete" data-prefix="${escapeHtml(p.prefix)}" title="${t("tip_delete", activeLang)}">${SVG_ICONS.laserTrash}</button>
           </div>
         </div>
 
@@ -5831,15 +5726,15 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
 
         <div class="p-stage">
           <div class="stage-printer">
-            <img class="printer-render" src="${imgSrc}" alt="${p.model}" />
-            <div class="model-chip">BAMBU ${p.modelNorm}</div>
+            <img class="printer-render" src="${imgSrc}" alt="${escapeHtml(p.model)}" />
+            <div class="model-chip">BAMBU ${escapeHtml(p.modelNorm)}</div>
           </div>
 
           <div class="stage-viewport">
             <div class="viewport-tabs">
-              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.camLens}<span>${stripLeadingEmoji(t("tab_cam", activeLang))}</span></button>
-              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.mesh3mf}<span>${stripLeadingEmoji(t("tab_3mf", activeLang))}</span></button>
-              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${p.prefix}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.ctrlDeck}<span>${stripLeadingEmoji(t("tab_ctrl", activeLang))}</span></button>
+              <button type="button" class="v-tab ${mode === 'cam' ? 'active' : ''}" data-vmode="cam" data-prefix="${escapeHtml(p.prefix)}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.camLens}<span>${stripLeadingEmoji(t("tab_cam", activeLang))}</span></button>
+              <button type="button" class="v-tab ${mode === 'cover' ? 'active' : ''}" data-vmode="cover" data-prefix="${escapeHtml(p.prefix)}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.mesh3mf}<span>${stripLeadingEmoji(t("tab_3mf", activeLang))}</span></button>
+              <button type="button" class="v-tab ${mode === 'controls' ? 'active' : ''}" data-vmode="controls" data-prefix="${escapeHtml(p.prefix)}" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;">${SVG_ICONS.ctrlDeck}<span>${stripLeadingEmoji(t("tab_ctrl", activeLang))}</span></button>
             </div>
             <div class="viewport-body">
               ${stageRightHtml}
@@ -5850,38 +5745,38 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         <div class="p-job-card">
           <div class="job-row-top">
             <div class="job-title" title="${escapeHtml(p.taskName)}">📄 ${escapeHtml(p.taskName)}</div>
-            <div class="job-pct">${p.progress}%</div>
+            <div class="job-pct">${escapeHtml(p.progress)}%</div>
           </div>
           <div class="job-bar-bg">
-            <div class="job-bar-fill" style="width:${p.progress}%;"></div>
+            <div class="job-bar-fill" style="width:${escapeHtml(p.progress)}%;"></div>
           </div>
           <div class="job-meta-pills">
-            <span>📚 ${t("job_layer", activeLang)} ${p.currentLayer} / ${p.totalLayers}</span>
-            <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${p.etaDisplay || t("job_idle_done", activeLang)}</span>
-            <span>⚖️ ${p.printWeight !== '—' ? p.printWeight + 'g' : '—'}${p.printLength && p.printLength !== '—' && p.printLength !== '0' ? ' • 📏 ' + p.printLength + 'm' : ''}</span>
+            <span>📚 ${t("job_layer", activeLang)} ${escapeHtml(p.currentLayer)} / ${escapeHtml(p.totalLayers)}</span>
+            <span title="Remaining Time & Estimated Finish Clock Time">⏱️ ${escapeHtml(p.etaDisplay || t("job_idle_done", activeLang))}</span>
+            <span>⚖️ ${escapeHtml(p.printWeight !== '—' ? p.printWeight + 'g' : '—')}${p.printLength && p.printLength !== '—' && p.printLength !== '0' ? ' • 📏 ' + escapeHtml(p.printLength) + 'm' : ''}</span>
           </div>
         </div>
 
         <div class="p-telemetry-grid">
           <div class="t-tile">
             <div class="t-lbl">${t("tel_nozzle", activeLang)}</div>
-            <div class="t-val">${p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—'}</div>
-            <div class="t-sub">${t("tel_target", activeLang)} ${p.nozzleTarget}°C • ${p.nozzleSize}mm</div>
+            <div class="t-val">${escapeHtml(p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—')}</div>
+            <div class="t-sub">${t("tel_target", activeLang)} ${escapeHtml(p.nozzleTarget)}°C • ${escapeHtml(p.nozzleSize)}mm</div>
           </div>
-          <div class="t-tile" data-act="edit" data-prefix="${p.prefix}" style="cursor:pointer;" title="${plateMeta.fullLabel} — Click to switch Build Plate (Bambu PEI / Smooth / SuperTack / BIQU CryoGrip Glacier &amp; Frostbite)">
+          <div class="t-tile" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" style="cursor:pointer;" title="${escapeHtml(plateMeta.fullLabel)} — Click to switch Build Plate (Bambu PEI / Smooth / SuperTack / BIQU CryoGrip Glacier &amp; Frostbite)">
             <div class="t-lbl">${hasChamber ? t("tel_bed_chamber", activeLang) : t("tel_build_plate", activeLang)}</div>
-            <div class="t-val">${p.bedTemp !== '—' ? p.bedTemp + '°C' : '—'}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${p.chamberTemp}°C</span>` : ''}</div>
-            <div class="t-sub">${t("tel_target", activeLang)} ${p.bedTarget}°C • <span style="color:${plateMeta.isBiqu ? '#38bdf8' : '#a7f3d0'};font-weight:700;">${plateMeta.isBiqu ? '🧊 ' : '🟢 '}${plateMeta.shortLabel}</span></div>
+            <div class="t-val">${escapeHtml(p.bedTemp !== '—' ? p.bedTemp + '°C' : '—')}${hasChamber ? ` <span style="font-size:12px;color:#38bdf8;font-weight:700;" title="Chamber Temperature">• 🏠 ${escapeHtml(p.chamberTemp)}°C</span>` : ''}</div>
+            <div class="t-sub">${t("tel_target", activeLang)} ${escapeHtml(p.bedTarget)}°C • <span style="color:${plateMeta.isBiqu ? '#38bdf8' : '#a7f3d0'};font-weight:700;">${plateMeta.isBiqu ? '🧊 ' : '🟢 '}${escapeHtml(plateMeta.shortLabel)}</span></div>
           </div>
           <div class="t-tile">
             <div class="t-lbl">${t("tel_cooling_speed", activeLang)}</div>
-            <div class="t-val">${p.coolingFan !== '—' ? p.coolingFan + '%' : '—'}</div>
-            <div class="t-sub" title="${coolingSubDetail}">${coolingSubDetail}</div>
+            <div class="t-val">${escapeHtml(p.coolingFan !== '—' ? p.coolingFan + '%' : '—')}</div>
+            <div class="t-sub" title="${escapeHtml(coolingSubDetail)}">${escapeHtml(coolingSubDetail)}</div>
           </div>
-          <div class="t-tile" data-act="edit" data-prefix="${p.prefix}" style="cursor:pointer;" title="${t('tip_odometer_meters', activeLang)} (${p.totalUsage}h • ${odo.metersDisplay} • ${odo.kgDisplay} • ~${odo.spoolsDisplay} ${t('odo_spools', activeLang)})">
+          <div class="t-tile" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" style="cursor:pointer;" title="${escapeHtml(t('tip_odometer_meters', activeLang) + ' (' + p.totalUsage + 'h • ' + odo.metersDisplay + ' • ' + odo.kgDisplay + ' • ~' + odo.spoolsDisplay + ' ' + t('odo_spools', activeLang) + ')')}">
             <div class="t-lbl">${t("tel_odometer", activeLang)}</div>
-            <div class="t-val">${p.totalUsage !== '—' ? p.totalUsage + 'h' : '0.0h'} <span style="font-size:12.5px;color:#10b981;font-weight:800;">• 🧵 ${odo.metersDisplay}</span></div>
-            <div class="t-sub">📦 ~${odo.spoolsDisplay} ${t("odo_spools", activeLang)} (${odo.kgDisplay}) • ${p.ipAddress}</div>
+            <div class="t-val">${escapeHtml(p.totalUsage !== '—' ? p.totalUsage + 'h' : '0.0h')} <span style="font-size:12.5px;color:#10b981;font-weight:800;">• 🧵 ${escapeHtml(odo.metersDisplay)}</span></div>
+            <div class="t-sub">📦 ~${escapeHtml(odo.spoolsDisplay)} ${t("odo_spools", activeLang)} (${escapeHtml(odo.kgDisplay)}) • ${escapeHtml(p.ipAddress)}</div>
           </div>
         </div>
 
@@ -5961,7 +5856,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
 
         <div class="ff-controls" style="margin-bottom:10px;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;">
-            <input id="ffSearchInp" class="ff-search" type="text" placeholder="${t("ff_search_ph", activeLang)}" value="${searchQuery || ''}" style="flex:1;min-width:220px;" />
+            <input id="ffSearchInp" class="ff-search" type="text" placeholder="${escapeHtml(t("ff_search_ph", activeLang))}" value="${escapeHtml(searchQuery || '')}" style="flex:1;min-width:220px;" />
             <button type="button" class="wt-pill ${readyOnly ? 'active' : ''}" id="ffReadyOnlyBtn" title="Show only spools loaded in online, idle printers ready to start a job immediately">
               🟢 ${t("ff_ready_btn", activeLang)} (${readySpools.length})
             </button>
@@ -5972,16 +5867,16 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           <div class="wt-pills">
             <button type="button" class="wt-pill ff-mat-pill ${curMat === 'ALL' ? 'active' : ''}" data-mat="ALL">${t("ff_all", activeLang)} (${hideEmpty ? loadedSpools.length : allSpools.length})</button>
             ${matTypes.map(m => `
-              <button type="button" class="wt-pill ff-mat-pill ${curMat === m ? 'active' : ''}" data-mat="${m}">${m}</button>
+              <button type="button" class="wt-pill ff-mat-pill ${curMat === m ? 'active' : ''}" data-mat="${escapeHtml(m)}">${escapeHtml(m)}</button>
             `).join("")}
           </div>
         </div>
 
         <div class="wt-pills" style="margin-bottom:14px;">
           ${colorFamilies.map(cf => `
-            <button type="button" class="wt-pill ff-color-pill ${curColorFam === cf.id ? 'active' : ''}" data-cf="${cf.id}" style="display:inline-flex;align-items:center;gap:6px;">
-              <span style="width:10px;height:10px;border-radius:50%;background:${cf.dot};border:1px solid rgba(255,255,255,0.45);display:inline-block;"></span>
-              <span>${cf.label}</span>
+            <button type="button" class="wt-pill ff-color-pill ${curColorFam === cf.id ? 'active' : ''}" data-cf="${escapeHtml(cf.id)}" style="display:inline-flex;align-items:center;gap:6px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:${escapeHtml(cf.dot)};border:1px solid rgba(255,255,255,0.45);display:inline-block;"></span>
+              <span>${escapeHtml(cf.label)}</span>
             </button>
           `).join("")}
         </div>
@@ -6005,15 +5900,15 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 ? `${s.remain}%${s.weightGrams !== null ? ' (~' + s.weightGrams + 'g)' : ''}`
                 : "";
               return `
-                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-locate="${s.printerPrefix}" title="${t('ff_click_highlight', activeLang)} ${escapeHtml(s.printerName)} (${escapeHtml(s.slotBadge)})">
-                  <div class="ff-swatch" style="background:${s.color};width:38px;height:38px;"></div>
+                <div class="ff-card ${s.active ? 'ff-active' : ''} ${s.empty ? 'ff-empty' : ''}" data-ff-locate="${escapeHtml(s.printerPrefix)}" title="${escapeHtml(t('ff_click_highlight', activeLang))} ${escapeHtml(s.printerName)} (${escapeHtml(s.slotBadge)})">
+                  <div class="ff-swatch" style="background:${escapeHtml(s.color)};width:38px;height:38px;"></div>
                   <div class="ff-info">
                     <div class="ff-top-row" style="flex-wrap:wrap;">
                       <span class="ff-mat-badge">${escapeHtml(s.type)}</span>
                       <span class="ff-slot-badge">${escapeHtml(s.slotBadge)}</span>
                       ${statusPill}
                       ${humBadge}
-                      ${remLabel ? `<span class="ff-rem">${remLabel}</span>` : ''}
+                      ${remLabel ? `<span class="ff-rem">${escapeHtml(remLabel)}</span>` : ''}
                     </div>
                     <div class="ff-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>
                     <div class="ff-printer" style="justify-content:space-between;margin-top:4px;">
@@ -6022,7 +5917,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                         <strong>${escapeHtml(s.printerName)}</strong> • ${escapeHtml(s.location)}
                       </span>
                       <span style="display:inline-flex;gap:4px;flex-shrink:0;">
-                        <button type="button" class="ff-mini-btn" data-ff-locate="${s.printerPrefix}" title="Scroll to & highlight ${s.printerName}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
+                        <button type="button" class="ff-mini-btn" data-ff-locate="${escapeHtml(s.printerPrefix)}" title="Scroll to &amp; highlight ${escapeHtml(s.printerName)}" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;cursor:pointer;">🎯</button>
                       </span>
                     </div>
                   </div>
@@ -6209,10 +6104,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             ${HARDWARE_SHOWCASE_MODELS.map(m => {
               const subLabel = isZh ? (m.subZh || m.sub) : (isZhTw ? (m.subZhTw || m.sub) : m.sub);
               return `
-              <button class="hw-chip" data-add-model="${m.addTarget || m.code}" title="Click to pair Bambu Lab ${m.label}">
-                <img src="${getPrinterImage(m.code)}" alt="${m.label}" />
-                <div class="hw-chip-name">${m.label}</div>
-                <div class="hw-chip-sub">${subLabel}</div>
+              <button class="hw-chip" data-add-model="${escapeHtml(m.addTarget || m.code)}" title="Click to pair Bambu Lab ${escapeHtml(m.label)}">
+                <img src="${getPrinterImage(m.code)}" alt="${escapeHtml(m.label)}" />
+                <div class="hw-chip-name">${escapeHtml(m.label)}</div>
+                <div class="hw-chip-sub">${escapeHtml(subLabel)}</div>
               </button>
               `;
             }).join("")}
@@ -7829,7 +7724,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             <label>🌐 Language (Auto-Detects Home Assistant Profile Language by Default)</label>
             <select id="langInp">
               <option value="auto" ${cfgLang === "auto" ? "selected" : ""}>🌐 Auto (Home Assistant Language)</option>
-              ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${cfgLang === l.code ? "selected" : ""}>${l.flag} ${l.label} (${l.code.toUpperCase()})</option>`).join("")}
+              ${SUPPORTED_LANGUAGES.map(l => `<option value="${escapeHtml(l.code)}" ${cfgLang === l.code ? "selected" : ""}>${escapeHtml(l.flag)} ${escapeHtml(l.label)} (${escapeHtml(l.code.toUpperCase())})</option>`).join("")}
             </select>
           </div>
           <div>
@@ -8236,13 +8131,13 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const expectedModelNorm = normalizeModel(filterModel || (filterPrefix ? filterPrefix.split("_")[0] : "P1S"));
       const verInfo = resolveFleetVersionInfo();
       const versionBadgeHtml = verInfo.updateAvailable
-        ? `<a class="cmd-version-pill update-avail" id="cmdVersionBadge" href="${verInfo.releaseUrl}" target="_blank" rel="noopener noreferrer" title="🚀 Update Available! Installed: v${verInfo.currentVersion} → Latest: v${verInfo.latestVersion} (Click to download)">
-             <span>v${verInfo.currentVersion}</span>
+        ? `<a class="cmd-version-pill update-avail" id="cmdVersionBadge" href="${escapeHtml(verInfo.releaseUrl)}" target="_blank" rel="noopener noreferrer" title="🚀 Update Available! Installed: v${escapeHtml(verInfo.currentVersion)} → Latest: v${escapeHtml(verInfo.latestVersion)} (Click to download)">
+             <span>v${escapeHtml(verInfo.currentVersion)}</span>
              <span class="ver-up-arrow" aria-hidden="true">⬆</span>
-             <span class="ver-new-tag">v${verInfo.latestVersion}</span>
+             <span class="ver-new-tag">v${escapeHtml(verInfo.latestVersion)}</span>
            </a>`
-        : `<a class="cmd-version-pill up-to-date" id="cmdVersionBadge" href="${verInfo.releaseUrl}" target="_blank" rel="noopener noreferrer" title="Bambu Lab Fleet Studio v${verInfo.currentVersion} — Up to date (Click to view Releases & Changelog)">
-             <span>v${verInfo.currentVersion}</span>
+        : `<a class="cmd-version-pill up-to-date" id="cmdVersionBadge" href="${escapeHtml(verInfo.releaseUrl)}" target="_blank" rel="noopener noreferrer" title="Bambu Lab Fleet Studio v${escapeHtml(verInfo.currentVersion)} — Up to date (Click to view Releases &amp; Changelog)">
+             <span>v${escapeHtml(verInfo.currentVersion)}</span>
              <span class="ver-check" aria-hidden="true">✓</span>
            </a>`;
 
@@ -8274,8 +8169,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   </div>
                 </div>
                 <select class="lang-select" id="langSelectBtn" title="Switch Language / 切换语言 / 切換語言 / Sprache / Langue / Idioma / Язык">
-                  <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${lang.toUpperCase()} (${t("lang_auto", lang)})</option>
-                  ${SUPPORTED_LANGUAGES.map(l => `<option value="${l.code}" ${savedLangPref === l.code ? "selected" : ""}>${l.flag} ${l.label}</option>`).join("")}
+                  <option value="auto" ${savedLangPref === "auto" ? "selected" : ""}>🌐 ${escapeHtml(lang.toUpperCase())} (${escapeHtml(t("lang_auto", lang))})</option>
+                  ${SUPPORTED_LANGUAGES.map(l => `<option value="${escapeHtml(l.code)}" ${savedLangPref === l.code ? "selected" : ""}>${escapeHtml(l.flag)} ${escapeHtml(l.label)}</option>`).join("")}
                 </select>
               </div>
               <div class="cmd-kpis">
@@ -8329,13 +8224,13 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 ? printers.map(p => buildPrinterCardHtml(p, this._viewModes[p.prefix] || "cam", this._highlightedPrefix === p.prefix, lang)).join("")
                 : `
                   <div class="empty-printer-card">
-                    <img src="${getPrinterImage(expectedModelNorm)}" alt="${expectedModelNorm}" />
-                    <div style="font-size:18px;font-weight:800;color:#f8fafc;">Bambu Lab ${expectedModelNorm} — ${t("empty_ready_pair", lang)}</div>
+                    <img src="${getPrinterImage(expectedModelNorm)}" alt="${escapeHtml(expectedModelNorm)}" />
+                    <div style="font-size:18px;font-weight:800;color:#f8fafc;">Bambu Lab ${escapeHtml(expectedModelNorm)} — ${t("empty_ready_pair", lang)}</div>
                     <div style="font-size:13px;color:#94a3b8;max-width:460px;line-height:1.5;">
-                      <strong>${filterPrefix || expectedModelNorm}</strong>: ${t("empty_no_entry", lang)}
+                      <strong>${escapeHtml(filterPrefix || expectedModelNorm)}</strong>: ${t("empty_no_entry", lang)}
                     </div>
-                    <button type="button" class="wt-cta-btn" id="emptyConnectBtn" data-model="${expectedModelNorm}" style="margin-top:6px;padding:11px 20px;font-size:13px;">
-                      ➕ ${t("empty_connect_btn", lang)} Bambu Lab ${expectedModelNorm}
+                    <button type="button" class="wt-cta-btn" id="emptyConnectBtn" data-model="${escapeHtml(expectedModelNorm)}" style="margin-top:6px;padding:11px 20px;font-size:13px;">
+                      ➕ ${t("empty_connect_btn", lang)} Bambu Lab ${escapeHtml(expectedModelNorm)}
                     </button>
                   </div>
                 `
@@ -8583,11 +8478,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                   action: "reload"
                 });
               } catch (e0) {}
-              if (p.entryId && !String(p.entryId).startsWith("standalone_")) {
-                try {
-                  await this._hass.callApi("POST", "config/config_entries/entry/" + p.entryId + "/reload");
-                } catch (e1) {}
-              }
+
               fetchStandaloneFleet(this._hass, null, true);
               btn.textContent = "✓";
               setTimeout(() => { this._lastSig = ""; this._render(); }, 900);
