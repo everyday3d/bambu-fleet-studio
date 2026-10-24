@@ -12,3 +12,4 @@ graphify-out/
 .codegraph/
 __pycache__/
 *.pyc
+scripts/deploy_ha.mjs
