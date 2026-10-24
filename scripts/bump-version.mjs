@@ -283,26 +283,7 @@ if (!discussionsOnly) {
     txt.replace(/"version":\s*"[^"]+"/, `"version": "${rawVer}"`)
   );
 
-  // 5. Update README.md & info.md badges and version pills
-  replaceInFile("README.md", (txt) =>
-    txt
-      .replace(
-        /\[!\[Release v[0-9.]+\]\(https:\/\/img\.shields\.io\/badge\/Release-v[0-9.]+%20\(Official\)-00e676\?style=flat-square&logo=github\)\]/g,
-        `[![Release ${tag}](https://img.shields.io/badge/Release-${tag}%20(Official)-00e676?style=flat-square&logo=github)]`
-      )
-      .replace(/Integration Version Badge \(`v[0-9.]+ ✓`\)/g, `Integration Version Badge (\`${tag} ✓\`)`)
-  );
-
-  replaceInFile("info.md", (txt) =>
-    txt
-      .replace(/^# 🖨️ Bambu Lab Fleet Studio `v[0-9.]+`/m, `# 🖨️ Bambu Lab Fleet Studio \`${tag}\``)
-      .replace(
-        /\[!\[Release v[0-9.]+\]\(https:\/\/img\.shields\.io\/badge\/Release-v[0-9.]+%20\(Official\)-00e676\?style=flat-square&logo=github\)\]/g,
-        `[![Release ${tag}](https://img.shields.io/badge/Release-${tag}%20(Official)-00e676?style=flat-square&logo=github)]`
-      )
-  );
-
-  // 6. Update CHANGELOG.md if [Unreleased] exists or scaffold new section
+  // 5. Update CHANGELOG.md if [Unreleased] exists or scaffold new section
   replaceInFile("CHANGELOG.md", (txt) => {
     if (txt.includes(`## [${rawVer}]`)) return txt;
     if (txt.includes("## [Unreleased]")) {
@@ -314,6 +295,49 @@ if (!discussionsOnly) {
       return txt.slice(0, firstHeaderIdx) + scaffold + txt.slice(firstHeaderIdx);
     }
     return txt;
+  });
+
+  // Extract latest CHANGELOG section for README.md & info.md What's New block
+  const clText = fs.readFileSync(path.join(ROOT_DIR, "CHANGELOG.md"), "utf8").replace(/\r\n/g, "\n");
+  const clSecRegex = new RegExp(`## \\[${rawVer.replace(/\./g, "\\.")}\\][^\n]*\n([\s\S]*?)(?=\n## \\[|$)`);
+  const clMatch = clText.match(clSecRegex);
+  const whatsNewBody = clMatch
+    ? clMatch[1].trim().replace(/^### [^\n]+\n+/gm, "")
+    : "";
+
+  // 6. Update README.md & info.md H1 version, badges, What's New section, and version pills
+  replaceInFile("README.md", (txt) => {
+    let out = txt
+      .replace(/^# 🖨️ Bambu Lab Fleet Studio(?:\s*`\[v[0-9.]+\]`)?\s*—/m, `# 🖨️ Bambu Lab Fleet Studio \`[${tag}]\` —`)
+      .replace(
+        /\[!\[Release v[0-9.]+\]\(https:\/\/img\.shields\.io\/badge\/Release-v[0-9.]+%20\(Official\)-00e676\?style=flat-square&logo=github\)\]/g,
+        `[![Release ${tag}](https://img.shields.io/badge/Release-${tag}%20(Official)-00e676?style=flat-square&logo=github)]`
+      )
+      .replace(/Integration Version Badge \(`v[0-9.]+ ✓`\)/g, `Integration Version Badge (\`${tag} ✓\`)`);
+    if (whatsNewBody && /## 🆕 What's New in `v[0-9.]+`/.test(out)) {
+      out = out.replace(
+        /## 🆕 What's New in `v[0-9.]+`[\s\S]*?(?=\n---\r?\n\r?\n## 🌟)/,
+        `## 🆕 What's New in \`${tag}\`\n\n${whatsNewBody}\n`
+      );
+    }
+    return out;
+  });
+
+  replaceInFile("info.md", (txt) => {
+    let out = txt
+      .replace(/^# 🖨️ Bambu Lab Fleet Studio `v[0-9.]+`/m, `# 🖨️ Bambu Lab Fleet Studio \`${tag}\``)
+      .replace(/^## 🆕 What's New in `v[0-9.]+`/m, `## 🆕 What's New in \`${tag}\``)
+      .replace(
+        /\[!\[Release v[0-9.]+\]\(https:\/\/img\.shields\.io\/badge\/Release-v[0-9.]+%20\(Official\)-00e676\?style=flat-square&logo=github\)\]/g,
+        `[![Release ${tag}](https://img.shields.io/badge/Release-${tag}%20(Official)-00e676?style=flat-square&logo=github)]`
+      );
+    if (whatsNewBody && /## 🆕 What's New in `v[0-9.]+`/.test(out)) {
+      out = out.replace(
+        /## 🆕 What's New in `v[0-9.]+`[\s\S]*?(?=\n## ✨ Key Highlights)/,
+        `## 🆕 What's New in \`${tag}\`\n\n${whatsNewBody}\n`
+      );
+    }
+    return out;
   });
 
   console.log(`[bump] All 7 versioned files synchronized to ${tag}.`);

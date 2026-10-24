@@ -1,7 +1,7 @@
-# 🖨️ Bambu Lab Fleet Studio — Home Assistant Dashboard & Custom Cards
+# 🖨️ Bambu Lab Fleet Studio `[v1.4.0]` — Home Assistant Dashboard & Custom Cards
 
-[![Release v1.3.4](https://img.shields.io/badge/Release-v1.3.4%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom%20Plugin-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/integration)
+[![Release v1.4.0](https://img.shields.io/badge/Release-v1.4.0%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![HACS Default](https://img.shields.io/badge/HACS-Default%20Store-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/default)
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
 
@@ -16,6 +16,17 @@
 
 ---
 
+## 🆕 What's New in `v1.4.0`
+
+- **🔧 Bambu Lab H2C Vortek 7-Nozzle Changer (`1L + 6R`) & H2D / H2D Pro / X2D Dual-Nozzle Telemetry & Card UI (`#41` — *`H2C` & `X2D` untested on physical hardware; community feedback needed!*)**:
+  - **Dual-Nozzle Telemetry Tile (`L + R`)**: Displays simultaneous **Left (`L`)** and **Right (`R`)** nozzle temperatures, active nozzle highlighting, and per-nozzle targets & diameters (`L→220°C (0.4mm) • R→250°C (0.4mm)`), plus dual-nozzle Smart Plug thermal safety lock (`max(L, R) > 60°C`).
+  - **Dedicated `.vortek-deck` (`🔧 Bambu Vortek 7-Nozzle Changer`) for `H2C`**: Displays the **1 Fixed Left Hotend (`L • FIXED`)** alongside all **6 Swappable Right Induction Hotends (`R1`–`R6`, ~8s swap)** decoded from Local LAN MQTT (`device.extruder` & `device.nozzle`) with live **`MOUNTED`**, **`DOCKED`**, and **`EMPTY`** status badges, nozzle diameters (`0.2mm`–`0.8mm`), flow ratings (`Standard` / `High-Flow` / `TPU High-Flow`), materials (`Hardened Steel` / `Stainless Steel` / `Tungsten Carbide`), and accumulated print hours.
+  - **🧪 Call for `H2C` & `X2D` Community Testing**: Because we do not have physical `H2C` or `X2D` hardware in our shop yet, `H2C` Vortek 7-nozzle changer and `X2D` dual-nozzle support are marked **`🧪 Beta • Community Feedback Needed`**. If you run an `H2C` or `X2D`, please let us know in **[GitHub Issues](https://github.com/everyday3d/bambu-fleet-studio/issues)** or **[Discussions](https://github.com/everyday3d/bambu-fleet-studio/discussions)** how it works on your machine!
+- **🎉 Official HACS Default Store Inclusion & Security Hardening (`hacs/default#11882`, `#38`, `#39`, `#40`)**:
+  - **Merged into the Official HACS Default Store**! Includes HMAC-signed camera snapshot/stream URLs (`async_sign_path` with signed `_ts` cache-busting), universal `escapeHtml()` XSS protection across all card views, administrator RBAC enforcement on mutating endpoints, and Home Assistant Issue Registry (`bad_access_code`) repair alerts with exponential MQTT backoff.
+
+---
+
 ## 🌟 Why Bambu Lab Fleet Studio?
 
 Default Home Assistant entity lists clutter your screen with dozens of ungrouped sensors and render empty AMS filament slots even on printers that do not have an AMS attached. **Bambu Lab Fleet Studio** replaces walls of text and scattered entities with a sleek, dark-glass industrial command center:
@@ -24,7 +35,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
   - **Direct Port `8883` TLS MQTT Client**: Connects directly (`username: bblp`, `password: <8-char Access Code>`) to `device/<serial>/report` and `device/<serial>/request` for real-time temperatures, print progress, layer counters, ETA, AMS/AMS Lite/AMS 2 Pro/AMS HT spools, HMS error codes, chamber lights, speed profiles, and print job controls (`pause`, `resume`, `stop`, `pushall`).
   - **Direct Port `6000` TLS & Port `322` RTSPS Camera Engine**: Streams live JPEG/MJPEG camera feeds directly from Port `6000` TLS (`A1`, `A1 Mini`, `P1P`, `P1S`) and decodes 1080p H.264 RTSPS video from Port `322` (`P2S`, `X1C`, `X1E`, `H2D`, `H2C`, `H2S`, `R1`) with zero external camera proxy dependencies.
 - **🖼️ Complete 14-Model Printer & R1 Laser Photography**: Built-in, embedded high-resolution studio renders for every Bambu Lab series—**`A1`**, **`A1 Mini`**, **`A2L`**, **`P1S`**, **`P1P`**, **`P2S`**, **`X1C`**, **`X1E`**, **`X2D`**, **`H2C`**, **`H2D`**, **`H2D Pro`**, **`H2S`**, and the **`R1` (55W CO2 Laser Cutter & Engraver)**—automatically matched to each device's model (with a per-device **Hardware Model & Artwork** selector in the Edit modal).
-- **🔧 Bambu H2C Vortek 7-Nozzle Changer & H2D / H2D Pro Dual-Nozzle Support (`#41`)**: Full local-LAN telemetry (`device.extruder` & `device.nozzle`) for dual-nozzle and Vortek nozzle-changer printers! Displays simultaneous **Left (`L`)** and **Right (`R`)** nozzle temperatures, targets, and active nozzle highlighting, plus a dedicated **`🔧 Bambu Vortek 7-Nozzle Changer`** deck on **`H2C`** cards showing the **1 Fixed Left Hotend (`L`)** and all **6 Right Induction Hotends (`R1`–`R6`, ~8s swap)** with live `MOUNTED` / `DOCKED` / `EMPTY` badges, nozzle diameters (`0.2mm`–`0.8mm`), flow ratings (`Standard` / `High-Flow` / `TPU High-Flow`), materials (`Hardened Steel` / `Stainless Steel` / `Tungsten Carbide`), and accumulated print hours.
+- **🔧 Bambu H2C Vortek 7-Nozzle Changer & H2D / H2D Pro / X2D Dual-Nozzle Support (`#41` — *`H2C` & `X2D` untested on physical hardware; community feedback needed!*)**: Full local-LAN telemetry (`device.extruder` & `device.nozzle`) for dual-nozzle and Vortek nozzle-changer printers! Displays simultaneous **Left (`L`)** and **Right (`R`)** nozzle temperatures, targets, and active nozzle highlighting, plus a dedicated **`🔧 Bambu Vortek 7-Nozzle Changer`** deck on **`H2C`** cards showing the **1 Fixed Left Hotend (`L`)** and all **6 Right Induction Hotends (`R1`–`R6`, ~8s swap)** with live `MOUNTED` / `DOCKED` / `EMPTY` badges, nozzle diameters (`0.2mm`–`0.8mm`), flow ratings (`Standard` / `High-Flow` / `TPU High-Flow`), materials (`Hardened Steel` / `Stainless Steel` / `Tungsten Carbide`), and accumulated print hours. *(Since we do not have physical `H2C` or `X2D` hardware in the shop yet, please share feedback in [GitHub Issues](https://github.com/everyday3d/bambu-fleet-studio/issues)!)*
 - **🎨 Embedded Studio Artwork for AMS Lite, AMS HT, AMS 2 Pro & AMS**: Includes dedicated high-resolution studio renders for **`AMS Lite`** (4-spool open rotary feeder), **`AMS HT`** (85°C High-Temperature active engineering dryer), **`AMS 2 Pro`** (4-slot active drying unit), and standard **`AMS`**, displayed directly inside each printer's **AMS & Filament System** header, the **Edit Device** modal, and the **Supported Hardware Lineup** gallery.
 - **🎨 Smart Conditional Multi-AMS Detection, Live `% RH` & Automatic `°F` → `°C` Normalization**: Automatically inspects live MQTT `print.ams.ams[]` payloads across single or daisy-chained AMS units (`AMS #1`, `AMS #2`, etc.). Normalizes any Imperial (`°F`) printer/AMS temperature sensors to 3D-printing Celsius (`°C`), renders **`🌬️ Open-Air Rotary`** on sensorless `AMS Lite` feeders, displays real relative humidity (`% RH`) with amber/red wet-filament highlighting (`>= 45% RH`), plus inline **Chamber Temp (`°C`)**, **Aux/Chamber Fan `%`**, **Door Open/Closed**, and **Exact Finish Clock Time (`1h 12m • 7:42 PM`)** inside existing tiles with zero layout bloat.
 - **📡 Built-In LAN Network Auto-Discovery & 15-Char Serial Lookup**: Opening the **`➕ Add Printer`** modal automatically sweeps your local `/24` subnet on Port `8883` TLS in ~1.2s, validates `BBL CA` certificates, extracts each printer's **15-character Serial Number**, and infers the hardware model (`22E` → `P2S`, `039` → `A1`, `030` → `A1 Mini`, `01P` → `P1S`, `00M` → `X1C`, `094` → `H2D`). Click any discovered printer card to populate **Model, IPv4 Address, Serial Number, and Name** in one click! Also includes a **`📡 Find IP on LAN`** button in the **Edit Device** modal if DHCP changes a printer's IP.
@@ -253,7 +264,9 @@ Vote on upcoming features in **[📊 Roadmap Poll #30](https://github.com/everyd
 - [x] ~~**🔊 Smart Speaker Voice TTS Announcer (with 🌙 Quiet Hours) & 🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)** (`#33`)~~ ✅
 - [x] ~~**🕒 Offline Printer "Last Online" Timestamp & Relative Time Badge** (`#34`)~~ ✅
 - [x] ~~**🎯 Deep-Linked Push Notifications with Filament Grams Used (`g`), Live Camera Action & 1-Tap Scroll/Highlight to Target Printer Card** (`#35`, `#36`)~~ ✅
-- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.3.3 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
+- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.4.0 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
+- [x] ~~**🔧 Bambu Lab H2C Vortek 7-Nozzle Changer (`1L + 6R`) & H2D / H2D Pro / X2D Dual-Nozzle Telemetry & Card Deck (`#41` — *untested on physical H2C & X2D; community feedback needed!*)**~~ ✅
+- [x] ~~**🎉 Official HACS Default Store Inclusion & Full Security Hardening (`hacs/default#11882`, `#38`, `#39`, `#40`)**~~ ✅
 
 ---
 
