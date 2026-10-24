@@ -5,6 +5,15 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Bambu Lab H2C Vortek 7-Nozzle Changer & H2D / H2D Pro / X2D Dual-Nozzle Telemetry & Card UI (`#41`)**:
+  - **MQTT `device.extruder` & `device.nozzle` Parsing**: Decodes packed 32-bit nozzle/bed temperatures (`temp & 0xFFFF` current °C, `(temp >> 16) & 0xFFFF` target °C), active extruder state (`(state >> 4) & 0xF` where `0` = Right Nozzle and `1` = Left Nozzle), and the **H2C Vortek 6-Slot Hotend Rack** (`device.nozzle.exist` bitmask `1 << 16..21`, `tar_id` mounted slot `16..21`, nozzle diameter `0.2`–`0.8mm`, flow type `Standard` / `High-Flow` / `TPU High-Flow`, material `Hardened Steel` / `Stainless Steel` / `Tungsten Carbide`, serial number `sn`, print hours `p_t`, and color `color_m`).
+  - **Dedicated `.vortek-deck` Card Section for `H2C`**: Renders **`🔧 Bambu Vortek 7-Nozzle Changer`** showing the **Fixed Left Hotend (`L • FIXED`)** alongside all **6 Swappable Right Induction Hotends (`R1`–`R6`)** with live **`MOUNTED`**, **`DOCKED`**, and **`EMPTY`** status badges, nozzle diameters, flow/material specs, and print hours.
+  - **Dual-Nozzle Telemetry Tile & Thermal Safety Lock**: Displays simultaneous Left (`L`) and Right (`R`) nozzle temperatures, active nozzle highlighting, and per-nozzle targets/diameters on `H2C`, `H2D`, `H2D Pro`, and `X2D` cards, and locks Smart Plug power-off until **both** Left and Right nozzles cool below `60°C`.
+  - **Strict HACS Security Compliance**: Every dynamic nozzle/rack string in `bambu-fleet-cards.js` is sanitized through `escapeHtml()`.
+
 ## [1.3.4] - 2026-10-24
 
 ### Security & HACS Compliance (Frenck Review Round 3 — Fixes #40)

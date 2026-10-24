@@ -505,6 +505,18 @@ class BambuPrinterRuntime:
         self.bed_type: str = str(config.get("bed_type") or "Bambu Textured PEI Plate").strip()
         self.nozzle_size: str = "0.4"
         self.nozzle_type: str = "hardened steel"
+        self.active_nozzle_index: int = 0
+        self.left_nozzle_temp: str = "—"
+        self.left_nozzle_target: str = "0"
+        self.left_nozzle_size: str = "0.4"
+        self.left_nozzle_type: str = "Hardened Steel"
+        self.right_nozzle_temp: str = "—"
+        self.right_nozzle_target: str = "0"
+        self.right_nozzle_size: str = "0.4"
+        self.right_nozzle_type: str = "Hardened Steel"
+        self.vortek_tar_id: int = 0
+        self.vortek_exist_mask: int = 0
+        self.vortek_hotends: dict[int, dict[str, Any]] = {}
         self.wifi_signal: str = "—"
         self.speed_profile: str = "standard"
         self.cooling_fan: str = "0"
@@ -532,6 +544,32 @@ class BambuPrinterRuntime:
         if rounded == int(rounded):
             return str(int(rounded))
         return str(rounded)
+
+    @staticmethod
+    def _decode_nozzle_type_code(type_code: str) -> tuple[str, str]:
+        """Decode Bambu nozzle type code (e.g. 'HS01', 'HH01', 'NH01', 'HU01') into (flow_label, material_label)."""
+        code = str(type_code or "").strip()
+        if not code:
+            return "Standard", "Hardened Steel"
+        up = code.upper()
+        if len(up) >= 4 and up[:2] in ("HS", "HH", "HE", "HU", "NH", "NS"):
+            flow_lbl = "TPU High-Flow" if up[1] == "U" else ("High-Flow" if up[1] in ("H", "E") else "Standard")
+            mat_map = {
+                "00": "Stainless Steel",
+                "01": "Hardened Steel",
+                "05": "Tungsten Carbide",
+            }
+            mat_lbl = mat_map.get(up[2:4], "Hardened Steel")
+            return flow_lbl, mat_lbl
+        low = code.lower().replace("_", " ")
+        flow_lbl = "TPU High-Flow" if "tpu" in low else ("High-Flow" if "high flow" in low else "Standard")
+        if "tungsten" in low:
+            mat_lbl = "Tungsten Carbide"
+        elif "stainless" in low:
+            mat_lbl = "Stainless Steel"
+        else:
+            mat_lbl = "Hardened Steel"
+        return flow_lbl, mat_lbl
 
     def _touch_online(self, now_ts: Optional[float] = None) -> None:
         """Record live online heartbeat and schedule periodic persistence of last_online_ts."""
@@ -1004,6 +1042,136 @@ class BambuPrinterRuntime:
             except Exception:
                 pass
 
+        # H2D / H2C packed bed temperature (device.bed.info.temp: low word = current, high word = target)
+        if isinstance(p.get("device"), dict) and isinstance(p["device"].get("bed"), dict):
+            try:
+                bed_info = p["device"]["bed"].get("info", {})
+                if isinstance(bed_info, dict) and bed_info.get("temp") is not None:
+                    bt_packed = int(bed_info["temp"])
+                    bt_cur = bt_packed & 0xFFFF
+                    bt_tar = (bt_packed >> 16) & 0xFFFF
+                    if 0 <= bt_cur < 160:
+                        self.bed_temp = str(bt_cur)
+                    if 0 <= bt_tar < 160:
+                        self.bed_target = str(bt_tar)
+            except Exception:
+                pass
+
+        # H2C / H2D Dual Extruder & Active Nozzle Telemetry (device.extruder)
+        if isinstance(p.get("device"), dict) and isinstance(p["device"].get("extruder"), dict):
+            try:
+                ext_block = p["device"]["extruder"]
+                if ext_block.get("state") is not None:
+                    self.active_nozzle_index = (int(ext_block["state"]) >> 4) & 0xF
+                ext_info = ext_block.get("info")
+                if isinstance(ext_info, list):
+                    for entry in ext_info:
+                        if not isinstance(entry, dict):
+                            continue
+                        eid = entry.get("id")
+                        if eid in (0, 1) and entry.get("temp") is not None:
+                            t_packed = int(entry["temp"])
+                            t_cur = t_packed & 0xFFFF
+                            t_tar = (t_packed >> 16) & 0xFFFF
+                            if 0 <= t_cur < 500:
+                                cur_str = str(t_cur)
+                                tar_str = str(t_tar if 0 <= t_tar < 500 else 0)
+                                if eid == 0:
+                                    self.right_nozzle_temp = cur_str
+                                    self.right_nozzle_target = tar_str
+                                else:
+                                    self.left_nozzle_temp = cur_str
+                                    self.left_nozzle_target = tar_str
+                    act_temp = self.left_nozzle_temp if self.active_nozzle_index == 1 else self.right_nozzle_temp
+                    act_tar = self.left_nozzle_target if self.active_nozzle_index == 1 else self.right_nozzle_target
+                    if "nozzle_temper" not in p and act_temp != "—":
+                        self.nozzle_temp = act_temp
+                    if "nozzle_target_temper" not in p:
+                        self.nozzle_target = act_tar
+            except Exception:
+                pass
+
+        # H2C Vortek 6-Slot Automated Hotend Changer Rack & Dual Nozzle Metadata (device.nozzle)
+        if isinstance(p.get("device"), dict) and isinstance(p["device"].get("nozzle"), dict):
+            try:
+                noz_block = p["device"]["nozzle"]
+                if noz_block.get("exist") is not None:
+                    self.vortek_exist_mask = int(noz_block["exist"])
+                if noz_block.get("tar_id") is not None:
+                    self.vortek_tar_id = int(noz_block["tar_id"])
+                noz_info = noz_block.get("info")
+                if isinstance(noz_info, list):
+                    for entry in noz_info:
+                        if not isinstance(entry, dict):
+                            continue
+                        nid = entry.get("id")
+                        diam_val = entry.get("diameter")
+                        tcode_val = str(entry.get("type") or "").strip()
+                        if nid in (0, 1):
+                            if diam_val is not None:
+                                try:
+                                    d_str = self._fmt_num(float(diam_val), 1)
+                                    if float(diam_val) > 0:
+                                        if nid == 0:
+                                            self.right_nozzle_size = d_str
+                                        else:
+                                            self.left_nozzle_size = d_str
+                                except Exception:
+                                    pass
+                            if tcode_val:
+                                fl_lbl, mt_lbl = self._decode_nozzle_type_code(tcode_val)
+                                combined_lbl = f"{fl_lbl} {mt_lbl}" if fl_lbl != "Standard" else mt_lbl
+                                if nid == 0:
+                                    self.right_nozzle_type = combined_lbl
+                                else:
+                                    self.left_nozzle_type = combined_lbl
+                        rack_slot_id: Optional[int] = None
+                        if isinstance(nid, int) and 16 <= nid <= 21:
+                            rack_slot_id = nid
+                        elif (
+                            isinstance(nid, int)
+                            and nid < 16
+                            and tcode_val
+                            and str(entry.get("sn") or "N/A") != "N/A"
+                            and 16 <= self.vortek_tar_id <= 21
+                        ):
+                            rack_slot_id = self.vortek_tar_id
+                        if rack_slot_id is not None:
+                            prev_h = self.vortek_hotends.get(rack_slot_id, {})
+                            h_diam = prev_h.get("size", "0.4")
+                            if diam_val is not None:
+                                try:
+                                    if float(diam_val) > 0:
+                                        h_diam = self._fmt_num(float(diam_val), 1)
+                                except Exception:
+                                    pass
+                            eff_tcode = tcode_val or str(prev_h.get("type_code") or "HS01")
+                            fl_lbl, mt_lbl = self._decode_nozzle_type_code(eff_tcode)
+                            raw_col = str(entry.get("color_m") or prev_h.get("raw_color") or "").strip()
+                            hex_col = f"#{raw_col[:6]}" if len(raw_col) >= 6 and raw_col[:6] != "000000" else str(prev_h.get("color") or "#38bdf8")
+                            pt_sec = int(entry.get("p_t", prev_h.get("print_time_sec", 0)) or 0)
+                            self.vortek_hotends[rack_slot_id] = {
+                                "id": rack_slot_id,
+                                "slot": rack_slot_id - 15,
+                                "size": h_diam,
+                                "type_code": eff_tcode,
+                                "flow": fl_lbl,
+                                "material": mt_lbl,
+                                "serial": str(entry.get("sn") or prev_h.get("serial") or ""),
+                                "print_time_sec": pt_sec,
+                                "hours": self._fmt_num(pt_sec / 3600.0, 1),
+                                "color": hex_col,
+                                "raw_color": raw_col,
+                            }
+                    act_sz = self.left_nozzle_size if self.active_nozzle_index == 1 else self.right_nozzle_size
+                    act_tp = self.left_nozzle_type if self.active_nozzle_index == 1 else self.right_nozzle_type
+                    if "nozzle_diameter" not in p and act_sz:
+                        self.nozzle_size = act_sz
+                    if "nozzle_type" not in p and act_tp:
+                        self.nozzle_type = act_tp.lower()
+            except Exception:
+                pass
+
         # Chamber temperature (either chamber_temper or ctc.info.temp)
         if "chamber_temper" in p:
             try:
@@ -1411,6 +1579,41 @@ class BambuPrinterRuntime:
         if is_online and c_stage == "offline":
             c_stage = "idle"
         self.get_job_filament_usage()
+        is_dual_nozzle = self.model in ("H2C", "H2D", "H2DPRO") or (
+            self.left_nozzle_temp != "—" and self.right_nozzle_temp != "—"
+        )
+        is_nozzle_changer = (
+            self.model == "H2C"
+            or self.vortek_exist_mask >= (1 << 16)
+            or len(self.vortek_hotends) > 0
+        )
+        eff_right_temp = self.right_nozzle_temp if self.right_nozzle_temp != "—" else self.nozzle_temp
+        eff_right_target = self.right_nozzle_target if self.right_nozzle_temp != "—" else self.nozzle_target
+        eff_left_temp = self.left_nozzle_temp if self.left_nozzle_temp != "—" else (self.nozzle_temp if is_dual_nozzle else "—")
+        eff_left_target = self.left_nozzle_target if self.left_nozzle_temp != "—" else "0"
+        mounted_vortek_slot = (self.vortek_tar_id - 15) if 16 <= self.vortek_tar_id <= 21 else (1 if is_nozzle_changer else None)
+
+        vortek_rack: list[dict[str, Any]] = []
+        if is_nozzle_changer:
+            for sid in range(16, 22):
+                slot_num = sid - 15
+                h_data = self.vortek_hotends.get(sid, {})
+                is_mounted = (sid == self.vortek_tar_id) or (self.vortek_tar_id == 0 and slot_num == 1 and self.vortek_exist_mask == 0)
+                is_occupied = is_mounted or bool(self.vortek_exist_mask & (1 << sid)) or bool(h_data) or (self.vortek_exist_mask == 0)
+                status_str = "mounted" if is_mounted else ("docked" if is_occupied else "empty")
+                vortek_rack.append({
+                    "slot": slot_num,
+                    "slotCode": f"R{slot_num}",
+                    "status": status_str,
+                    "mounted": is_mounted,
+                    "occupied": is_occupied,
+                    "size": str(h_data.get("size") or (self.right_nozzle_size if is_mounted else "0.4")),
+                    "flow": str(h_data.get("flow") or ("High-Flow" if slot_num in (1, 2) else "Standard")),
+                    "material": str(h_data.get("material") or "Hardened Steel"),
+                    "hours": str(h_data.get("hours") or "0.0"),
+                    "color": str(h_data.get("color") or "#38bdf8"),
+                })
+
         return {
             "serial": self.serial,
             "prefix": self.prefix,
@@ -1428,6 +1631,25 @@ class BambuPrinterRuntime:
             "progress": self.progress,
             "nozzleTemp": self.nozzle_temp,
             "nozzleTarget": self.nozzle_target,
+            "isDualNozzle": is_dual_nozzle,
+            "isNozzleChanger": is_nozzle_changer,
+            "activeNozzleIndex": self.active_nozzle_index,
+            "leftNozzle": {
+                "temp": eff_left_temp,
+                "target": eff_left_target,
+                "size": self.left_nozzle_size or self.nozzle_size,
+                "type": self.left_nozzle_type or "Hardened Steel",
+                "active": self.active_nozzle_index == 1,
+            },
+            "rightNozzle": {
+                "temp": eff_right_temp,
+                "target": eff_right_target,
+                "size": self.right_nozzle_size or self.nozzle_size,
+                "type": self.right_nozzle_type or "Hardened Steel",
+                "active": self.active_nozzle_index == 0,
+                "mountedSlot": mounted_vortek_slot,
+            },
+            "vortekRack": vortek_rack,
             "bedTemp": self.bed_temp,
             "bedTarget": self.bed_target,
             "chamberTemp": self.chamber_temp,

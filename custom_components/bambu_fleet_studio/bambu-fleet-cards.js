@@ -1845,6 +1845,59 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     const rawTask = sp.taskName && sp.taskName !== "No active print job" ? sp.taskName : t("job_no_active", activeLang);
     const nozzleTemp = String(sp.nozzleTemp || "—");
 
+    // Dual-Nozzle (H2C / H2D / H2D Pro / X2D) & H2C Vortek 7-Nozzle Changer resolution
+    const isDualNozzle = Boolean(sp.isDualNozzle || displayModelNorm === "H2C" || displayModelNorm === "H2D" || displayModelNorm === "H2DPRO" || displayModelNorm === "X2D");
+    const isNozzleChanger = Boolean(sp.isNozzleChanger || displayModelNorm === "H2C");
+    const activeNozzleIndex = typeof sp.activeNozzleIndex === "number" ? sp.activeNozzleIndex : 0;
+    const rawLeft = sp.leftNozzle || {};
+    const rawRight = sp.rightNozzle || {};
+    const leftNozzle = {
+      id: 1,
+      label: "L",
+      name: String(rawLeft.name || "Left Fixed Hotend"),
+      temp: String(rawLeft.temp || "—"),
+      target: String(rawLeft.target || "0"),
+      size: String(rawLeft.size || "0.4"),
+      type: String(rawLeft.type || "Hardened Steel"),
+      flowType: String(rawLeft.flowType || "Standard"),
+      active: activeNozzleIndex === 1
+    };
+    const rightNozzle = {
+      id: 0,
+      label: "R",
+      name: String(rawRight.name || (isNozzleChanger ? "Right Vortek Induction" : "Right Hotend")),
+      temp: String(rawRight.temp || nozzleTemp || "—"),
+      target: String(rawRight.target || sp.nozzleTarget || "0"),
+      size: String(rawRight.size || sp.nozzleSize || "0.4"),
+      type: String(rawRight.type || sp.nozzleType || "Hardened Steel"),
+      flowType: String(rawRight.flowType || "Standard"),
+      active: activeNozzleIndex === 0,
+      mountedSlot: typeof rawRight.mountedSlot === "number" ? rawRight.mountedSlot : (isNozzleChanger ? 1 : null)
+    };
+    let vortekRack = [];
+    if (isNozzleChanger) {
+      const rawRack = Array.isArray(sp.vortekRack) ? sp.vortekRack : [];
+      vortekRack = [1, 2, 3, 4, 5, 6].map(slotNum => {
+        const found = rawRack.find(r => r && r.slot === slotNum) || {};
+        const occupied = typeof found.occupied === "boolean" ? found.occupied : true;
+        const mounted = Boolean(found.mounted || rightNozzle.mountedSlot === slotNum);
+        return {
+          slot: slotNum,
+          slotCode: String(found.slotCode || ("R" + slotNum)),
+          id: found.id || (15 + slotNum),
+          occupied,
+          mounted,
+          diameter: String(found.diameter || "0.4"),
+          typeCode: String(found.typeCode || "HH01"),
+          flowType: String(found.flowType || (slotNum <= 2 ? "High-Flow" : "Standard")),
+          material: String(found.material || "Hardened Steel"),
+          sn: String(found.sn || ""),
+          printHours: typeof found.printHours === "number" ? found.printHours : 0.0,
+          color: String(found.color || "#38bdf8")
+        };
+      });
+    }
+
     // Smart Plug resolution
     const plugCfg = savedPlugs[prefix] || savedPlugs[serial] || sp.smartPlugCfg || null;
     let smartPlug = null;
@@ -1852,12 +1905,19 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const swObj = plugCfg.switchEntity ? hass.states[plugCfg.switchEntity] : null;
       const pwObj = plugCfg.powerEntity ? hass.states[plugCfg.powerEntity] : null;
       const nozzleNum = parseFloat(nozzleTemp);
+      const leftNum = parseFloat(leftNozzle.temp);
+      const rightNum = parseFloat(rightNozzle.temp);
+      const maxNozzleNum = Math.max(
+        isNaN(nozzleNum) ? 0 : nozzleNum,
+        isNaN(leftNum) ? 0 : leftNum,
+        isNaN(rightNum) ? 0 : rightNum
+      );
       const isPrintingNow = printStatus === "running" || printStatus === "prepare" || printStatus === "pause";
-      const isHot = !isNaN(nozzleNum) && nozzleNum > 60;
+      const isHot = maxNozzleNum > 60;
       const safetyLocked = isPrintingNow || isHot;
       const lockReason = isPrintingNow
         ? "Active print job in progress (" + printStatus.toUpperCase() + ")"
-        : (isHot ? ("Nozzle above 60°C (" + nozzleTemp + "°C — wait for heatbreak cooldown)") : "");
+        : (isHot ? ("Nozzle above 60°C (" + maxNozzleNum + "°C — wait for heatbreak cooldown)") : "");
       smartPlug = {
         switchEntity: plugCfg.switchEntity || "",
         powerEntity: plugCfg.powerEntity || "",
@@ -1994,6 +2054,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       bedType: String(rawBedType),
       nozzleSize: String(sp.nozzleSize || "0.4"),
       nozzleType: String(sp.nozzleType || "hardened steel"),
+      isDualNozzle,
+      isNozzleChanger,
+      activeNozzleIndex,
+      leftNozzle,
+      rightNozzle,
+      vortekRack,
       ipAddress: String(sp.ipAddress || "—"),
       wifiSignal: String(sp.wifiSignal || "—"),
       speedProfile: String(sp.speedProfile || "standard"),
@@ -2148,6 +2214,58 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const bedType = localBedPlate || (haBedType !== "—" ? haBedType : getBuildPlateOptionsForModel(displayModelNorm).defaultPlate);
       const nozzleSize = stVal("sensor", "nozzle_size", "0.4");
       const nozzleType = stVal("sensor", "nozzle_type", "").replace(/_/g, " ");
+      const isDualNozzle = displayModelNorm === "H2C" || displayModelNorm === "H2D" || displayModelNorm === "H2DPRO" || displayModelNorm === "X2D";
+      const isNozzleChanger = displayModelNorm === "H2C";
+      const leftTempHa = stTempC("sensor", "left_nozzle_temperature", "—", 0);
+      const leftTargetHa = stTempC("sensor", "left_nozzle_target_temperature", "0", 0);
+      const rightTempHa = stTempC("sensor", "right_nozzle_temperature", nozzleTemp, 0);
+      const rightTargetHa = stTempC("sensor", "right_nozzle_target_temperature", nozzleTarget, 0);
+      const activeNozzleIndex = 0;
+      const leftNozzle = {
+        id: 1,
+        label: "L",
+        name: "Left Fixed Hotend",
+        temp: leftTempHa,
+        target: leftTargetHa,
+        size: stVal("sensor", "left_nozzle_size", nozzleSize),
+        type: stVal("sensor", "left_nozzle_type", nozzleType || "Hardened Steel").replace(/_/g, " "),
+        flowType: "Standard",
+        active: false
+      };
+      const rightNozzle = {
+        id: 0,
+        label: "R",
+        name: isNozzleChanger ? "Right Vortek Induction" : "Right Hotend",
+        temp: rightTempHa,
+        target: rightTargetHa,
+        size: stVal("sensor", "right_nozzle_size", nozzleSize),
+        type: stVal("sensor", "right_nozzle_type", nozzleType || "Hardened Steel").replace(/_/g, " "),
+        flowType: "Standard",
+        active: true,
+        mountedSlot: isNozzleChanger ? 1 : null
+      };
+      let vortekRack = [];
+      if (isNozzleChanger) {
+        vortekRack = [1, 2, 3, 4, 5, 6].map(slotNum => {
+          const rackSt = st("sensor", "hotend_rack_hotend_" + slotNum) || st("sensor", "vortek_hotend_" + slotNum);
+          const occupied = rackSt ? (rackSt.state !== "Empty" && rackSt.state !== "empty" && rackSt.state !== "unavailable") : true;
+          const mounted = rackSt?.attributes?.mounted === true || slotNum === 1;
+          return {
+            slot: slotNum,
+            slotCode: "R" + slotNum,
+            id: 15 + slotNum,
+            occupied,
+            mounted,
+            diameter: String(rackSt?.attributes?.diameter || "0.4"),
+            typeCode: String(rackSt?.attributes?.type_code || "HH01"),
+            flowType: String(rackSt?.attributes?.flow_type || (slotNum <= 2 ? "High-Flow" : "Standard")),
+            material: String(rackSt?.attributes?.material || "Hardened Steel"),
+            sn: String(rackSt?.attributes?.sn || ""),
+            printHours: typeof rackSt?.attributes?.print_hours === "number" ? rackSt.attributes.print_hours : 0.0,
+            color: String(rackSt?.attributes?.color || "#38bdf8")
+          };
+        });
+      }
       const ipAddress = stVal("sensor", "ip_address", "—");
       const wifiSignal = stVal("sensor", "wi_fi_signal", "—");
       const speedProfile = stVal("sensor", "speed_profile", "standard");
@@ -2218,12 +2336,19 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         const swObj = plugCfg.switchEntity ? hass.states[plugCfg.switchEntity] : null;
         const pwObj = plugCfg.powerEntity ? hass.states[plugCfg.powerEntity] : null;
         const nozzleNum = parseFloat(nozzleTemp);
+        const leftNum = parseFloat(leftNozzle.temp);
+        const rightNum = parseFloat(rightNozzle.temp);
+        const maxNozzleNum = Math.max(
+          isNaN(nozzleNum) ? 0 : nozzleNum,
+          isNaN(leftNum) ? 0 : leftNum,
+          isNaN(rightNum) ? 0 : rightNum
+        );
         const isPrintingNow = printStatus === "running" || printStatus === "prepare" || printStatus === "pause";
-        const isHot = !isNaN(nozzleNum) && nozzleNum > 60;
+        const isHot = maxNozzleNum > 60;
         const safetyLocked = isPrintingNow || isHot;
         const lockReason = isPrintingNow
           ? "Active print job in progress (" + printStatus.toUpperCase() + ")"
-          : (isHot ? ("Nozzle above 60°C (" + nozzleTemp + "°C — wait for heatbreak cooldown)") : "");
+          : (isHot ? ("Nozzle above 60°C (" + maxNozzleNum + "°C — wait for heatbreak cooldown)") : "");
 
         smartPlug = {
           switchEntity: plugCfg.switchEntity || "",
@@ -2380,6 +2505,12 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         bedType,
         nozzleSize,
         nozzleType,
+        isDualNozzle,
+        isNozzleChanger,
+        activeNozzleIndex,
+        leftNozzle,
+        rightNozzle,
+        vortekRack,
         ipAddress,
         wifiSignal,
         speedProfile,
@@ -5705,6 +5836,67 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       ? (`${t("tel_aux", activeLang)} ${p.auxFan !== '—' ? p.auxFan + '%' : '0%'} • ${t("tel_chamb", activeLang)} ${p.chamberFan !== '—' ? p.chamberFan + '%' : '0%'} • ${p.speedProfile}`)
       : (`${t("tel_mode", activeLang)}: ${p.speedProfile}`);
 
+    let vortekHtml = "";
+    if (p.isNozzleChanger && Array.isArray(p.vortekRack) && p.vortekRack.length > 0) {
+      const leftN = p.leftNozzle || { temp: "—", target: "0", size: "0.4", type: "Hardened Steel", flowType: "Standard", active: false };
+      const rightN = p.rightNozzle || { temp: "—", target: "0", size: "0.4", type: "Hardened Steel", flowType: "Standard", active: true, mountedSlot: 1 };
+      const occupiedCount = p.vortekRack.filter(r => r.occupied).length + 1;
+      vortekHtml = `
+        <div class="vortek-deck">
+          <div class="ams-hdr">
+            <div class="ams-title">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  <span class="ams-dot" style="background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></span>
+                  <strong>🔧 Bambu Vortek 7-Nozzle Changer</strong>
+                </div>
+                <div class="ams-sub">1 Fixed Left Hotend (L) + 6 Right Induction Hotends (R1–R6 • ~8s Swap)</div>
+              </div>
+            </div>
+            <div class="ams-Readouts">
+              <span class="ams-chip" style="border:1px solid rgba(56,189,248,0.35);color:#e0f2fe;">🔥 L: ${escapeHtml(leftN.temp !== '—' ? leftN.temp + '°C' : '—')} • R: ${escapeHtml(rightN.temp !== '—' ? rightN.temp + '°C' : '—')}</span>
+              <span class="ams-chip" style="background:rgba(16,185,129,0.16);color:#6ee7b7;font-weight:800;">⚡ ${escapeHtml(occupiedCount)}/7 Hotends Ready</span>
+            </div>
+          </div>
+          <div class="vortek-slots-grid">
+            <div class="vortek-card ${leftN.active ? 'active-nozzle' : ''}" title="Left Fixed Toolhead Hotend • ${escapeHtml(leftN.size)}mm ${escapeHtml(leftN.type)}">
+              <div class="spool-top">
+                <span class="slot-num" style="color:#f59e0b;">L • FIXED</span>
+                <span class="spool-type">${escapeHtml(leftN.size)}mm</span>
+              </div>
+              <div class="spool-swatch-row">
+                <span class="spool-ring" style="background:#f59e0b;"></span>
+                <div class="spool-name">${escapeHtml(leftN.temp !== '—' ? leftN.temp + '°C' : 'Idle')}</div>
+              </div>
+              <div style="font-size:9px;color:#94a3b8;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(leftN.flowType || 'Standard')} • ${escapeHtml(leftN.type)}</div>
+            </div>
+            ${p.vortekRack.map(rk => {
+              const statusBadge = rk.mounted
+                ? "MOUNTED"
+                : (rk.occupied ? "DOCKED" : "EMPTY");
+              const statusColor = rk.mounted ? "#10b981" : (rk.occupied ? "#38bdf8" : "#64748b");
+              const tempOrHrs = rk.mounted && rightN.temp !== "—"
+                ? (rightN.temp + "°C")
+                : (rk.occupied ? (rk.printHours > 0 ? rk.printHours + "h" : "Ready") : "Empty");
+              return `
+                <div class="vortek-card ${rk.mounted ? 'active-nozzle' : ''} ${!rk.occupied ? 'empty-nozzle' : ''}" title="Vortek Rack Slot ${escapeHtml(rk.slotCode)} • ${escapeHtml(statusBadge)} • ${escapeHtml(rk.diameter)}mm ${escapeHtml(rk.flowType)} ${escapeHtml(rk.material)}${rk.sn ? ' • SN: ' + escapeHtml(rk.sn) : ''}">
+                  <div class="spool-top">
+                    <span class="slot-num" style="color:${statusColor};">${escapeHtml(rk.slotCode)} • ${escapeHtml(statusBadge)}</span>
+                    <span class="spool-type">${escapeHtml(rk.occupied ? (rk.diameter + 'mm') : '—')}</span>
+                  </div>
+                  <div class="spool-swatch-row">
+                    <span class="spool-ring" style="background:${escapeHtml(rk.occupied ? (rk.color || '#38bdf8') : '#334155')};"></span>
+                    <div class="spool-name">${escapeHtml(tempOrHrs)}</div>
+                  </div>
+                  <div style="font-size:9px;color:#94a3b8;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(rk.occupied ? (rk.flowType + ' • ' + rk.material) : 'Open Rack Slot')}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div class="p-card ${p.online ? 'is-online' : 'is-offline'} ${isHighlighted ? 'is-highlighted' : ''}" id="printer-card-${escapeHtml(p.prefix)}" data-prefix="${escapeHtml(p.prefix)}">
         <div class="p-hdr">
@@ -5769,9 +5961,19 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
 
         <div class="p-telemetry-grid">
           <div class="t-tile">
-            <div class="t-lbl">${t("tel_nozzle", activeLang)}</div>
-            <div class="t-val">${escapeHtml(p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—')}</div>
-            <div class="t-sub">${t("tel_target", activeLang)} ${escapeHtml(p.nozzleTarget)}°C • ${escapeHtml(p.nozzleSize)}mm</div>
+            ${p.isDualNozzle && p.leftNozzle && p.rightNozzle ? `
+              <div class="t-lbl">🔥 ${p.isNozzleChanger ? 'Dual Nozzle • Vortek 7-Hotend' : 'Dual Nozzle (L + R)'}</div>
+              <div class="t-val" style="font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="color:${p.leftNozzle.active ? '#10b981' : '#f8fafc'};" title="Left Nozzle (${escapeHtml(p.leftNozzle.size)}mm ${escapeHtml(p.leftNozzle.type)})">L: ${escapeHtml(p.leftNozzle.temp !== '—' ? p.leftNozzle.temp + '°C' : '—')}</span>
+                <span style="color:#64748b;">•</span>
+                <span style="color:${p.rightNozzle.active ? '#38bdf8' : '#f8fafc'};" title="Right Nozzle (${escapeHtml(p.rightNozzle.size)}mm ${escapeHtml(p.rightNozzle.type)})">R${p.rightNozzle.mountedSlot ? escapeHtml(p.rightNozzle.mountedSlot) : ''}: ${escapeHtml(p.rightNozzle.temp !== '—' ? p.rightNozzle.temp + '°C' : '—')}</span>
+              </div>
+              <div class="t-sub">L→${escapeHtml(p.leftNozzle.target)}°C (${escapeHtml(p.leftNozzle.size)}mm) • R→${escapeHtml(p.rightNozzle.target)}°C (${escapeHtml(p.rightNozzle.size)}mm)</div>
+            ` : `
+              <div class="t-lbl">${t("tel_nozzle", activeLang)}</div>
+              <div class="t-val">${escapeHtml(p.nozzleTemp !== '—' ? p.nozzleTemp + '°C' : '—')}</div>
+              <div class="t-sub">${t("tel_target", activeLang)} ${escapeHtml(p.nozzleTarget)}°C • ${escapeHtml(p.nozzleSize)}mm</div>
+            `}
           </div>
           <div class="t-tile" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" style="cursor:pointer;" title="${escapeHtml(plateMeta.fullLabel)} — Click to switch Build Plate (Bambu PEI / Smooth / SuperTack / BIQU CryoGrip Glacier &amp; Frostbite)">
             <div class="t-lbl">${hasChamber ? t("tel_bed_chamber", activeLang) : t("tel_build_plate", activeLang)}</div>
@@ -5790,6 +5992,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           </div>
         </div>
 
+        ${vortekHtml}
         ${filamentHtml}
       </div>
     `;
@@ -5950,7 +6153,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     { code: "X1C", label: "X1 Carbon", sub: "Flagship CoreXY", subZh: "旗舰级 CoreXY", subZhTw: "旗艦級 CoreXY" },
     { code: "X1E", label: "X1E", sub: "Enterprise", subZh: "企业级", subZhTw: "企業級" },
     { code: "X2D", label: "X2D", sub: "Dual Extruder", subZh: "双挤出机", subZhTw: "雙擠出機" },
-    { code: "H2C", label: "H2C", sub: "Pro Chamber", subZh: "专业恒温腔", subZhTw: "專業恆溫腔" },
+    { code: "H2C", label: "H2C", sub: "7-Nozzle Vortek", subZh: "Vortek 7 喷头换头", subZhTw: "Vortek 7 噴頭換頭" },
     { code: "H2D", label: "H2D", sub: "Dual Nozzle Pro", subZh: "双喷头专业级", subZhTw: "雙噴頭專業級" },
     { code: "H2S", label: "H2S", sub: "High-Speed H-Series", subZh: "高速 H 系列", subZhTw: "高速 H 系列" },
     { code: "R1", label: "R1 Laser", sub: "55W CO2 Laser", subZh: "55W CO2 激光", subZhTw: "55W CO2 雷射" },
@@ -6910,6 +7113,42 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       max-width: 100%;
       box-sizing: border-box;
       overflow: hidden;
+    }
+    .vortek-deck {
+      background: rgba(9, 14, 24, 0.72);
+      border: 1px solid rgba(56, 189, 248, 0.32);
+      border-radius: 14px;
+      padding: 11px;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .vortek-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+    .vortek-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      padding: 6px 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .vortek-card.active-nozzle {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+    }
+    .vortek-card.empty-nozzle {
+      opacity: 0.55;
+      border-style: dashed;
     }
     .ams-hdr {
       display: flex;
@@ -8055,7 +8294,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const sig = activeLang + "|" + verSig.currentVersion + "|" + verSig.latestVersion + "|" + (verSig.updateAvailable ? "1" : "0") + "|" + JSON.stringify(printers.map(p => [
         p.name, p.model, p.modelNorm, p.online, p.camAvailable, p.printStatus, p.progress, p.nozzleTemp, p.bedTemp,
         p.chamberTemp, p.auxFan, p.chamberFan, p.doorOpen, p.remainingMins,
-        p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug,
+        p.currentLayer, p.lightOn, p.hasAms, p.alerts, p.smartPlug, p.leftNozzle, p.rightNozzle, p.vortekRack,
         (p.amsUnits || []).map(u => u.modelNorm + ":" + u.humidityIndex + ":" + u.humidityPct + ":" + u.temperature + ":" + u.trays.map(t => t.name + t.color + t.remain).join(","))
       ]));
       if (sig !== this._lastSig) {
