@@ -1,6 +1,6 @@
 # 🖨️ Bambu Lab Fleet Studio — Home Assistant Dashboard & Custom Cards
 
-[![Release v1.3.1](https://img.shields.io/badge/Release-v1.3.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![Release v1.3.2](https://img.shields.io/badge/Release-v1.3.2%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom%20Plugin-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/integration)
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
@@ -253,7 +253,7 @@ Vote on upcoming features in **[📊 Roadmap Poll #30](https://github.com/everyd
 - [x] ~~**🔊 Smart Speaker Voice TTS Announcer (with 🌙 Quiet Hours) & 🔌 Safe Cooldown Smart Plug Auto-Off ($\le 50^\circ\text{C}$)** (`#33`)~~ ✅
 - [x] ~~**🕒 Offline Printer "Last Online" Timestamp & Relative Time Badge** (`#34`)~~ ✅
 - [x] ~~**🎯 Deep-Linked Push Notifications with Filament Grams Used (`g`), Live Camera Action & 1-Tap Scroll/Highlight to Target Printer Card** (`#35`, `#36`)~~ ✅
-- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.3.1 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
+- [x] ~~**⬆️ Live Fleet Studio Integration Version Badge (`v1.3.2 ✓`) & GitHub Release Update Indicator (`⬆ vX.Y.Z`)** (`#37`)~~ ✅
 
 ---
 
