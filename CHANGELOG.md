@@ -5,6 +5,13 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **🛠️ Preventative Maintenance Tracker & 1-Click Service Reset Log (`#42`)**:
+  - **Model-Aware Maintenance Intervals**: Tracks elapsed print hours for **🧹 X/Y Carbon Rods / Linear Rails** (`250h`), **🔩 Z-Axis Lead Screws** (`500h`), **⚙️ Extruder Gears & Nozzle** (`500h`, or **Laser Lens & Mirrors** on `R1`), and **🌬️ Chamber Carbon Filter** (`400h` on enclosed models).
+  - **Odometer Status Badge & Service Reset Modal**: Displays a compact **`🛠️ OK`** or **`🛠️ X Due`** status badge inside each printer's Odometer tile, plus a full **🛠️ Preventative Maintenance & Service Log** section inside **✏️ Edit Device** with progress bars, last-serviced dates, individual **✓ Reset** buttons, and a **✓ Reset All Intervals** button persisted in Home Assistant storage.
+
 ## [1.4.0] - 2026-10-24
 
 ### Added

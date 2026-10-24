@@ -1698,6 +1698,129 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     };
   }
 
+  const STORAGE_MAINTENANCE_KEY = "bambu_fleet_studio_maintenance_v1";
+
+  function loadMaintenanceOverrides() {
+    try {
+      const raw = localStorage.getItem(STORAGE_MAINTENANCE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveMaintenanceOverride(serialOrPrefix, itemKey, hours, meters) {
+    if (!serialOrPrefix) return;
+    try {
+      const cur = loadMaintenanceOverrides();
+      const key = String(serialOrPrefix);
+      const entry = (cur[key] && typeof cur[key] === "object") ? { ...cur[key] } : {};
+      const nowSec = Math.round(Date.now() / 1000);
+      const hVal = Math.round((parseFloat(hours) || 0) * 10) / 10;
+      const mVal = Math.round((parseFloat(meters) || 0) * 100) / 100;
+      const validKeys = ["rods", "leadscrews", "extruder", "filter"];
+      if (itemKey === "all") {
+        validKeys.forEach(k => {
+          entry[k] = { hours: hVal, meters: mVal, ts: nowSec };
+        });
+      } else if (validKeys.includes(itemKey)) {
+        entry[itemKey] = { hours: hVal, meters: mVal, ts: nowSec };
+      }
+      cur[key] = entry;
+      localStorage.setItem(STORAGE_MAINTENANCE_KEY, JSON.stringify(cur));
+    } catch (e) {}
+  }
+
+  function computePrinterMaintenance(modelNorm, totalUsageHours, extrudedMeters, backendLog, localLog) {
+    const m = String(modelNorm || "X1C").toUpperCase();
+    const curHours = Math.max(0, parseFloat(totalUsageHours) || 0);
+    const curMeters = Math.max(0, parseFloat(extrudedMeters) || 0);
+    const bLog = (backendLog && typeof backendLog === "object") ? backendLog : {};
+    const lLog = (localLog && typeof localLog === "object") ? localLog : {};
+
+    const isBedslinger = m === "A1" || m === "A1MINI" || m === "A2L";
+    const isLaser = m === "R1";
+    const hasFilter = ["P1S", "P2S", "X1C", "X1E", "X2D", "H2C", "H2D", "H2DPRO", "H2S", "R1"].includes(m);
+
+    const defs = [
+      {
+        key: "rods",
+        icon: "🧹",
+        label: isLaser ? "X/Y Gantry Rails" : (isBedslinger ? "X/Y Linear Rails" : "X/Y Carbon Rods / Rails"),
+        hint: isLaser ? "Wipe rails & lubricate" : (isBedslinger ? "Clean & lubricate linear rails" : "Clean carbon rods with IPA"),
+        intervalHours: 250
+      },
+      {
+        key: "leadscrews",
+        icon: "🔩",
+        label: "Z-Axis Lead Screws",
+        hint: "Wipe old grease & regrease Z screws",
+        intervalHours: 500
+      },
+      {
+        key: "extruder",
+        icon: "⚙️",
+        label: isLaser ? "Laser Lens & Mirrors" : "Extruder Gears & Nozzle",
+        hint: isLaser ? "Clean optics & air-assist nozzle" : "Brush filament dust & inspect hotend",
+        intervalHours: 500
+      }
+    ];
+
+    if (hasFilter) {
+      defs.push({
+        key: "filter",
+        icon: "🌬️",
+        label: "Chamber Carbon Filter",
+        hint: "Replace activated carbon VOC filter",
+        intervalHours: 400
+      });
+    }
+
+    const items = defs.map(d => {
+      const bEntry = bLog[d.key] && typeof bLog[d.key] === "object" ? bLog[d.key] : null;
+      const lEntry = lLog[d.key] && typeof lLog[d.key] === "object" ? lLog[d.key] : null;
+      let chosen = bEntry;
+      if (lEntry && (!bEntry || (parseFloat(lEntry.ts) || 0) >= (parseFloat(bEntry.ts) || 0))) {
+        chosen = lEntry;
+      }
+      const baseHours = chosen && typeof chosen.hours === "number" ? chosen.hours : (parseFloat(chosen?.hours) || 0);
+      const lastTs = chosen && typeof chosen.ts === "number" ? chosen.ts : (parseFloat(chosen?.ts) || 0);
+      const sinceHours = Math.max(0, Math.round((curHours - baseHours) * 10) / 10);
+      const pct = Math.min(100, Math.max(0, Math.round((sinceHours / d.intervalHours) * 100)));
+      const remainingHours = Math.max(0, Math.round((d.intervalHours - sinceHours) * 10) / 10);
+      const status = sinceHours >= d.intervalHours ? "overdue" : (pct >= 85 ? "soon" : "ok");
+      let lastResetLabel = "Factory / Initial";
+      if (lastTs > 0) {
+        try {
+          lastResetLabel = new Date(lastTs * 1000).toLocaleDateString([], { month: "short", day: "numeric" }) + ` (@ ${baseHours.toFixed(0)}h)`;
+        } catch (e) {
+          lastResetLabel = `@ ${baseHours.toFixed(0)}h`;
+        }
+      }
+      return {
+        ...d,
+        baseHours,
+        sinceHours,
+        remainingHours,
+        pct,
+        status,
+        lastTs,
+        lastResetLabel
+      };
+    });
+
+    const dueItems = items.filter(i => i.status === "overdue" || i.status === "soon");
+    const overdueCount = items.filter(i => i.status === "overdue").length;
+    return {
+      items,
+      dueCount: dueItems.length,
+      overdueCount,
+      anyDue: dueItems.length > 0,
+      curHours,
+      curMeters
+    };
+  }
+
   const STORAGE_LAST_ONLINE_KEY = "bambu_fleet_studio_last_online_v1";
   let _lastOnlineCache = null;
   const _lastOnlineWriteTs = {};
@@ -2011,6 +2134,11 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     const extrudedMeters = Math.max(backendMeters, localMeters);
     const odometer = formatOdometer(extrudedMeters, totalUsage);
 
+    const maintOverrides = loadMaintenanceOverrides();
+    const localMaint = maintOverrides[serial] || maintOverrides[prefix] || {};
+    const backendMaint = (sp.maintenanceLog && typeof sp.maintenanceLog === "object") ? sp.maintenanceLog : {};
+    const maintenance = computePrinterMaintenance(displayModelNorm, totalUsage, odometer.meters, backendMaint, localMaint);
+
     const bedPlateOverrides = loadBedPlateOverrides();
     const localBedPlate = bedPlateOverrides[serial] || bedPlateOverrides[prefix] || "";
     const defaultPlateForModel = getBuildPlateOptionsForModel(displayModelNorm).defaultPlate;
@@ -2048,6 +2176,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       totalUsage,
       extrudedMeters: odometer.meters,
       odometer,
+      maintenanceLog: backendMaint,
+      maintenance,
       taskName: rawTask,
       printWeight: String(sp.printWeight || "—"),
       printLength: String(sp.printLength || "—"),
@@ -2205,6 +2335,9 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const rawHaUsage = stVal("sensor", "total_usage", "—");
       const totalUsage = rawHaUsage !== "—" ? rawHaUsage : (odoOv && odoOv.usageHours > 0 ? String(odoOv.usageHours) : "0.0");
       const odometer = formatOdometer(odoOv ? odoOv.extrudedMeters : 0, totalUsage);
+      const maintOverrides = loadMaintenanceOverrides();
+      const localMaint = maintOverrides[serial] || maintOverrides[prefix] || {};
+      const maintenance = computePrinterMaintenance(displayModelNorm, totalUsage, odometer.meters, {}, localMaint);
       const taskName = stVal("sensor", "task_name", t("job_no_active", activeLang));
       const printWeight = stVal("sensor", "print_weight", "—");
       const printLength = stVal("sensor", "print_length", "—");
@@ -2499,6 +2632,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         totalUsage,
         extrudedMeters: odometer.meters,
         odometer,
+        maintenanceLog: {},
+        maintenance,
         taskName,
         printWeight,
         printLength,
@@ -5280,6 +5415,43 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const initialBedPlate = payload.bedType && payload.bedType !== "—"
         ? payload.bedType
         : getBuildPlateOptionsForModel(curModelNorm).defaultPlate;
+      let activeBackendMaintLog = (payload.maintenanceLog && typeof payload.maintenanceLog === "object")
+        ? { ...payload.maintenanceLog }
+        : {};
+
+      const renderMaintenanceItemsHtml = (modelCode, curHrs, curMtrs) => {
+        const maintOverrides = loadMaintenanceOverrides();
+        const localMaint = maintOverrides[payload.serial] || maintOverrides[payload.prefix] || {};
+        const maint = computePrinterMaintenance(modelCode, curHrs, curMtrs, activeBackendMaintLog, localMaint);
+        return maint.items.map(item => {
+          const barColor = item.status === "overdue" ? "#ef4444" : (item.status === "soon" ? "#f59e0b" : "#10b981");
+          const badgeBg = item.status === "overdue"
+            ? "rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.45);color:#fca5a5;"
+            : (item.status === "soon"
+              ? "rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.45);color:#fde68a;"
+              : "rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);color:#6ee7b7;");
+          const statusTxt = item.status === "overdue"
+            ? "⚠️ Service Due"
+            : (item.status === "soon" ? "⏳ Due Soon" : "✓ Healthy");
+          return `
+            <div style="background:rgba(15,23,42,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <div style="font-size:12px;font-weight:800;color:#f8fafc;">${escapeHtml(item.icon)} ${escapeHtml(item.label)}</div>
+                <button type="button" data-maint-reset="${escapeHtml(item.key)}" title="Log service completed &amp; reset interval counter to 0h" style="background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.38);color:#38bdf8;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:800;cursor:pointer;">✓ Reset</button>
+              </div>
+              <div style="font-size:10.5px;color:#94a3b8;margin-top:2px;">${escapeHtml(item.hint)}</div>
+              <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;margin:6px 0 5px;">
+                <div style="height:100%;width:${escapeHtml(item.pct)}%;background:${barColor};border-radius:999px;transition:width 0.25s ease;"></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:#cbd5e1;">
+                <span><b>${escapeHtml(item.sinceHours)}h</b> / ${escapeHtml(item.intervalHours)}h (${escapeHtml(item.pct)}%)</span>
+                <span style="padding:1px 6px;border-radius:999px;font-size:9.5px;font-weight:800;${badgeBg}">${escapeHtml(statusTxt)}</span>
+              </div>
+              <div style="font-size:9.5px;color:#64748b;margin-top:3px;">Last reset: ${escapeHtml(item.lastResetLabel)}</div>
+            </div>
+          `;
+        }).join("");
+      };
 
       const renderBedPlateOptionsHtml = (modelCode, currentPlate) => {
         const cat = getBuildPlateOptionsForModel(modelCode);
@@ -5393,6 +5565,14 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             </div>
             <input id="cacheInp" type="hidden" value="100" />
 
+            <div class="sec-divider" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>🛠️ Preventative Maintenance &amp; Service Log</span>
+              <button type="button" id="maintResetAllBtn" title="Log full preventative maintenance &amp; reset all service counters" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;border-radius:999px;padding:2px 9px;font-size:10px;font-weight:800;cursor:pointer;text-transform:none;letter-spacing:0;">✓ Reset All Intervals</button>
+            </div>
+            <div id="maintGridContainer" class="grid-2" style="gap:8px;margin-bottom:10px;">
+              ${renderMaintenanceItemsHtml(curModelNorm, initialHours, initialMeters)}
+            </div>
+
             <div class="sec-divider">⚡ Smart Plug Power Toggle & Live Wattage (Optional • Safety-Locked)</div>
             <div class="grid-2">
               <div class="fld">
@@ -5490,7 +5670,75 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         if (metersCalcHint) {
           metersCalcHint.textContent = `📦 ~${odo.spoolsDisplay} spools • ${odo.kgDisplay} (${odo.metersDisplay})`;
         }
+        refreshMaintGrid();
       };
+
+      const maintGridContainer = shadow.getElementById("maintGridContainer");
+      const maintResetAllBtn = shadow.getElementById("maintResetAllBtn");
+
+      const handleMaintReset = async (itemKey) => {
+        const curH = parseFloat(hoursInpEl?.value) || 0;
+        const curM = parseFloat(metersInpEl?.value) || 0;
+        saveMaintenanceOverride(payload.serial || payload.prefix, itemKey, curH, curM);
+        if (payload.serial && payload.prefix && payload.serial !== payload.prefix) {
+          saveMaintenanceOverride(payload.prefix, itemKey, curH, curM);
+        }
+        const nowSec = Math.round(Date.now() / 1000);
+        const validKeys = ["rods", "leadscrews", "extruder", "filter"];
+        if (itemKey === "all") {
+          validKeys.forEach(k => {
+            activeBackendMaintLog[k] = { hours: curH, meters: curM, ts: nowSec };
+          });
+        } else if (validKeys.includes(itemKey)) {
+          activeBackendMaintLog[itemKey] = { hours: curH, meters: curM, ts: nowSec };
+        }
+        refreshMaintGrid();
+        try {
+          if (payload.serial) {
+            await hass.callApi("POST", "bambu_fleet_studio/command", {
+              serial: payload.serial,
+              action: "reset_maintenance",
+              value: itemKey
+            });
+            _lastStandaloneFetch = 0;
+            await fetchStandalonePrinters(hass, true);
+          }
+        } catch (e) {}
+        const alertBox = shadow.getElementById("alertBox");
+        if (alertBox) {
+          alertBox.className = "alert ok";
+          alertBox.textContent = itemKey === "all"
+            ? `✓ Logged full service & reset all maintenance intervals at ${curH.toFixed(1)}h!`
+            : `✓ Logged service & reset ${itemKey} interval counter at ${curH.toFixed(1)}h!`;
+        }
+        if (onDone) onDone();
+      };
+
+      const bindMaintResetBtns = () => {
+        if (!maintGridContainer) return;
+        maintGridContainer.querySelectorAll("[data-maint-reset]").forEach(btn => {
+          btn.onclick = () => {
+            const k = btn.getAttribute("data-maint-reset");
+            if (k) handleMaintReset(k);
+          };
+        });
+      };
+
+      const refreshMaintGrid = () => {
+        if (!maintGridContainer) return;
+        const curH = parseFloat(hoursInpEl?.value) || 0;
+        const curM = parseFloat(metersInpEl?.value) || 0;
+        maintGridContainer.innerHTML = renderMaintenanceItemsHtml(editModelSel?.value || curModelNorm, curH, curM);
+        bindMaintResetBtns();
+      };
+
+      bindMaintResetBtns();
+      if (maintResetAllBtn) {
+        maintResetAllBtn.onclick = () => handleMaintReset("all");
+      }
+      if (hoursInpEl) {
+        hoursInpEl.oninput = refreshMaintGrid;
+      }
 
       if (metersInpEl) {
         metersInpEl.oninput = refreshOdoHint;
@@ -5513,6 +5761,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
           if (bedSizeBadge) bedSizeBadge.textContent = cat.bedSizeLabel;
           editBedPlateSel.innerHTML = renderBedPlateOptionsHtml(newMod, editBedPlateSel.value);
         }
+        refreshMaintGrid();
       };
       editAmsSel.onchange = updateAmsPreview;
 
@@ -5540,6 +5789,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               }
               if (match.bed_type && editBedPlateSel) {
                 editBedPlateSel.innerHTML = renderBedPlateOptionsHtml(editModelSel.value, match.bed_type);
+              }
+              if (match.maintenanceLog && typeof match.maintenanceLog === "object") {
+                activeBackendMaintLog = { ...match.maintenanceLog };
+                refreshMaintGrid();
               }
             }
           } catch (e0) {}
@@ -5986,8 +6239,15 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             <div class="t-val">${escapeHtml(p.coolingFan !== '—' ? p.coolingFan + '%' : '—')}</div>
             <div class="t-sub" title="${escapeHtml(coolingSubDetail)}">${escapeHtml(coolingSubDetail)}</div>
           </div>
-          <div class="t-tile" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" style="cursor:pointer;" title="${escapeHtml(t('tip_odometer_meters', activeLang) + ' (' + p.totalUsage + 'h • ' + odo.metersDisplay + ' • ' + odo.kgDisplay + ' • ~' + odo.spoolsDisplay + ' ' + t('odo_spools', activeLang) + ')')}">
-            <div class="t-lbl">${t("tel_odometer", activeLang)}</div>
+          <div class="t-tile" data-act="edit" data-prefix="${escapeHtml(p.prefix)}" style="cursor:pointer;" title="${escapeHtml(t('tip_odometer_meters', activeLang) + ' (' + p.totalUsage + 'h • ' + odo.metersDisplay + ' • ' + odo.kgDisplay + ' • ~' + odo.spoolsDisplay + ' ' + t('odo_spools', activeLang) + ') — Click for Build Plate & Preventative Maintenance Log')}">
+            <div class="t-lbl" style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span>${t("tel_odometer", activeLang)}</span>
+              ${p.maintenance && p.maintenance.anyDue ? `
+                <span style="font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px;background:${p.maintenance.overdueCount > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'};color:${p.maintenance.overdueCount > 0 ? '#fca5a5' : '#fde68a'};border:1px solid ${p.maintenance.overdueCount > 0 ? 'rgba(239,68,68,0.45)' : 'rgba(245,158,11,0.45)'};" title="Preventative maintenance due — click to view &amp; reset service intervals">🛠️ ${escapeHtml(p.maintenance.dueCount)} Due</span>
+              ` : `
+                <span style="font-size:9.5px;font-weight:800;color:#34d399;opacity:0.9;" title="All preventative maintenance intervals healthy — click to view service log">🛠️ OK</span>
+              `}
+            </div>
             <div class="t-val">${escapeHtml(p.totalUsage !== '—' ? p.totalUsage + 'h' : '0.0h')} <span style="font-size:12.5px;color:#10b981;font-weight:800;">• 🧵 ${escapeHtml(odo.metersDisplay)}</span></div>
             <div class="t-sub">📦 ~${escapeHtml(odo.spoolsDisplay)} ${t("odo_spools", activeLang)} (${escapeHtml(odo.kgDisplay)}) • ${escapeHtml(p.ipAddress)}</div>
           </div>

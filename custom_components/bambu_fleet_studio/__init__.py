@@ -478,6 +478,8 @@ class BambuPrinterRuntime:
         self._rfid_accumulated_m: float = 0.0
         self._last_tray_remains: dict[str, int] = {}
         self._low_spool_alerted: set[str] = set()
+        raw_maint = config.get("maintenance_log")
+        self.maintenance_log: dict[str, dict[str, Any]] = dict(raw_maint) if isinstance(raw_maint, dict) else {}
 
         # Live telemetry state
         self.online: bool = False
@@ -1554,6 +1556,23 @@ class BambuPrinterRuntime:
         m_str = self._fmt_num(meters, 1) if meters > 0.0 else "0.0"
         return g_str, m_str
 
+    def reset_maintenance_item(self, item_key: str) -> bool:
+        """Reset a preventative maintenance baseline to current odometer hours and meters."""
+        valid_keys = ("rods", "leadscrews", "extruder", "filter")
+        clean_key = str(item_key or "all").strip().lower()
+        if clean_key != "all" and clean_key not in valid_keys:
+            return False
+        targets = valid_keys if clean_key == "all" else (clean_key,)
+        snap = {
+            "hours": round(float(self._usage_hours_val or 0.0), 1),
+            "meters": round(float(self._extruded_meters or 0.0), 2),
+            "ts": round(time.time(), 1),
+        }
+        for k in targets:
+            self.maintenance_log[k] = dict(snap)
+        self._config_ref["maintenance_log"] = self.maintenance_log
+        return True
+
     def _sign_camera_url(self, path: str) -> str:
         """Return a signed Home Assistant HTTP path (4-hour TTL) for camera endpoints."""
         try:
@@ -1663,6 +1682,7 @@ class BambuPrinterRuntime:
             "extrudedMeters": round(self._extruded_meters, 1),
             "extrudedGrams": round(self._extruded_grams, 0),
             "extrudedSpools": round(self._extruded_meters / 330.0, 2),
+            "maintenanceLog": self.maintenance_log,
             "bedType": self.bed_type,
             "nozzleSize": self.nozzle_size,
             "nozzleType": self.nozzle_type,
@@ -2547,6 +2567,11 @@ class BambuFleetStudioManager:
             if existing_rt and existing_rt.last_online_ts > 0
             else float(existing.get("last_online_ts") or 0.0)
         )
+        maint_log = (
+            payload.get("maintenance_log")
+            if isinstance(payload.get("maintenance_log"), dict)
+            else (existing_rt.maintenance_log if existing_rt else existing.get("maintenance_log", {}))
+        )
 
         cfg = {
             "serial": serial,
@@ -2561,6 +2586,7 @@ class BambuFleetStudioManager:
             "ams_override": ams_override,
             "smart_plug": smart_plug,
             "last_online_ts": round(prev_last_online, 1) if prev_last_online > 0 else 0.0,
+            "maintenance_log": maint_log if isinstance(maint_log, dict) else {},
         }
         self.configs[serial] = cfg
         await self.async_save()
@@ -2975,6 +3001,15 @@ class FleetCommandAPIView(HomeAssistantView):
                 cfg = mgr.configs.get(rt.serial, {})
                 await mgr.async_start_printer(rt.serial, cfg)
                 return web.json_response({"ok": True, "reloaded": rt.serial})
+
+            if action == "reset_maintenance":
+                ok = rt.reset_maintenance_item(str(value or "all"))
+                if not ok:
+                    return web.json_response({"error": "Invalid maintenance item key"}, status=400)
+                if rt.serial in mgr.configs:
+                    mgr.configs[rt.serial]["maintenance_log"] = rt.maintenance_log
+                await mgr.async_save()
+                return web.json_response({"ok": True, "printer": rt.to_status_dict()})
 
             ok = await self.hass.async_add_executor_job(rt.send_action, action, value)
             return web.json_response({"ok": ok, "printer": rt.to_status_dict()})

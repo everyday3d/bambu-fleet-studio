@@ -84,6 +84,7 @@ Default Home Assistant entity lists can quickly turn into a wall of scattered se
 ![Advanced Fleet Intelligence Spotlight](docs/screenshots/05_filament_hms_smartplug_automations.png)
 
 - **Filament Finder**: Filter all spools across your shop by material or color family.
+- **Preventative Maintenance Tracker & Service Log**: Tracks print hours since you last cleaned carbon rods/linear rails (`250h`), greased Z lead screws (`500h`), cleaned the extruder/nozzle (`500h`), or swapped the carbon filter (`400h`)—with a status badge on the card and 1-click **✓ Reset** buttons in **✏️ Edit Device**.
 - **Automatic Error Banner**: Stays hidden when everything is running smoothly, and pops up with a plain-English explanation and a **Bambu Wiki ↗** link if a printer pauses or reports a fault.
 - **1-Click Automations**: Set up phone alerts, WLED progress bars, voice announcements, low-spool warnings, and safe cooldown power-off in seconds.
 
@@ -175,9 +176,9 @@ Have an idea or want to help pick what gets built next? Vote with a 👍 in **[�
 - [ ] **2️⃣ 🤖 AI Print Failure & Spaghetti Watchdog (`Ollama` / `Gemini` / `OpenAI` / `Claude` / `OpenRouter` / HA AI)**: Periodically check live camera snapshots using your choice of local **Ollama** or cloud AI vision to spot spaghetti, first-layer peeling, or nozzle blobs—with optional auto-pause and phone alerts.
 - [ ] **3️⃣ 🎯 Skip Failed Objects Mid-Print & Live Temp/Fan Sliders** *(NEW)*: If one part pops loose on a multi-part plate, tap to skip just that object so the rest of the build plate finishes cleanly—plus adjust nozzle temp, bed temp, and fan speeds right from the card.
 - [ ] **4️⃣ 📂 Printer SD Card File Browser & 1-Click Reprint**: Browse `.3mf` and `.gcode` files stored on your printer's MicroSD card over your local network, preview plate thumbnails, and start a reprint from the dashboard.
-- [ ] **5️⃣ 🛠️ Maintenance Reminder Tracker & Service Log**: Simple countdown reminders based on your printer's actual print hours and filament used (cleaning carbon rods, greasing lead screws, swapping nozzles/PTFE tubes, and replacing carbon filters) with a 1-click reset log.
+- [ ] **5️⃣ 🌡️ Active Filament Dryer Companion & Desiccant Tracker** *(NEW)*: Pair standalone filament dryers or enclosure temp/humidity sensors with your printers and get a reminder when AMS desiccant packs stay above `35%` RH for too long.
 - [ ] **6️⃣ 🎞️ Automatic Layer Timelapses & Combined Filament + Electricity Cost Log** *(NEW)*: Save a camera snapshot on each layer change to build downloadable MP4 timelapses, and combine filament used (`g`) with Smart Plug electricity (`kWh`) to see true total print cost.
-- [ ] **7️⃣ 🌡️ Workshop Air Quality & BentoBox / Exhaust Fan Automation** *(NEW)*: Link room or enclosure air quality sensors (`VOC`, `PM2.5`) and BentoBox / exhaust fans so filtration turns on automatically when printing `ABS`, `ASA`, `PA-CF`, or `PC`.
+- [ ] **7️⃣ 💨 Workshop Air Quality & BentoBox / Exhaust Fan Automation** *(NEW)*: Link room or enclosure air quality sensors (`VOC`, `PM2.5`) and BentoBox / exhaust fans so filtration turns on automatically when printing `ABS`, `ASA`, `PA-CF`, or `PC`.
 - [ ] **8️⃣ 📱 Wall-Tablet Kiosk Mode & Multi-Camera Grid View** *(NEW)*: A compact wall-tablet layout with a 2×2 or 3×2 live camera grid for print farms, plus community translation polish for Russian, Simplified Chinese, and Traditional Chinese.
 
 > **☁️ Note on Bambu Firmware Limits**:
@@ -196,6 +197,7 @@ Have an idea or want to help pick what gets built next? Vote with a 👍 in **[�
 - [x] ~~**⬆️ Version Badge & Update Notification in Top Bar** (`#37`)~~ ✅
 - [x] ~~**🔧 Bambu Lab H2C Vortek 7-Nozzle Changer (`1L + 6R`) & H2D / X2D Dual-Nozzle Support (*Untested on H2C & X2D — Community Feedback Needed!*)** (`#41`)~~ ✅
 - [x] ~~**🎉 Official HACS Default Store Release & Security Improvements** (`#38`, `#39`, `#40`)~~ ✅
+- [x] ~~**🛠️ Preventative Maintenance Reminder Tracker & 1-Click Service Reset Log** (`#42`)~~ ✅
 
 ---
 
