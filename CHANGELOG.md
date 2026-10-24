@@ -5,6 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2026-10-24
+
+### Security & HACS Compliance (Frenck Review Round 3 — Fixes #40)
+- **Signed Camera Cache-Busting Query Parameter (`_ts`)**: Included `?_ts=<timestamp>` inside `_sign_camera_url()` and `_build_printer_notification_data()` **before** calling `async_sign_path()`, so `_ts` is signed inside `authSig` query parameter claims. Removed all client-side `&_ts=` appends in `bambu-fleet-cards.js`; both the card stage loop (`_startRtspFrameLoop`) and camera modal polling (`startModalFramePolling`) now consume fresh server-signed URLs from `/api/bambu_fleet_studio/status`.
+- **Thread-Safe Issue Registry Scheduling (`functools.partial`)**: Wrapped `async_create_issue` and `async_delete_issue` in `functools.partial(...)` when scheduling via `self.hass.loop.call_soon_threadsafe(...)` in `_mqtt_loop` so keyword arguments (`is_fixable`, `severity`, `translation_key`, `translation_placeholders`, `learn_more_url`) execute cleanly on the Home Assistant event loop without raising `TypeError`.
+
 ## [1.3.3] - 2026-10-24
 
 ### Security & HACS Compliance (Frenck Review Round 2 — Fixes #39)

@@ -10,6 +10,7 @@ Connects directly to Bambu Lab printers over:
 from __future__ import annotations
 
 import asyncio
+import functools
 import hashlib
 import json
 import logging
@@ -45,7 +46,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.3.3"
+VERSION = "1.3.4"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -765,10 +766,12 @@ class BambuPrinterRuntime:
                             self.current_stage = "idle"
                         try:
                             self.hass.loop.call_soon_threadsafe(
-                                async_delete_issue,
-                                self.hass,
-                                DOMAIN,
-                                f"bad_access_code_{self.serial.lower()}",
+                                functools.partial(
+                                    async_delete_issue,
+                                    self.hass,
+                                    DOMAIN,
+                                    f"bad_access_code_{self.serial.lower()}",
+                                )
                             )
                         except Exception:
                             pass
@@ -801,21 +804,23 @@ class BambuPrinterRuntime:
                             self._mark_offline()
                             try:
                                 self.hass.loop.call_soon_threadsafe(
-                                    async_create_issue,
-                                    self.hass,
-                                    DOMAIN,
-                                    f"bad_access_code_{self.serial.lower()}",
-                                    is_fixable=False,
-                                    severity=IssueSeverity.ERROR,
-                                    translation_key="bad_access_code",
-                                    translation_placeholders={
-                                        "printer_name": self.name,
-                                        "serial": self.serial,
-                                    },
-                                    learn_more_url="https://github.com/everyday3d/bambu-fleet-studio#troubleshooting",
+                                    functools.partial(
+                                        async_create_issue,
+                                        self.hass,
+                                        DOMAIN,
+                                        f"bad_access_code_{self.serial.lower()}",
+                                        is_fixable=False,
+                                        severity=IssueSeverity.ERROR,
+                                        translation_key="bad_access_code",
+                                        translation_placeholders={
+                                            "printer_name": self.name,
+                                            "serial": self.serial,
+                                        },
+                                        learn_more_url="https://github.com/everyday3d/bambu-fleet-studio#troubleshooting",
+                                    )
                                 )
                             except Exception as issue_err:
-                                LOGGER.debug("Failed to create bad_access_code issue: %s", issue_err)
+                                LOGGER.warning("Failed to create bad_access_code issue: %s", issue_err)
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
 
                 def on_disconnect(cli, userdata, *args):
@@ -1384,7 +1389,9 @@ class BambuPrinterRuntime:
     def _sign_camera_url(self, path: str) -> str:
         """Return a signed Home Assistant HTTP path (4-hour TTL) for camera endpoints."""
         try:
-            return async_sign_path(self.hass, path, timedelta(hours=4))
+            sep = "&" if "?" in path else "?"
+            target = f"{path}{sep}_ts={int(time.time() * 1000)}"
+            return async_sign_path(self.hass, target, timedelta(hours=4))
         except Exception:
             return path
 
@@ -2077,7 +2084,7 @@ class BambuFleetStudioManager:
                 except Exception:
                     pass
             if rt._last_jpeg is not None:
-                cam_path = f"/api/bambu_fleet_studio/camera/{rt.serial}"
+                cam_path = f"/api/bambu_fleet_studio/camera/{rt.serial}?_ts={int(time.time() * 1000)}"
                 try:
                     signed_path = async_sign_path(self.hass, cam_path, timedelta(hours=24))
                 except Exception:
@@ -2253,6 +2260,10 @@ class BambuFleetStudioManager:
         sn = serial.strip().upper()
         if sn in self.runtimes:
             await self.hass.async_add_executor_job(self.runtimes[sn].stop)
+        try:
+            async_delete_issue(self.hass, DOMAIN, f"bad_access_code_{sn.lower()}")
+        except Exception:
+            pass
         rt = BambuPrinterRuntime(self.hass, cfg, on_odometer_save=self._schedule_save_from_thread)
         self.runtimes[sn] = rt
         await self.hass.async_add_executor_job(rt.start)
@@ -2335,6 +2346,7 @@ class BambuFleetStudioManager:
         # If runtime already exists and network credentials did not change, update in-place without dropping MQTT/camera
         if (
             existing_rt is not None
+            and not existing_rt.auth_failed
             and existing_rt.host == resolved_host
             and existing_rt.access_code == access_code
             and existing_rt.model == model
