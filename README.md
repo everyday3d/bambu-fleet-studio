@@ -101,7 +101,7 @@ Default Home Assistant entity lists clutter your screen with dozens of ungrouped
 
 ### Prerequisites
 1. **Home Assistant** `2024.6.0` or newer.
-2. **No other Bambu Lab integration required!** Bambu Lab Fleet Studio includes its own standalone local LAN MQTT + Camera backend (`custom_components/bambu_fleet_studio/`) and frontend Lovelace card bundle (`bambu-fleet-cards.js`). *(If you already have `ha-bambulab` installed, Fleet Studio will automatically import your existing printer credentials and coexist seamlessly.)*
+2. **No other Bambu Lab integration required!** Bambu Lab Fleet Studio includes its own standalone local LAN MQTT + Camera backend (`custom_components/bambu_fleet_studio/`) and frontend Lovelace card bundle (`bambu-fleet-cards.js`).
 
 ---
 
