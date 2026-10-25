@@ -1,5 +1,9 @@
 # 🖨️ Bambu Lab Fleet Studio `[v1.4.1]` — Home Assistant Dashboard & Custom Cards
 
+<p align="center">
+  <img src="icon.png" width="128" height="128" alt="Bambu Lab Fleet Studio (BFleet)" style="border-radius: 28px;" />
+</p>
+
 [![Release v1.4.1](https://img.shields.io/badge/Release-v1.4.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 [![HACS Default](https://img.shields.io/badge/HACS-Default%20Store-41BDF5?style=flat-square&logo=home-assistant)](https://github.com/hacs/default)
 [![GitHub Issues](https://img.shields.io/github/issues/everyday3d/bambu-fleet-studio?style=flat-square&logo=github&label=Issue%20Tracker)](https://github.com/everyday3d/bambu-fleet-studio/issues)

@@ -1,5 +1,9 @@
 # 🖨️ Bambu Lab Fleet Studio `v1.4.1`
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/everyday3d/bambu-fleet-studio/main/icon.png" width="128" height="128" alt="Bambu Lab Fleet Studio (BFleet)" style="border-radius: 28px;" />
+</p>
+
 [![Release v1.4.1](https://img.shields.io/badge/Release-v1.4.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 
 > **👋 Hello makers!** This is a project I've been working on for some time, and I'm excited to share it with the community.
