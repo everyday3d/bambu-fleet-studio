@@ -471,6 +471,9 @@ class BambuPrinterRuntime:
         self._last_odometer_save_ts: float = time.time()
         self._odometer_dirty: bool = False
         self._active_job_key: str = ""
+        # True once a report carrying real telemetry (temps/AMS/device) has arrived on this connection.
+        self._got_full_status: bool = False
+        self._parse_error_logged: bool = False
         self._last_job_progress: int = 0
         self._job_length_m: float = 0.0
         self._job_weight_g: float = 0.0
@@ -799,6 +802,7 @@ class BambuPrinterRuntime:
                     rc_val = getattr(rc, "value", rc)
                     if rc_val == 0:
                         disconnected[0] = False
+                        self._got_full_status = False
                         self.auth_failed = False
                         self._touch_online()
                         if self.print_status == "offline":
@@ -865,6 +869,10 @@ class BambuPrinterRuntime:
 
                 def on_disconnect(cli, userdata, *args):
                     disconnected[0] = True
+                    LOGGER.info(
+                        "MQTT disconnected from %s (%s); full telemetry received this session: %s",
+                        self.serial, self.host, self._got_full_status,
+                    )
                     if (time.time() - self.last_seen) > 90.0:
                         self._mark_offline()
 
@@ -876,7 +884,14 @@ class BambuPrinterRuntime:
                         data = json.loads(msg.payload.decode("utf-8", errors="ignore"))
                         self._handle_mqtt_payload(data)
                     except Exception as parse_err:
-                        LOGGER.debug("MQTT payload parse error (%s): %s", self.serial, parse_err)
+                        if not self._parse_error_logged:
+                            self._parse_error_logged = True
+                            LOGGER.warning(
+                                "MQTT payload parse error (%s): %s (further errors logged at debug)",
+                                self.serial, parse_err, exc_info=True,
+                            )
+                        else:
+                            LOGGER.debug("MQTT payload parse error (%s): %s", self.serial, parse_err)
 
                 client.on_connect = on_connect
                 client.on_disconnect = on_disconnect
@@ -891,7 +906,10 @@ class BambuPrinterRuntime:
                     time.sleep(1.5)
                     now_ts = time.time()
                     self._tick_odometer(now_ts)
-                    if self.online and (now_ts - last_pushall) > 60.0:
+                    # Until a full report (temps/AMS/device) arrives, retry pushall every 10s instead of 60s,
+                    # so a dropped or partial first response doesn't leave the card blank for a minute+.
+                    pushall_every = 60.0 if self._got_full_status else 10.0
+                    if self.online and (now_ts - last_pushall) > pushall_every:
                         last_pushall = now_ts
                         self.send_action("pushall")
                     if (now_ts - self.last_seen) > 75.0:
@@ -954,6 +972,9 @@ class BambuPrinterRuntime:
         p = data.get("print")
         if not isinstance(p, dict):
             return
+
+        if any(k in p for k in ("nozzle_temper", "bed_temper", "ams", "device")):
+            self._got_full_status = True
 
         prev_status = self.print_status
         if "gcode_state" in p:
