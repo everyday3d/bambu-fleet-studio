@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-11-17
+
+### Fixed
+- **Blank temperatures / progress / AMS after a print (`#43` — *Untested; Community Feedback Needed!*)**: Some printers (reported on `X2D` and `A1`) showed the Idle/Finished status and print hours but no temperatures, progress or AMS. The root cause isn't confirmed yet, so this release adds a safety net and better diagnostics. If a printer connects but doesn't send its full status, the integration now asks again every `10s` (instead of `60s`) until it arrives. The first unreadable message and every printer disconnect are now logged with details, so we can see what's going on. I don't have an `X2D` here, so please report back in [#43](https://github.com/everyday3d/bambu-fleet-studio/issues/43) if you still see blank cards.
+
 ## [1.4.1] - 2026-10-24
 
 ### Added
