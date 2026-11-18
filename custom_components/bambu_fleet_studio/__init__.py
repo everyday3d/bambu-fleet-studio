@@ -46,7 +46,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.3"
+VERSION = "1.4.4"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -474,6 +474,9 @@ class BambuPrinterRuntime:
         # True once a report carrying real telemetry (temps/AMS/device) has arrived on this connection.
         self._got_full_status: bool = False
         self._parse_error_logged: bool = False
+        self._report_msg_count: int = 0
+        self._last_print_keys: list[str] = []
+        self._no_full_warned: bool = False
         self._last_job_progress: int = 0
         self._job_length_m: float = 0.0
         self._job_weight_g: float = 0.0
@@ -797,12 +800,17 @@ class BambuPrinterRuntime:
                 client.tls_set_context(ctx)
 
                 disconnected = [False]
+                connected_at = [time.time()]
 
                 def on_connect(cli, userdata, flags, rc, *args):
                     rc_val = getattr(rc, "value", rc)
                     if rc_val == 0:
                         disconnected[0] = False
                         self._got_full_status = False
+                        self._no_full_warned = False
+                        self._report_msg_count = 0
+                        self._last_print_keys = []
+                        connected_at[0] = time.time()
                         self.auth_failed = False
                         self._touch_online()
                         if self.print_status == "offline":
@@ -909,6 +917,19 @@ class BambuPrinterRuntime:
                     # Until a full report (temps/AMS/device) arrives, retry pushall every 10s instead of 60s,
                     # so a dropped or partial first response doesn't leave the card blank for a minute+.
                     pushall_every = 60.0 if self._got_full_status else 10.0
+                    if (
+                        self.online
+                        and not self._got_full_status
+                        and not self._no_full_warned
+                        and (now_ts - connected_at[0]) > 30.0
+                    ):
+                        self._no_full_warned = True
+                        LOGGER.warning(
+                            "No full status report from %s (%s, model %s) 30s after connecting. "
+                            "Received %d report message(s); fields seen in the last one: %s",
+                            self.serial, self.host, self.model, self._report_msg_count,
+                            ", ".join(self._last_print_keys) or "(none)",
+                        )
                     if self.online and (now_ts - last_pushall) > pushall_every:
                         last_pushall = now_ts
                         self.send_action("pushall")
@@ -973,6 +994,8 @@ class BambuPrinterRuntime:
         if not isinstance(p, dict):
             return
 
+        self._report_msg_count += 1
+        self._last_print_keys = sorted(str(k) for k in p.keys())[:60]
         if any(k in p for k in ("nozzle_temper", "bed_temper", "ams", "device")):
             self._got_full_status = True
 

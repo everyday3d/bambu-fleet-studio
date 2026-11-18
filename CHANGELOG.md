@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.4] - 2026-11-18
+
+### Fixed
+- **Clearer warning when a printer never sends full status (`#43` — *Untested; Community Feedback Needed!*)**: If a printer connects but doesn't send temperatures, AMS or device data within 30 seconds, Fleet Studio now logs a single warning showing how many messages arrived and which fields were in the last one. This doesn't fix the blank temperature/AMS cards some `X2D` and `A1` users see, but it shows us what those printers are actually sending so we can.
+
 ## [1.4.3] - 2026-11-17
 
 ### Fixed
