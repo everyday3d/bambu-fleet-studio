@@ -5,6 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7] - 2026-11-18
+
+### Fixed
+- **Debug window is easier to use (`#43`)**: The debug switch is now a clear **Turn debugging ON / OFF** button with an ON/OFF status label instead of a small checkbox, and debug logging now switches itself off after 30 minutes so it can't be left running by accident.
+- **Printer named like its model**: A printer named just like its model (for example "P2S") no longer has its model hidden in the debug report.
+
 ## [1.4.6] - 2026-11-18
 
 ### Added

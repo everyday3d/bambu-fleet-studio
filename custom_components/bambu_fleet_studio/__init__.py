@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.6"
+VERSION = "1.4.7"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -924,7 +924,18 @@ class BambuPrinterRuntime:
                         try:
                             mgr_dbg = self.hass.data.get(DOMAIN, {}).get("manager")
                             if mgr_dbg and mgr_dbg.notifications.get("debug_logging") and isinstance(data, dict):
-                                self._debug_msgs.append((time.strftime("%H:%M:%S"), data))
+                                if not mgr_dbg.debug_started_ts:
+                                    mgr_dbg.debug_started_ts = time.time()
+                                if time.time() - mgr_dbg.debug_started_ts > 1800:
+                                    # Safety net: debug logging switches itself off after 30 minutes
+                                    self._debug_msgs.clear()
+                                    self.hass.loop.call_soon_threadsafe(
+                                        lambda m=mgr_dbg: self.hass.async_create_task(
+                                            m.async_update_notifications({"debug_logging": False})
+                                        )
+                                    )
+                                else:
+                                    self._debug_msgs.append((time.strftime("%H:%M:%S"), data))
                         except Exception:
                             pass
                         self._handle_mqtt_payload(data)
@@ -1852,6 +1863,7 @@ class BambuFleetStudioManager:
             "low_spool_threshold_pct": 15,
             "debug_logging": False,
         }
+        self.debug_started_ts: float = 0.0
         self._release_cache: dict[str, Any] = {
             "current_version": VERSION,
             "latest_version": VERSION,
@@ -2956,7 +2968,10 @@ def build_debug_report(mgr: "BambuFleetStudioManager") -> str:
     runtimes = list(mgr.runtimes.values())
     literals: list[str] = []
     for rt in runtimes:
-        literals += [rt.serial, rt.host, rt.access_code, rt.name]
+        literals += [rt.serial, rt.host, rt.access_code]
+        # A printer named just like its model (e.g. "P2S") must stay visible in the report
+        if str(rt.name).strip().upper() != str(rt.model).strip().upper():
+            literals.append(rt.name)
     literals = sorted({x for x in literals if x}, key=len, reverse=True)
 
     printers: list[dict[str, Any]] = []
@@ -3035,6 +3050,7 @@ class FleetDebugAPIView(HomeAssistantView):
             return web.json_response({"error": "Manager not initialized"}, status=500)
         body = await request.json()
         await mgr.async_update_notifications({"debug_logging": bool(body.get("enabled"))})
+        mgr.debug_started_ts = time.time() if mgr.notifications.get("debug_logging") else 0.0
         if not mgr.notifications.get("debug_logging"):
             for rt in mgr.runtimes.values():
                 rt._debug_msgs.clear()
