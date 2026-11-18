@@ -46,7 +46,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.4"
+VERSION = "1.4.5"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -477,6 +477,8 @@ class BambuPrinterRuntime:
         self._report_msg_count: int = 0
         self._last_print_keys: list[str] = []
         self._no_full_warned: bool = False
+        # False until the first hms/print_error report on a connection; that report is a baseline, not an alert.
+        self._fault_baselined: bool = False
         self._last_job_progress: int = 0
         self._job_length_m: float = 0.0
         self._job_weight_g: float = 0.0
@@ -669,6 +671,12 @@ class BambuPrinterRuntime:
                     daemon=True,
                 )
                 self._cam_thread.start()
+        else:
+            LOGGER.warning(
+                "Printer %s not started: missing %s. Open Edit Device and fill in the IP, serial and LAN access code.",
+                self.name,
+                ", ".join(n for n, v in (("IP address", self.host), ("LAN access code", self.access_code), ("serial", self.serial)) if not v),
+            )
 
     def stop(self) -> None:
         """Stop background MQTT and Camera threads."""
@@ -808,9 +816,11 @@ class BambuPrinterRuntime:
                         disconnected[0] = False
                         self._got_full_status = False
                         self._no_full_warned = False
+                        self._fault_baselined = False
                         self._report_msg_count = 0
                         self._last_print_keys = []
                         connected_at[0] = time.time()
+                        LOGGER.info("MQTT connected to %s (%s, model %s)", self.serial, self.host, self.model)
                         self.auth_failed = False
                         self._touch_online()
                         if self.print_status == "offline":
@@ -918,16 +928,15 @@ class BambuPrinterRuntime:
                     # so a dropped or partial first response doesn't leave the card blank for a minute+.
                     pushall_every = 60.0 if self._got_full_status else 10.0
                     if (
-                        self.online
-                        and not self._got_full_status
+                        not self._got_full_status
                         and not self._no_full_warned
                         and (now_ts - connected_at[0]) > 30.0
                     ):
                         self._no_full_warned = True
                         LOGGER.warning(
-                            "No full status report from %s (%s, model %s) 30s after connecting. "
-                            "Received %d report message(s); fields seen in the last one: %s",
-                            self.serial, self.host, self.model, self._report_msg_count,
+                            "No full status report from %s (%s, model %s) 30s after connecting "
+                            "(online=%s). Received %d report message(s); fields seen in the last one: %s",
+                            self.serial, self.host, self.model, self.online, self._report_msg_count,
                             ", ".join(self._last_print_keys) or "(none)",
                         )
                     if self.online and (now_ts - last_pushall) > pushall_every:
@@ -996,7 +1005,13 @@ class BambuPrinterRuntime:
 
         self._report_msg_count += 1
         self._last_print_keys = sorted(str(k) for k in p.keys())[:60]
-        if any(k in p for k in ("nozzle_temper", "bed_temper", "ams", "device")):
+        # Partial updates also carry "ams"/"device", so only real temperature data counts as a full report.
+        dev_blk = p.get("device")
+        if (
+            "nozzle_temper" in p
+            or "bed_temper" in p
+            or (isinstance(dev_blk, dict) and any(k in dev_blk for k in ("extruder", "bed")))
+        ):
             self._got_full_status = True
 
         prev_status = self.print_status
@@ -1281,13 +1296,32 @@ class BambuPrinterRuntime:
 
         prev_hms_count = len(self.hms_errors)
         prev_print_error = self.print_error
+        had_baseline = self._fault_baselined
         if "hms" in p and isinstance(p["hms"], list):
             self.hms_errors = p["hms"]
+            self._fault_baselined = True
         if "print_error" in p:
             try:
                 self.print_error = int(p["print_error"])
+                self._fault_baselined = True
             except Exception:
                 pass
+
+        def _hms_severity(entry: Any) -> int:
+            """Bambu HMS severity from the code's high word: 1 fatal, 2 serious, 3 common, 4 info (0 = unknown)."""
+            try:
+                return (int(entry.get("code", 0)) >> 16) & 0xFFFF
+            except Exception:
+                return 0
+
+        # Only alert on real faults: ignore the first report after connecting (stale entries the printer
+        # still remembers), and ignore informational/common HMS notices (e.g. plate or filament hints).
+        new_serious_hms = False
+        if had_baseline and len(self.hms_errors) > prev_hms_count:
+            new_serious_hms = any(
+                _hms_severity(e) in (0, 1, 2) for e in self.hms_errors if isinstance(e, dict)
+            ) or any(not isinstance(e, dict) for e in self.hms_errors)
+        new_print_error = had_baseline and self.print_error != 0 and self.print_error != prev_print_error
 
         # Parse External Spool (vt_tray)
         vt = p.get("vt_tray")
@@ -1459,9 +1493,14 @@ class BambuPrinterRuntime:
             self._emit_runtime_event("print_complete")
         elif (
             (prev_status in ("running", "prepare", "pause") and self.print_status == "failed")
-            or (len(self.hms_errors) > prev_hms_count and len(self.hms_errors) > 0)
-            or (self.print_error != 0 and self.print_error != prev_print_error)
+            or new_serious_hms
+            or new_print_error
         ):
+            LOGGER.warning(
+                "Printer fault alert for %s: status %s->%s, print_error %s->%s, hms %d->%d %s",
+                self.serial, prev_status, self.print_status, prev_print_error, self.print_error,
+                prev_hms_count, len(self.hms_errors), self.hms_errors[:5],
+            )
             self._emit_runtime_event("hms_error")
 
     def _emit_runtime_event(self, event_type: str, extra: Optional[dict[str, Any]] = None) -> None:

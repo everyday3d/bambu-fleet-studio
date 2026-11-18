@@ -5,6 +5,12 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2026-11-18
+
+### Fixed
+- **False "printer error" alerts when slicing or sending a print**: The critical "reported a print error or HMS fault" alert could fire when nothing was wrong, for example right after Home Assistant restarted or while the printer prepared a new job. The first fault report after connecting is now treated as a baseline, and only serious or fatal HMS entries trigger an alert. When an alert does fire, a warning in the log shows exactly what caused it. *The HMS severity filter is untested; please report any real faults that were missed.*
+- **Better connection diagnostics (`#43` — *Untested; Community Feedback Needed!*)**: A printer is now only counted as sending full status once real temperature data arrives. The "No full status report" warning also shows whether the printer is online, a successful MQTT connection is logged, and a printer with a missing IP, serial or access code now logs why it didn't start.
+
 ## [1.4.4] - 2026-11-18
 
 ### Fixed
