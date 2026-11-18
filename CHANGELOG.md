@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2026-11-18
+
+### Added
+- **🐞 Debug log for troubleshooting (`#43`)**: A new **🐞 Debug** button on the Fleet Studio header opens a window where an administrator can switch debug logging on, then copy a report to paste into a GitHub issue. The report shows connection events, message counts, which fields each printer sends, and the last 20 raw printer messages. Serials, IP addresses, access codes, Wi-Fi names, printer names, file names, MAC addresses, emails and links are removed automatically. Turn it off when you're done. *Please tell us if you ever spot personal details in a report.*
+
 ## [1.4.5] - 2026-11-18
 
 ### Fixed

@@ -10,6 +10,7 @@ Connects directly to Bambu Lab printers over:
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 import functools
 import hashlib
 import json
@@ -46,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.5"
+VERSION = "1.4.6"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -479,6 +480,13 @@ class BambuPrinterRuntime:
         self._no_full_warned: bool = False
         # False until the first hms/print_error report on a connection; that report is a baseline, not an alert.
         self._fault_baselined: bool = False
+        # Diagnostics (shown in Settings > Devices & services > Fleet Studio > Download diagnostics)
+        self._diag_events: deque = deque(maxlen=60)
+        self._msg_total: int = 0
+        self._last_msg_ts: float = 0.0
+        self._top_keys_seen: dict[str, int] = {}
+        # Recent raw printer messages, only recorded while "Debug logging" is switched on
+        self._debug_msgs: deque = deque(maxlen=20)
         self._last_job_progress: int = 0
         self._job_length_m: float = 0.0
         self._job_weight_g: float = 0.0
@@ -687,6 +695,10 @@ class BambuPrinterRuntime:
             except Exception:
                 pass
 
+    def _diag(self, text: str) -> None:
+        """Record a short timestamped event for the diagnostics download."""
+        self._diag_events.append(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {text}")
+
     def _next_seq(self) -> str:
         self._seq_id += 1
         return str(self._seq_id)
@@ -821,6 +833,7 @@ class BambuPrinterRuntime:
                         self._last_print_keys = []
                         connected_at[0] = time.time()
                         LOGGER.info("MQTT connected to %s (%s, model %s)", self.serial, self.host, self.model)
+                        self._diag("MQTT connected; sent pushall + get_version")
                         self.auth_failed = False
                         self._touch_online()
                         if self.print_status == "offline":
@@ -884,9 +897,11 @@ class BambuPrinterRuntime:
                             except Exception as issue_err:
                                 LOGGER.warning("Failed to create bad_access_code issue: %s", issue_err)
                         LOGGER.warning("MQTT connect rc=%s for %s (%s)", rc_val, self.serial, self.host)
+                        self._diag(f"MQTT connect refused rc={rc_val} auth_failed={self.auth_failed}")
 
                 def on_disconnect(cli, userdata, *args):
                     disconnected[0] = True
+                    self._diag(f"MQTT disconnected (args={args!r}); full status seen: {self._got_full_status}")
                     LOGGER.info(
                         "MQTT disconnected from %s (%s); full telemetry received this session: %s",
                         self.serial, self.host, self._got_full_status,
@@ -900,8 +915,21 @@ class BambuPrinterRuntime:
                         self.print_status = "idle"
                     try:
                         data = json.loads(msg.payload.decode("utf-8", errors="ignore"))
+                        self._msg_total += 1
+                        self._last_msg_ts = time.time()
+                        if isinstance(data, dict):
+                            for top_key in data.keys():
+                                k = str(top_key)[:30]
+                                self._top_keys_seen[k] = self._top_keys_seen.get(k, 0) + 1
+                        try:
+                            mgr_dbg = self.hass.data.get(DOMAIN, {}).get("manager")
+                            if mgr_dbg and mgr_dbg.notifications.get("debug_logging") and isinstance(data, dict):
+                                self._debug_msgs.append((time.strftime("%H:%M:%S"), data))
+                        except Exception:
+                            pass
                         self._handle_mqtt_payload(data)
                     except Exception as parse_err:
+                        self._diag(f"payload error: {type(parse_err).__name__}: {parse_err}")
                         if not self._parse_error_logged:
                             self._parse_error_logged = True
                             LOGGER.warning(
@@ -933,6 +961,10 @@ class BambuPrinterRuntime:
                         and (now_ts - connected_at[0]) > 30.0
                     ):
                         self._no_full_warned = True
+                        self._diag(
+                            f"no full status 30s after connect (online={self.online}, "
+                            f"messages={self._report_msg_count}, keys={self._last_print_keys})"
+                        )
                         LOGGER.warning(
                             "No full status report from %s (%s, model %s) 30s after connecting "
                             "(online=%s). Received %d report message(s); fields seen in the last one: %s",
@@ -968,6 +1000,7 @@ class BambuPrinterRuntime:
 
             except Exception as err:
                 self._mark_offline()
+                self._diag(f"MQTT loop error: {type(err).__name__}: {err}")
                 LOGGER.warning("MQTT loop error for %s (%s): %s", self.serial, self.host, err)
                 if self.auth_failed:
                     break
@@ -1817,6 +1850,7 @@ class BambuFleetStudioManager:
             "cooldown_target_temp": 50,
             "low_spool_alert": True,
             "low_spool_threshold_pct": 15,
+            "debug_logging": False,
         }
         self._release_cache: dict[str, Any] = {
             "current_version": VERSION,
@@ -1998,6 +2032,7 @@ class BambuFleetStudioManager:
             "tts_quiet_hours",
             "safe_cooldown_plug_off",
             "low_spool_alert",
+            "debug_logging",
         ):
             if bool_key in payload:
                 self.notifications[bool_key] = bool(payload[bool_key])
@@ -2868,6 +2903,144 @@ async def async_scan_bambu_network(hass: HomeAssistant, subnet_override: str = "
     }
 
 
+_REDACT_KEYS = {
+    "sn", "dev_id", "device_id", "serial", "ssid", "bssid", "mac", "ip", "ip_addr", "host", "hostname",
+    "access_code", "token", "password", "passwd", "email", "user_id", "uid", "tag_uid", "tray_uuid", "uuid",
+    "rtsp_url", "url", "subtask_name", "gcode_file", "project_id", "task_id", "subtask_id", "job_id",
+    "profile_id", "model_id", "design_id", "plate_name", "lan_ip", "wifi_ssid", "name",
+}
+_REDACT_SUFFIXES = ("_sn", "_serial", "_ssid", "_uuid", "_token", "_url", "_ip", "_mac", "_uid", "_password", "_email")
+# Octets without leading zeros, so firmware versions like 01.09.00.00 are not mistaken for IP addresses
+_RE_IPV4 = re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b")
+_RE_MAC = re.compile(r"\b[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}\b")
+_RE_EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+_RE_URL = re.compile(r"\b(?:https?|rtsps?|mqtts?)://\S+", re.I)
+_RE_SERIAL = re.compile(r"\b(?=[0-9A-Z]*\d)(?=[0-9A-Z]*[A-Z])[0-9A-Z]{12,16}\b")
+
+
+def _redact_text(text: str, literals: list[str]) -> str:
+    """Remove personal details (serials, IPs, MACs, emails, URLs, known names) from free text."""
+    for lit in literals:
+        if lit and len(lit) >= 3:
+            text = re.sub(re.escape(lit), "[redacted]", text, flags=re.I)
+    text = _RE_URL.sub("[url]", text)
+    text = _RE_EMAIL.sub("[email]", text)
+    text = _RE_MAC.sub("[mac]", text)
+    text = _RE_IPV4.sub("[ip]", text)
+    text = _RE_SERIAL.sub("[serial]", text)
+    return text
+
+
+def _redact_obj(obj: Any, literals: list[str], depth: int = 0) -> Any:
+    """Recursively copy a JSON-like object with sensitive keys and values replaced."""
+    if depth > 12:
+        return "[too deep]"
+    if isinstance(obj, dict):
+        out: dict[str, Any] = {}
+        for k, v in obj.items():
+            lk = str(k).lower()
+            if lk in _REDACT_KEYS or lk.endswith(_REDACT_SUFFIXES) or lk.startswith("access"):
+                out[str(k)] = "[redacted]" if v not in (None, "", 0) else v
+            else:
+                out[str(k)] = _redact_obj(v, literals, depth + 1)
+        return out
+    if isinstance(obj, (list, tuple)):
+        return [_redact_obj(v, literals, depth + 1) for v in list(obj)[:60]]
+    if isinstance(obj, str):
+        return _redact_text(obj, literals)
+    return obj
+
+
+def build_debug_report(mgr: "BambuFleetStudioManager") -> str:
+    """Build a shareable debug report with all personal details removed."""
+    runtimes = list(mgr.runtimes.values())
+    literals: list[str] = []
+    for rt in runtimes:
+        literals += [rt.serial, rt.host, rt.access_code, rt.name]
+    literals = sorted({x for x in literals if x}, key=len, reverse=True)
+
+    printers: list[dict[str, Any]] = []
+    for idx, rt in enumerate(runtimes, start=1):
+        now = time.time()
+        thread = getattr(rt, "_mqtt_thread", None)
+        printers.append({
+            "printer": f"Printer {idx} ({rt.model})",
+            "firmware": rt.sw_version,
+            "has_ip": bool(rt.host),
+            "has_access_code": bool(rt.access_code),
+            "has_serial": bool(rt.serial),
+            "mqtt_thread_alive": bool(thread and thread.is_alive()),
+            "online": rt.online,
+            "auth_failed": rt.auth_failed,
+            "seconds_since_last_seen": round(now - rt.last_seen, 1) if rt.last_seen else None,
+            "seconds_since_last_message": round(now - rt._last_msg_ts, 1) if rt._last_msg_ts else None,
+            "messages_received": rt._msg_total,
+            "print_messages_received": rt._report_msg_count,
+            "top_level_keys_seen": dict(rt._top_keys_seen),
+            "fields_in_last_print_message": list(rt._last_print_keys),
+            "got_full_status": rt._got_full_status,
+            "state": {
+                "print_status": rt.print_status,
+                "stage": rt.current_stage,
+                "progress": rt.progress,
+                "nozzle_temp": rt.nozzle_temp,
+                "bed_temp": rt.bed_temp,
+                "chamber_temp": rt.chamber_temp,
+                "ams_units": len(rt.ams_units),
+                "hms_count": len(rt.hms_errors),
+                "print_error": rt.print_error,
+            },
+            "recent_events": list(rt._diag_events),
+            "recent_raw_messages": [
+                {"time": ts, "message": _redact_obj(msg, literals)} for ts, msg in list(rt._debug_msgs)
+            ],
+        })
+    report = {
+        "bambu_fleet_studio_version": VERSION,
+        "debug_logging_enabled": bool(mgr.notifications.get("debug_logging")),
+        "printer_count": len(runtimes),
+        "note": "Serials, IP addresses, access codes, names, file names, MAC addresses, emails and URLs are removed.",
+        "printers": printers,
+    }
+    return _redact_text(json.dumps(report, indent=2, default=str, ensure_ascii=False), literals)
+
+
+class FleetDebugAPIView(HomeAssistantView):
+    """Admin-only: switch debug logging on/off and download the redacted debug report."""
+
+    url = "/api/bambu_fleet_studio/debug"
+    name = "api:bambu_fleet_studio:debug"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
+        mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
+        if not mgr:
+            return web.json_response({"error": "Manager not initialized"}, status=500)
+        return web.json_response({
+            "ok": True,
+            "enabled": bool(mgr.notifications.get("debug_logging")),
+            "report": build_debug_report(mgr),
+        })
+
+    async def post(self, request: web.Request) -> web.Response:
+        if err_resp := _require_admin(request):
+            return err_resp
+        mgr: Optional[BambuFleetStudioManager] = self.hass.data.get(DOMAIN, {}).get("manager")
+        if not mgr:
+            return web.json_response({"error": "Manager not initialized"}, status=500)
+        body = await request.json()
+        await mgr.async_update_notifications({"debug_logging": bool(body.get("enabled"))})
+        if not mgr.notifications.get("debug_logging"):
+            for rt in mgr.runtimes.values():
+                rt._debug_msgs.clear()
+        return web.json_response({"ok": True, "enabled": bool(mgr.notifications.get("debug_logging"))})
+
+
 def _require_admin(request: web.Request) -> Optional[web.Response]:
     """Verify that the requesting user has administrator privileges."""
     user = request.get("hass_user")
@@ -3216,6 +3389,7 @@ async def _async_ensure_initialized(hass: HomeAssistant) -> BambuFleetStudioMana
     if not domain_data.get("views_registered"):
         hass.http.register_view(FleetStatusAPIView(hass))
         hass.http.register_view(FleetNotificationsAPIView(hass))
+        hass.http.register_view(FleetDebugAPIView(hass))
         hass.http.register_view(FleetPrintersAPIView(hass))
         hass.http.register_view(FleetCommandAPIView(hass))
         hass.http.register_view(FleetCameraSnapshotAPIView(hass))
