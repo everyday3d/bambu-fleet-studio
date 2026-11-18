@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.7"
+VERSION = "1.4.8"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -1772,6 +1772,7 @@ class BambuPrinterRuntime:
             "online": is_online,
             "lastOnlineTs": round(eff_last_online, 1) if eff_last_online > 0 else 0,
             "authFailed": self.auth_failed,
+            "missingFields": [n for n, v in (("IP address", self.host), ("LAN access code", self.access_code), ("serial", self.serial)) if not v],
             "printStatus": p_status,
             "currentStage": c_stage,
             "progress": self.progress,

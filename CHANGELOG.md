@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2026-11-18
+
+### Added
+- **"Setup incomplete" alert on the card (`#43`)**: A printer that is missing its IP address, serial number or LAN access code now shows a clear alert on its card ("Missing: LAN access code. Click Edit Device…") instead of just blank temperatures and AMS. Previously this only appeared in the Home Assistant log, so a printer that was never configured looked like a bug.
+
 ## [1.4.7] - 2026-11-18
 
 ### Fixed
