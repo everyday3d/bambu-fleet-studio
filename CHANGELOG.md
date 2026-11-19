@@ -5,6 +5,14 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.10] - 2026-11-19
+
+### Fixed
+- **AMS HT shows one slot (`#43`)**: An AMS HT holds a single spool, but the card drew four slots for it. It now shows one. The unit type is also read from the unit's own info code (3 = AMS 2 Pro, 4 = AMS HT), which was confirmed from a real X2D report. **Untested** on a live card.
+
+### Changed
+- **Debug logging now switches itself off after 5 minutes** instead of 30.
+
 ## [1.4.9] - 2026-11-19
 
 ### Fixed

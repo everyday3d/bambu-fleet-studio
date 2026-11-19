@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.9"
+VERSION = "1.4.10"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -928,8 +928,8 @@ class BambuPrinterRuntime:
                             if mgr_dbg and mgr_dbg.notifications.get("debug_logging") and isinstance(data, dict):
                                 if not mgr_dbg.debug_started_ts:
                                     mgr_dbg.debug_started_ts = time.time()
-                                if time.time() - mgr_dbg.debug_started_ts > 1800:
-                                    # Safety net: debug logging switches itself off after 30 minutes
+                                if time.time() - mgr_dbg.debug_started_ts > 300:
+                                    # Safety net: debug logging switches itself off after 5 minutes
                                     self._debug_msgs.clear()
                                     self.hass.loop.call_soon_threadsafe(
                                         lambda m=mgr_dbg: self.hass.async_create_task(
@@ -1409,8 +1409,17 @@ class BambuPrinterRuntime:
                 unit_num = (idx + 1) if is_ht_unit else (unit_id + 1)
                 bank_letter = ["A", "B", "C", "D"][idx if is_ht_unit else unit_id] if 0 <= (idx if is_ht_unit else unit_id) < 4 else "A"
                 default_ams_code = "AMSLITE" if self.model in ("A1", "A1MINI", "A2L") else ("AMS2PRO" if self.model in ("P2S", "X2D", "H2C", "H2D", "H2S") else "AMS")
-                if is_ht_unit:
+                # The low nibble of the unit "info" field is the unit type (seen: 3 = AMS 2 Pro, 4 = AMS HT).
+                info_type = -1
+                try:
+                    info_type = int(str(u.get("info") or ""), 16) & 0xF
+                except Exception:
+                    info_type = -1
+                if is_ht_unit or info_type == 4:
+                    is_ht_unit = True
                     detected_ams_code = "AMSHT"
+                elif info_type == 3:
+                    detected_ams_code = "AMS2PRO"
                 else:
                     detected_ams_code = self.ams_module_types.get(unit_id, default_ams_code)
                 ams_code = self.ams_override if (self.ams_override and self.ams_override not in ("AUTO", "NONE")) else detected_ams_code
@@ -1438,7 +1447,7 @@ class BambuPrinterRuntime:
                 tray_map = {int(str(t.get("id", 0))): t for t in raw_trays if isinstance(t, dict) and str(t.get("id", "")).isdigit()}
 
                 trays_out = []
-                for slot_idx in range(4):
+                for slot_idx in range(1 if is_ht_unit else 4):
                     slot_num = slot_idx + 1
                     t_obj = tray_map.get(slot_idx)
                     global_tray_id = str(unit_id + slot_idx) if is_ht_unit else str(unit_id * 4 + slot_idx)
