@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.11] - 2026-11-19
+
+### Fixed
+- **Print hours you type in Edit Device now show on the card (`#43`)**: When ha-bambulab was installed, its total usage sensor always replaced the hours on the card, so a value entered in Edit Device never appeared (the odometer meters did). Hours you enter yourself now take priority over the ha-bambulab sensor. Printers where you haven't entered hours keep using the sensor as before. **Untested** with a live ha-bambulab sensor.
+
 ## [1.4.10] - 2026-11-19
 
 ### Fixed

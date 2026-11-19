@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.10"
+VERSION = "1.4.11"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -444,8 +444,9 @@ class BambuPrinterRuntime:
         except Exception:
             self._usage_hours_val = 0.0
         self.usage_hours: str = self._fmt_num(self._usage_hours_val, 1)
+        self.hours_manual: bool = bool(config.get("hours_manual"))
         try:
-            raw_m = max(0.0, float(config.get("extruded_meters") or 0.0))
+            raw_m =max(0.0, float(config.get("extruded_meters") or 0.0))
             self._extruded_meters: float = raw_m if raw_m > 0.0 else round(self._usage_hours_val * 4.5, 1)
         except Exception:
             self._extruded_meters = round(self._usage_hours_val * 4.5, 1)
@@ -1833,6 +1834,7 @@ class BambuPrinterRuntime:
             "printWeight": self.print_weight,
             "printLength": self.print_length,
             "totalUsage": self.usage_hours,
+            "hoursManual": self.hours_manual,
             "extrudedMeters": round(self._extruded_meters, 1),
             "extrudedGrams": round(self._extruded_grams, 0),
             "extrudedSpools": round(self._extruded_meters / 330.0, 2),
@@ -2730,12 +2732,22 @@ class BambuFleetStudioManager:
             else (existing_rt.maintenance_log if existing_rt else existing.get("maintenance_log", {}))
         )
 
+        # A value the user typed in Edit Device wins over other hour sources on the card.
+        hours_manual = bool(existing.get("hours_manual"))
+        try:
+            prev_hours = float(existing_rt.usage_hours if existing_rt else existing.get("usage_hours", 0) or 0)
+            if "usage_hours" in payload and abs(float(usage_hours or 0) - prev_hours) > 0.2:
+                hours_manual = True
+        except Exception:
+            pass
+
         cfg = {
             "serial": serial,
             "host": resolved_host,
             "access_code": access_code,
             "model": model,
             "name": name,
+            "hours_manual": hours_manual,
             "usage_hours": usage_hours,
             "extruded_meters": round(extruded_meters, 2),
             "extruded_grams": round(extruded_grams, 1),
@@ -2757,6 +2769,7 @@ class BambuFleetStudioManager:
             and existing_rt.model == model
         ):
             existing_rt._config_ref = cfg
+            existing_rt.hours_manual = hours_manual
             existing_rt.name = name
             existing_rt.ams_override = ams_override
             existing_rt.bed_type = bed_type
