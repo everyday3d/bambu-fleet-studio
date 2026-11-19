@@ -1,10 +1,10 @@
-# 🖨️ Bambu Lab Fleet Studio `v1.4.8`
+# 🖨️ Bambu Lab Fleet Studio `v1.4.9`
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/everyday3d/bambu-fleet-studio/main/icon.png" width="128" height="128" alt="Bambu Lab Fleet Studio (BFleet)" style="border-radius: 28px;" />
 </p>
 
-[![Release v1.4.8](https://img.shields.io/badge/Release-v1.4.8%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
+[![Release v1.4.9](https://img.shields.io/badge/Release-v1.4.9%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/bambu-fleet-studio/releases/latest)
 
 > **👋 Hello makers!** This is a project I've been working on for some time, and I'm excited to share it with the community.
 >
@@ -16,7 +16,7 @@ A clean, card-based Home Assistant dashboard for **Bambu Lab** 3D printers, lase
 
 ![Bambu Lab Fleet Studio Overview](https://raw.githubusercontent.com/everyday3d/bambu-fleet-studio/main/docs/screenshots/01_fleet_studio_overview.png)
 
-## 🆕 What's New in `v1.4.8`
+## 🆕 What's New in `v1.4.9`
 
 - **🛠️ Printer Maintenance Reminders & 1-Click Reset Log**:
   - Keeping up with routine maintenance across multiple printers is easy to forget until a print starts acting up. Each printer now keeps track of its own print hours and reminds you when it's time to **wipe down carbon rods or lubricate linear rails** (every `250h`), **clean and regrease the Z lead screws** (every `500h`), **brush out the extruder gears and check the nozzle** (every `500h`, or clean the optics on an `R1` Laser), and **swap out the carbon air filter** on enclosed printers (every `400h`).

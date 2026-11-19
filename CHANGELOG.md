@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.9] - 2026-11-19
+
+### Fixed
+- **AMS type is read from the printer (`#43`)**: The AMS type used to be guessed from the printer model, so an AMS HT showed up as an AMS 2 Pro on the X2D and as an AMS Lite on the A1. Fleet Studio now reads the attached AMS units from the printer's version info (AMS, AMS Lite, AMS 2 Pro) and treats units with ids from 128 up as AMS HT. The old model-based guess is only used when the printer doesn't say. **Untested**, as no AMS HT is available here; the manual AMS type override in Edit Device still works.
+
 ## [1.4.8] - 2026-11-18
 
 ### Added

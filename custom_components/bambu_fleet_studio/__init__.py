@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.8"
+VERSION = "1.4.9"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -548,6 +548,8 @@ class BambuPrinterRuntime:
         self.print_error: int = 0
         self.rtsp_url: str = ""
         self.ams_units: list[dict[str, Any]] = []
+        # AMS type per unit index, learned from the printer's get_version module list.
+        self.ams_module_types: dict[int, str] = {}
         self.ext_spool: dict[str, Any] = {
             "name": "External Spool",
             "type": "PLA",
@@ -1042,6 +1044,16 @@ class BambuPrinterRuntime:
                     if isinstance(m, dict) and m.get("name") in ("ota", "mc", "ap") and m.get("sw_ver"):
                         self.sw_version = str(m["sw_ver"])
                         break
+                # Module names: ams/N = AMS, ams_f1/N = AMS Lite, n3f/N = AMS 2 Pro, n3s/N = AMS HT.
+                # Only AMS/Lite/2 Pro are keyed by unit id; HT units use ids 128 and up.
+                name_to_code = {"ams": "AMS", "ams_f1": "AMSLITE", "n3f": "AMS2PRO"}
+                for m in mods:
+                    if not isinstance(m, dict):
+                        continue
+                    base, _, idx_s = str(m.get("name") or "").partition("/")
+                    code = name_to_code.get(base.lower())
+                    if code and idx_s.isdigit():
+                        self.ams_module_types[int(idx_s)] = code
 
         p = data.get("print")
         if not isinstance(p, dict):
@@ -1393,10 +1405,15 @@ class BambuPrinterRuntime:
                 if not isinstance(u, dict):
                     continue
                 unit_id = int(str(u.get("id", idx)))
-                unit_num = unit_id + 1
-                bank_letter = ["A", "B", "C", "D"][unit_id] if 0 <= unit_id < 4 else "A"
+                is_ht_unit = unit_id >= 128
+                unit_num = (idx + 1) if is_ht_unit else (unit_id + 1)
+                bank_letter = ["A", "B", "C", "D"][idx if is_ht_unit else unit_id] if 0 <= (idx if is_ht_unit else unit_id) < 4 else "A"
                 default_ams_code = "AMSLITE" if self.model in ("A1", "A1MINI", "A2L") else ("AMS2PRO" if self.model in ("P2S", "X2D", "H2C", "H2D", "H2S") else "AMS")
-                ams_code = self.ams_override if (self.ams_override and self.ams_override not in ("AUTO", "NONE")) else default_ams_code
+                if is_ht_unit:
+                    detected_ams_code = "AMSHT"
+                else:
+                    detected_ams_code = self.ams_module_types.get(unit_id, default_ams_code)
+                ams_code = self.ams_override if (self.ams_override and self.ams_override not in ("AUTO", "NONE")) else detected_ams_code
 
                 hum_idx = str(u.get("humidity") or "—")
                 hum_raw = u.get("humidity_raw")
@@ -1415,7 +1432,7 @@ class BambuPrinterRuntime:
                 except Exception:
                     pass
 
-                is_open_air = ams_code == "AMSLITE" or (temp_str in ("—", "0", "0.0") and hum_pct is None)
+                is_open_air = ams_code == "AMSLITE" or (ams_code != "AMSHT" and temp_str in ("—", "0", "0.0") and hum_pct is None)
 
                 raw_trays = u.get("tray") if isinstance(u.get("tray"), list) else []
                 tray_map = {int(str(t.get("id", 0))): t for t in raw_trays if isinstance(t, dict) and str(t.get("id", "")).isdigit()}
@@ -1424,7 +1441,7 @@ class BambuPrinterRuntime:
                 for slot_idx in range(4):
                     slot_num = slot_idx + 1
                     t_obj = tray_map.get(slot_idx)
-                    global_tray_id = str(unit_id * 4 + slot_idx)
+                    global_tray_id = str(unit_id + slot_idx) if is_ht_unit else str(unit_id * 4 + slot_idx)
                     is_active = tray_now_raw == global_tray_id
                     if not t_obj:
                         trays_out.append({
