@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.11"
+VERSION = "1.4.12"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -2991,7 +2991,10 @@ def _redact_obj(obj: Any, literals: list[str], depth: int = 0) -> Any:
         out: dict[str, Any] = {}
         for k, v in obj.items():
             lk = str(k).lower()
-            if lk in _REDACT_KEYS or lk.endswith(_REDACT_SUFFIXES) or lk.startswith("access"):
+            if lk == "rtsp_url" and isinstance(v, str) and "://" not in v:
+                # Keep plain switch values such as "disable" / "enable"; only real addresses are hidden.
+                out[str(k)] = v
+            elif lk in _REDACT_KEYS or lk.endswith(_REDACT_SUFFIXES) or lk.startswith("access"):
                 out[str(k)] = "[redacted]" if v not in (None, "", 0) else v
             else:
                 out[str(k)] = _redact_obj(v, literals, depth + 1)
@@ -3034,6 +3037,13 @@ def build_debug_report(mgr: "BambuFleetStudioManager") -> str:
             "top_level_keys_seen": dict(rt._top_keys_seen),
             "fields_in_last_print_message": list(rt._last_print_keys),
             "got_full_status": rt._got_full_status,
+            "camera": {
+                "uses_rtsp_stream": rt.model in RTSP_MODELS,
+                "printer_reports_stream": (
+                    "not reported yet" if not rt.rtsp_url
+                    else (rt.rtsp_url if "://" not in rt.rtsp_url else "address provided")
+                ),
+            },
             "state": {
                 "print_status": rt.print_status,
                 "stage": rt.current_stage,

@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.12] - 2026-11-20
+
+### Changed
+- **Debug report shows the camera stream state (`#43`)**: The report now has a "camera" section that says whether the printer uses the RTSP camera stream and what the printer reports about it (for example `disable` when the printer's LAN Mode Liveview switch is off). Only real stream addresses are hidden; plain switch values like `disable` are shown.
+
 ## [1.4.11] - 2026-11-19
 
 ### Fixed
