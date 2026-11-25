@@ -5,6 +5,17 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.13] - 2026-11-25
+
+### Fixed
+- **Green "in use" slot follows the printer (`#44`)**: When the printer switched to another AMS slot, for example after the first spool ran out, the green highlight stayed on the old slot until the next full AMS report. It now moves as soon as the printer reports the new slot. **Untested** on a live runout.
+
+### Changed
+- **The setup guide is hidden by default (`#44`)**: The guide no longer opens every time the card loads. Use the Guide button to show it, or set `show_walkthrough: true` in the card config to keep it open.
+
+### Added
+- **`show_header: false` card option (`#44`)**: Hides the top bar (title, counters and buttons) for people who only want the printer cards, for example with a single printer.
+
 ## [1.4.12] - 2026-11-20
 
 ### Changed

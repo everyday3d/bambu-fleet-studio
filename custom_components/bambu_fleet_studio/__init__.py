@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.12"
+VERSION = "1.4.13"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -1532,6 +1532,8 @@ class BambuPrinterRuntime:
                 parsed_units.append({
                     "id": f"ams_{self.prefix}_{unit_num}",
                     "unitNum": unit_num,
+                    "unitId": unit_id,
+                    "isHt": is_ht_unit,
                     "bankLetter": bank_letter,
                     "modelNorm": ams_code,
                     "isOpenAir": is_open_air,
@@ -1545,6 +1547,18 @@ class BambuPrinterRuntime:
                     "trays": trays_out,
                 })
             self.ams_units = parsed_units
+        elif isinstance(ams_block, dict) and "tray_now" in ams_block and self.ams_units:
+            # Partial update that only carries tray_now (the printer switched spools, e.g. after a runout):
+            # move the "in use" marker without waiting for the next full AMS report.
+            now_raw = str(ams_block.get("tray_now") or "255")
+            for unit in self.ams_units:
+                uid = unit.get("unitId")
+                if uid is None:
+                    continue
+                for tray in unit.get("trays", []):
+                    slot_i = int(tray.get("slot", 1)) - 1
+                    gid = str(uid + slot_i) if unit.get("isHt") else str(uid * 4 + slot_i)
+                    tray["active"] = (gid == now_raw)
 
         self._tick_odometer(
             time.time(),
