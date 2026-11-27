@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.13"
+VERSION = "1.4.14"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -525,6 +525,9 @@ class BambuPrinterRuntime:
         self.nozzle_size: str = "0.4"
         self.nozzle_type: str = "hardened steel"
         self.active_nozzle_index: int = 0
+        # Loaded slot as last reported; partial updates may leave either one out.
+        self.tray_now_raw: str = "255"
+        self.extruder_snow: dict[int, int] = {}
         self.left_nozzle_temp: str = "—"
         self.left_nozzle_target: str = "0"
         self.left_nozzle_size: str = "0.4"
@@ -1036,6 +1039,20 @@ class BambuPrinterRuntime:
         except Exception:
             return "0"
 
+    def _is_tray_active(self, unit_id: int, slot_idx: int, is_ht: bool) -> bool:
+        """True when this AMS slot is the one feeding the active nozzle."""
+        snow = self.extruder_snow.get(self.active_nozzle_index)
+        if snow is None and len(self.extruder_snow) == 1:
+            snow = next(iter(self.extruder_snow.values()))
+        if snow is not None:
+            # Newer firmware: AMS unit id << 8 | slot. Here tray_now can be just the slot number (0-3),
+            # which is the same for every AMS unit. 0xFF means nothing is loaded.
+            if snow == 0xFF or (snow >> 8) != unit_id:
+                return False
+            return is_ht or (snow & 0xFF) == slot_idx
+        global_id = unit_id + slot_idx if is_ht else unit_id * 4 + slot_idx
+        return self.tray_now_raw == str(global_id)
+
     def _handle_mqtt_payload(self, data: dict[str, Any]) -> None:
         """Update live telemetry fields from a Bambu Lab MQTT JSON message."""
         if "info" in data and isinstance(data["info"], dict):
@@ -1187,6 +1204,8 @@ class BambuPrinterRuntime:
                         if not isinstance(entry, dict):
                             continue
                         eid = entry.get("id")
+                        if eid in (0, 1) and entry.get("snow") is not None:
+                            self.extruder_snow[eid] = int(entry["snow"])
                         if eid in (0, 1) and entry.get("temp") is not None:
                             t_packed = int(entry["temp"])
                             t_cur = t_packed & 0xFFFF
@@ -1399,7 +1418,8 @@ class BambuPrinterRuntime:
         # Parse Multi-AMS units (ams.ams)
         ams_block = p.get("ams")
         if isinstance(ams_block, dict) and isinstance(ams_block.get("ams"), list):
-            tray_now_raw = str(ams_block.get("tray_now") or "255")
+            if "tray_now" in ams_block:
+                self.tray_now_raw = str(ams_block.get("tray_now") or "255")
             raw_units = ams_block["ams"]
             parsed_units = []
             for idx, u in enumerate(raw_units):
@@ -1452,7 +1472,7 @@ class BambuPrinterRuntime:
                     slot_num = slot_idx + 1
                     t_obj = tray_map.get(slot_idx)
                     global_tray_id = str(unit_id + slot_idx) if is_ht_unit else str(unit_id * 4 + slot_idx)
-                    is_active = tray_now_raw == global_tray_id
+                    is_active = self._is_tray_active(unit_id, slot_idx, is_ht_unit)
                     if not t_obj:
                         trays_out.append({
                             "slot": slot_num,
@@ -1547,18 +1567,18 @@ class BambuPrinterRuntime:
                     "trays": trays_out,
                 })
             self.ams_units = parsed_units
-        elif isinstance(ams_block, dict) and "tray_now" in ams_block and self.ams_units:
-            # Partial update that only carries tray_now (the printer switched spools, e.g. after a runout):
-            # move the "in use" marker without waiting for the next full AMS report.
-            now_raw = str(ams_block.get("tray_now") or "255")
-            for unit in self.ams_units:
-                uid = unit.get("unitId")
-                if uid is None:
-                    continue
-                for tray in unit.get("trays", []):
-                    slot_i = int(tray.get("slot", 1)) - 1
-                    gid = str(uid + slot_i) if unit.get("isHt") else str(uid * 4 + slot_i)
-                    tray["active"] = (gid == now_raw)
+
+        # The printer can switch spools (for example after a runout) in a small update without the AMS list:
+        # move the "in use" marker without waiting for the next full AMS report.
+        if isinstance(ams_block, dict) and "tray_now" in ams_block:
+            self.tray_now_raw = str(ams_block.get("tray_now") or "255")
+        for unit in self.ams_units:
+            uid = unit.get("unitId")
+            if uid is None:
+                continue
+            for tray in unit.get("trays", []):
+                slot_i = int(tray.get("slot", 1)) - 1
+                tray["active"] = self._is_tray_active(uid, slot_i, bool(unit.get("isHt")))
 
         self._tick_odometer(
             time.time(),
@@ -3051,6 +3071,15 @@ def build_debug_report(mgr: "BambuFleetStudioManager") -> str:
             "top_level_keys_seen": dict(rt._top_keys_seen),
             "fields_in_last_print_message": list(rt._last_print_keys),
             "got_full_status": rt._got_full_status,
+            "active_slot": {
+                "tray_now": rt.tray_now_raw,
+                "extruder_snow": dict(rt.extruder_snow),
+                "active_nozzle": rt.active_nozzle_index,
+                "highlighted": [
+                    {"ams_id": u.get("unitId"), "slot": t.get("slot")}
+                    for u in rt.ams_units for t in u.get("trays", []) if t.get("active")
+                ],
+            },
             "camera": {
                 "uses_rtsp_stream": rt.model in RTSP_MODELS,
                 "printer_reports_stream": (

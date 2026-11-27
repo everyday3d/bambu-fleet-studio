@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.14] - 2026-11-27
+
+### Fixed
+- **Green "in use" slot on the wrong AMS (`#44`)**: With more than one AMS, the card could highlight the right slot number on the wrong unit, for example AMS 1 slot 3 while AMS 2 slot 3 was printing. Newer firmware reports the loaded slot together with its AMS unit, and Fleet Studio now reads that first. The debug report also shows what the printer sends for the active slot. **Untested** on a live printer with two AMS units.
+
 ## [1.4.13] - 2026-11-25
 
 ### Fixed
