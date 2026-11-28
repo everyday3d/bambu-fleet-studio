@@ -47,7 +47,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = "bambu_fleet_studio"
-VERSION = "1.4.14"
+VERSION = "1.4.15"
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 GITHUB_RELEASES_API = "https://api.github.com/repos/everyday3d/bambu-fleet-studio/releases/latest"
 GITHUB_RELEASES_WEB = "https://github.com/everyday3d/bambu-fleet-studio/releases/latest"
@@ -425,6 +425,14 @@ def get_or_create_rtsps_bridge(host: str, access_code: str, port: int = 322, pat
             bridge = _LocalRtspsBridge(host, port, "bblp", access_code)
             _RTSPS_BRIDGES[key] = bridge
     return f"rtsp://127.0.0.1:{bridge.local_port}{path}"
+
+
+def _tray_colors(tray: dict) -> list[str]:
+    """All colours of a spool as RRGGBBAA. Multi-colour spools list them in "cols"."""
+    cols = tray.get("cols")
+    if not isinstance(cols, list) or not cols:
+        cols = [tray.get("tray_color")]
+    return [str(c).strip().lstrip("#").upper() for c in cols if c]
 
 
 class BambuPrinterRuntime:
@@ -1411,6 +1419,8 @@ class BambuPrinterRuntime:
                 "name": "Empty" if is_empty else sub_brand,
                 "type": t_type or "PLA",
                 "color": hex_col,
+                "filaId": str(vt.get("tray_info_idx") or ""),
+                "colors": _tray_colors(vt),
                 "active": False,
                 "empty": is_empty,
             }
@@ -1544,6 +1554,8 @@ class BambuPrinterRuntime:
                         "name": "Empty" if is_empty else (t_sub or t_type),
                         "type": t_type or "PLA",
                         "color": hex_color,
+                        "filaId": str(t_obj.get("tray_info_idx") or ""),
+                        "colors": _tray_colors(t_obj),
                         "remain": remain,
                         "active": is_active,
                         "empty": is_empty,

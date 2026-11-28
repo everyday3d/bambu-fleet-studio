@@ -21,7 +21,7 @@
 // Boxerdawg3D maker logo (transparent PNG), shown in the card header.
 const BOXERDAWG3D_LOGO = 'data:image/png;base64,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';
 (function() {
-  const CARD_VERSION = "1.4.14";
+  const CARD_VERSION = "1.4.15";
 
   const escapeHtml = (str) => {
     if (str === null || str === undefined) return "";
@@ -2079,6 +2079,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             name: isEmpty ? t("ams_empty", activeLang) : (tRaw.name || t("ams_empty", activeLang)),
             type: tRaw.type || "PLA",
             color: tRaw.color || "#334155",
+            filaId: tRaw.filaId || "",
+            colors: tRaw.colors || [],
             remain: typeof tRaw.remain === "number" ? tRaw.remain : null,
             active: Boolean(tRaw.active),
             empty: isEmpty
@@ -2111,6 +2113,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       name: extEmpty ? t("ext_spool_title", activeLang) : (extRaw.name || t("ext_spool_title", activeLang)),
       type: extRaw.type || "PLA",
       color: extRaw.color || "#f59e0b",
+      filaId: extRaw.filaId || "",
+      colors: extRaw.colors || [],
       active: Boolean(extRaw.active),
       empty: extEmpty
     };
@@ -2548,6 +2552,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
               name: materialName,
               type: filType,
               color: hexColor,
+              filaId: trayState?.attributes?.filament_id || "",
+              colors: trayState?.attributes?.cols?.length ? trayState.attributes.cols : [rawColor],
               remain: (typeof remain === "number" && remain >= 0) ? remain : null,
               active: isActive,
               empty: isEmpty
@@ -2602,6 +2608,8 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         name: (extState && extState.state !== "unavailable" && extState.state !== "unknown") ? extState.state : t("ext_spool_title", activeLang),
         type: extState?.attributes?.type || "PLA",
         color: (extState?.attributes?.color || "#f59e0b").slice(0, 7),
+        filaId: extState?.attributes?.filament_id || "",
+        colors: extState?.attributes?.cols?.length ? extState.attributes.cols : [extState?.attributes?.color || ""],
         active: hass.states["binary_sensor." + prefix + "_externalspool_active"]?.state === "on",
         empty: extEmpty
       };
@@ -2762,7 +2770,405 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     { hex: "#4D3324", name: "Espresso Brown", zh: "浓缩咖啡棕", zhTw: "濃縮咖啡棕", family: "PURPLE_BROWN" }
   ];
 
-  function resolveSpoolColorInfo(hexStr, arg2 = false, arg3 = "PLA", arg4 = false, lang = "en") {
+  // Every Bambu filament colour in every material: [filament id, filament line, RRGGBBAA colours joined by "+", English, Chinese].
+  // Generated from Bambu Studio's resources/profiles/BBL/filament/filaments_color_codes.json.
+  const BAMBU_OFFICIAL_COLORS = [
+    ["GFA00","PLA Basic","FF6A13FF","Orange","橙色"],
+    ["GFA00","PLA Basic","FF9016FF","Pumpkin Orange","南瓜橙"],
+    ["GFA00","PLA Basic","5B6579FF","Blue Gray","蓝灰"],
+    ["GFA00","PLA Basic","0056B8FF","Cobalt Blue","钴蓝色"],
+    ["GFA00","PLA Basic","00B1B7FF","Turquoise","松石绿"],
+    ["GFA00","PLA Basic","0086D6FF","Cyan","青色"],
+    ["GFA00","PLA Basic","0A2989FF","Blue","蓝色"],
+    ["GFA00","PLA Basic","8E9089FF","Gray","灰色"],
+    ["GFA00","PLA Basic","A6A9AAFF","Silver","银色"],
+    ["GFA00","PLA Basic","D1D3D5FF","Light Gray","浅灰"],
+    ["GFA00","PLA Basic","545454FF","Dark Gray","深灰"],
+    ["GFA00","PLA Basic","3F8E43FF","Mistletoe Green","圣诞绿"],
+    ["GFA00","PLA Basic","BECF00FF","Bright Green","苹果绿"],
+    ["GFA00","PLA Basic","00AE42FF","Bambu Green","拓竹绿"],
+    ["GFA00","PLA Basic","000000FF","Black","黑色"],
+    ["GFA00","PLA Basic","9CDBD9FF+FFFFFFFF","Arctic Whisper","蓝白渐变"],
+    ["GFA00","PLA Basic","E94B3CFF+FFFFFFFF","Solar Breeze","红白渐变"],
+    ["GFA00","PLA Basic","307FE2FF+54FF9BFF","Ocean to Meadow","蓝绿渐变"],
+    ["GFA00","PLA Basic","F78F77FF+E4505AFF","Pink Citrus","霞光粉"],
+    ["GFA00","PLA Basic","B6FF43FF+4EC939FF","Mint Lime","青柠绿"],
+    ["GFA00","PLA Basic","6FCAEFFF+8573DDFF","Blueberry Bubblegum","泡泡紫"],
+    ["GFA00","PLA Basic","CE4406FF+ED9558FF","Dusk Glare","日落橙"],
+    ["GFA00","PLA Basic","E7C1D5FF+8EC9E9FF","Cotton Candy Cloud","多巴胺（粉蓝渐变）"],
+    ["GFA00","PLA Basic","9D432CFF","Brown","棕色"],
+    ["GFA00","PLA Basic","6F5034FF","Cocoa Brown","可可棕"],
+    ["GFA00","PLA Basic","F7E6DEFF","Beige","杏色"],
+    ["GFA00","PLA Basic","F55A74FF","Pink","粉色"],
+    ["GFA00","PLA Basic","482960FF","Indigo Purple","绀紫色"],
+    ["GFA00","PLA Basic","5E43B7FF","Purple","紫色"],
+    ["GFA00","PLA Basic","EC008CFF","Magenta","品红"],
+    ["GFA00","PLA Basic","C12E1FFF","Red","红色"],
+    ["GFA00","PLA Basic","9D2235FF","Maroon Red","胭脂红"],
+    ["GFA00","PLA Basic","F5547CFF","Hot Pink","桃红色"],
+    ["GFA00","PLA Basic","FFFFFFFF","Jade White","玉石白"],
+    ["GFA00","PLA Basic","F4EE2AFF","Yellow","黄色"],
+    ["GFA00","PLA Basic","FEC600FF","Sunflower Yellow","暖黄色"],
+    ["GFA00","PLA Basic","847D48FF","Bronze","青铜"],
+    ["GFA00","PLA Basic","E4BD68FF","Gold","金色"],
+    ["GFA01","PLA Matte","F99963FF","Mandarin Orange","橘橙"],
+    ["GFA01","PLA Matte","56B7E6FF","Sky Blue","天蓝色"],
+    ["GFA01","PLA Matte","0078BFFF","Marine Blue","海蓝"],
+    ["GFA01","PLA Matte","A3D8E1FF","Ice Blue","冰蓝"],
+    ["GFA01","PLA Matte","042F56FF","Dark Blue","暗夜蓝"],
+    ["GFA01","PLA Matte","757575FF","Nardo Gray","枪灰色"],
+    ["GFA01","PLA Matte","9B9EA0FF","Ash Gray","岩石灰"],
+    ["GFA01","PLA Matte","C2E189FF","Apple Green","果绿色"],
+    ["GFA01","PLA Matte","61C680FF","Grass Green","草绿"],
+    ["GFA01","PLA Matte","68724DFF","Dark Green","暗夜绿"],
+    ["GFA01","PLA Matte","000000FF","Charcoal","炭黑"],
+    ["GFA01","PLA Matte","4D3324FF","Dark Chocolate","深棕色"],
+    ["GFA01","PLA Matte","D3B7A7FF","Latte Brown","拿铁褐"],
+    ["GFA01","PLA Matte","7D6556FF","Dark Brown","暗夜棕"],
+    ["GFA01","PLA Matte","AE835BFF","Caramel","沙棕色"],
+    ["GFA01","PLA Matte","E8AFCFFF","Sakura Pink","樱花粉"],
+    ["GFA01","PLA Matte","AE96D4FF","Lilac Purple","丁香紫"],
+    ["GFA01","PLA Matte","DE4343FF","Scarlet Red","猩红"],
+    ["GFA01","PLA Matte","B15533FF","Terracotta","砖红色"],
+    ["GFA01","PLA Matte","950051FF","Plum","莓果紫"],
+    ["GFA01","PLA Matte","BB3D43FF","Dark Red","暗夜红"],
+    ["GFA01","PLA Matte","FFFFFFFF","Ivory White","象牙白"],
+    ["GFA01","PLA Matte","CBC6B8FF","Bone White","骨白"],
+    ["GFA01","PLA Matte","F7D959FF","Lemon Yellow","柠檬黄"],
+    ["GFA01","PLA Matte","E8DBB7FF","Desert Tan","沙漠黄"],
+    ["GFA05","PLA Silk","147BD1FF","Blue","蓝色"],
+    ["GFA05","PLA Silk","EAECEBFF","Silver","银色"],
+    ["GFA05","PLA Silk","4CE4A0FF","Green","绿色"],
+    ["GFA05","PLA Silk","5E4B3CFF","Copper","铜色"],
+    ["GFA05","PLA Silk","EEB1C1FF","Pink","粉色"],
+    ["GFA05","PLA Silk","854CE4FF","Purple","紫色"],
+    ["GFA05","PLA Silk","FF9425FF+C16784FF","Gilded Rose","金粉双色"],
+    ["GFA05","PLA Silk","0047BBFF+7D1B49FF","Midnight Blaze","蓝红双色"],
+    ["GFA05","PLA Silk","0047BBFF+BB22A3FF","Neon City","蓝粉双色"],
+    ["GFA05","PLA Silk","418FDEFF+70C884FF","Blue Hawaii","蓝绿双色"],
+    ["GFA05","PLA Silk","000000FF+A34342FF","Velvet Eclipse (Black-Red)","灰烬红"],
+    ["GFA05","PLA Silk","FFFFFFFF","White","白色"],
+    ["GFA05","PLA Silk","E5B03DFF","Gold","金色"],
+    ["GFA06","PLA Silk+","A8C6EEFF","Baby Blue","天空蓝"],
+    ["GFA06","PLA Silk+","008BDAFF","Blue","丝绸蓝"],
+    ["GFA06","PLA Silk+","5F6367FF","Titan Gray","钛灰色"],
+    ["GFA06","PLA Silk+","C8C8C8FF","Silver","丝绸银"],
+    ["GFA06","PLA Silk+","018814FF","Candy Green","糖果绿"],
+    ["GFA06","PLA Silk+","96DCB9FF","Mint","薄荷绿"],
+    ["GFA06","PLA Silk+","8671CBFF","Purple","丝绸紫"],
+    ["GFA06","PLA Silk+","D02727FF","Candy Red","糖果红"],
+    ["GFA06","PLA Silk+","BA9594FF","Rose Gold","烟粉色"],
+    ["GFA06","PLA Silk+","F7ADA6FF","Pink","丝绸粉"],
+    ["GFA06","PLA Silk+","FFFFFFFF","White","丝绸白"],
+    ["GFA06","PLA Silk+","F3CFB2FF","Champagne","香槟色"],
+    ["GFA06","PLA Silk+","F4A925FF","Gold","丝绸金"],
+    ["GFA07","PLA Marble","F7F3F0FF","White Marble","大理石"],
+    ["GFA07","PLA Marble","AD4E38FF","Red Granite","砖红"],
+    ["GFA08","PLA Sparkle","483D8BFF","Royal Purple Sparkle","深蓝"],
+    ["GFA08","PLA Sparkle","8E9089FF","Slate Gray Sparkle","灰色"],
+    ["GFA08","PLA Sparkle","3F5443FF","Alpine Green Sparkle","绿色"],
+    ["GFA08","PLA Sparkle","2D2B28FF","Onyx Black Sparkle","黑色"],
+    ["GFA08","PLA Sparkle","792B36FF","Crimson Red Sparkle","红色"],
+    ["GFA08","PLA Sparkle","CEA629FF","Classic Gold Sparkle","金色"],
+    ["GFA09","PLA Tough","FF7F41FF","Orange","橙色"],
+    ["GFA09","PLA Tough","0085ADFF","Light Blue","浅蓝"],
+    ["GFA09","PLA Tough","6667ABFF","Lavender Blue","薰衣草紫"],
+    ["GFA09","PLA Tough","515A6CFF","Gray","灰色"],
+    ["GFA09","PLA Tough","898D8DFF","Silver","银色"],
+    ["GFA09","PLA Tough","00482BFF","Pine Green","松绿"],
+    ["GFA09","PLA Tough","25282AFF","Black","黑色"],
+    ["GFA09","PLA Tough","DD3C22FF","Vermilion Red","朱砂红"],
+    ["GFA09","PLA Tough","F9F7F4FF","White","白色"],
+    ["GFA09","PLA Tough","FEDB00FF","Yellow","黄色"],
+    ["GFA11","PLA Aero","CDCECAFF","Gray","灰色"],
+    ["GFA11","PLA Aero","000000FF","Black","黑色"],
+    ["GFA11","PLA Aero","FFFFFFFF","White","白色"],
+    ["GFA12","PLA Glow","FF9D5BFF","Glow Orange","夜光橙"],
+    ["GFA12","PLA Glow","7AC0E9FF","Glow Blue","夜光蓝"],
+    ["GFA12","PLA Glow","A1FFACFF","Glow Green","夜光绿"],
+    ["GFA12","PLA Glow","F17B8FFF","Glow Pink","夜光粉"],
+    ["GFA12","PLA Glow","F8FF80FF","Glow Yellow","夜光黄"],
+    ["GFA13","PLA Dynamic","FFFFFFFF","UV Color Changing - White to Coral","光变-白变粉"],
+    ["GFA15","PLA Galaxy","594177FF","Purple","星河紫"],
+    ["GFA15","PLA Galaxy","3B665EFF","Green","星河绿"],
+    ["GFA15","PLA Galaxy","424379FF","Nebulae","星云色"],
+    ["GFA15","PLA Galaxy","684A43FF","Brown","星河棕"],
+    ["GFA16","PLA Wood","918669FF","Classic Birch","经典桦木"],
+    ["GFA16","PLA Wood","4F3F24FF","Black Walnut","黑胡桃"],
+    ["GFA16","PLA Wood","995F11FF","Clay Brown","陶土褐"],
+    ["GFA16","PLA Wood","4C241CFF","Rosewood","红木"],
+    ["GFA16","PLA Wood","D6CCA3FF","White Oak","白橡木"],
+    ["GFA16","PLA Wood","C98935FF","Ochre Yellow","赭石黄"],
+    ["GFA50","PLA-CF","2842ADFF","Royal Blue","皇家蓝"],
+    ["GFA50","PLA-CF","6E88BCFF","Jeans Blue","牛仔蓝"],
+    ["GFA50","PLA-CF","4D5054FF","Lava Gray","熔岩灰"],
+    ["GFA50","PLA-CF","5C9748FF","Matcha Green","抹茶绿"],
+    ["GFA50","PLA-CF","000000FF","Black","黑色"],
+    ["GFA50","PLA-CF","69398EFF","Iris Purple","鸢尾花紫"],
+    ["GFA50","PLA-CF","951E23FF","Burgundy Red","勃艮第红"],
+    ["GFB00","ABS","FF6A13FF","Orange","橙色"],
+    ["GFB00","ABS","0A2CA5FF","Blue","蓝色"],
+    ["GFB00","ABS","489FDFFF","Azure","天蓝色"],
+    ["GFB00","ABS","0C2340FF","Navy Blue","藏青色"],
+    ["GFB00","ABS","7AE1BFFF","Mint","青色"],
+    ["GFB00","ABS","87909AFF","Silver","银色"],
+    ["GFB00","ABS","00AE42FF","Bambu Green","拓竹绿"],
+    ["GFB00","ABS","789D4AFF","Olive","橄榄绿"],
+    ["GFB00","ABS","000000FF","Black","黑色"],
+    ["GFB00","ABS","7248BDFF","Lavender","薰衣草紫"],
+    ["GFB00","ABS","AF1685FF","Purple","紫色"],
+    ["GFB00","ABS","D32941FF","Red","红色"],
+    ["GFB00","ABS","FFFFFFFF","White","白色"],
+    ["GFB00","ABS","FCE900FF","Yellow","黄色"],
+    ["GFB00","ABS","FFC72CFF","Tangerine Yellow","橘黄"],
+    ["GFB00","ABS","DFD1A7FF","Beige","卡其色"],
+    ["GFB01","ASA","2140B4FF","Blue","蓝色"],
+    ["GFB01","ASA","8A949EFF","Gray","灰色"],
+    ["GFB01","ASA","00A6A0FF","Green","绿色"],
+    ["GFB01","ASA","000000FF","Black","黑色"],
+    ["GFB01","ASA","E02928FF","Red","红色"],
+    ["GFB01","ASA","FFFAF2FF","White","白色"],
+    ["GFB02","ASA Aero","F5F1DDFF","White","白色"],
+    ["GFB50","ABS-GF","F48438FF","Orange","橙色"],
+    ["GFB50","ABS-GF","0C3B95FF","Blue","蓝色"],
+    ["GFB50","ABS-GF","C6C6C6FF","Gray","灰色"],
+    ["GFB50","ABS-GF","61BF36FF","Green","绿色"],
+    ["GFB50","ABS-GF","000000FF","Black","黑色"],
+    ["GFB50","ABS-GF","E83100FF","Red","红色"],
+    ["GFB50","ABS-GF","FFFFFFFF","White","白色"],
+    ["GFB50","ABS-GF","FFE133FF","Yellow","黄色"],
+    ["GFB51","ASA-CF","000000FF","Black","黑色"],
+    ["GFC00","PC","68686580","Clear Black","透明黑"],
+    ["GFC00","PC","00000000","Transparent","透明"],
+    ["GFC00","PC","000000FF","Black","黑色"],
+    ["GFC00","PC","FFFFFFFF","White","白色"],
+    ["GFC01","PC FR","A8A8AAFF","Gray","灰色"],
+    ["GFC01","PC FR","000000FF","Black","黑色"],
+    ["GFC01","PC FR","FFFFFFFF","White","白色"],
+    ["GFG01","PETG Translucent","FF911A80","Translucent Orange","透明橘"],
+    ["GFG01","PETG Translucent","61B0FF80","Translucent Light Blue","透明浅蓝"],
+    ["GFG01","PETG Translucent","00000000","Clear","透明"],
+    ["GFG01","PETG Translucent","8E8E8E80","Translucent Gray","透明灰"],
+    ["GFG01","PETG Translucent","748C4580","Translucent Olive","透明橄榄绿"],
+    ["GFG01","PETG Translucent","77EDD780","Translucent Teal","透明浅绿"],
+    ["GFG01","PETG Translucent","C9A38180","Translucent Brown","透明茶色"],
+    ["GFG01","PETG Translucent","D6ABFF80","Translucent Purple","透明紫"],
+    ["GFG01","PETG Translucent","F9C1BD80","Translucent Pink","透明粉"],
+    ["GFG02","PETG HF","F75403FF","Orange","橙色"],
+    ["GFG02","PETG HF","002E96FF","Blue","蓝色"],
+    ["GFG02","PETG HF","1F79E5FF","Lake Blue","湖蓝"],
+    ["GFG02","PETG HF","ADB1B2FF","Gray","灰色"],
+    ["GFG02","PETG HF","515151FF","Dark Gray","深灰"],
+    ["GFG02","PETG HF","00AE42FF","Green","绿色"],
+    ["GFG02","PETG HF","6EE53CFF","Lime Green","柠檬绿"],
+    ["GFG02","PETG HF","39541AFF","Forest Green","丛林绿"],
+    ["GFG02","PETG HF","000000FF","Black","黑色"],
+    ["GFG02","PETG HF","875718FF","Peanut Brown","花生棕"],
+    ["GFG02","PETG HF","BC0900FF","Red","红色"],
+    ["GFG02","PETG HF","FFFFFFFF","White","白色"],
+    ["GFG02","PETG HF","FFD00BFF","Yellow","黄色"],
+    ["GFG02","PETG HF","F9DFB9FF","Cream","奶油白"],
+    ["GFG50","PETG-CF","324585FF","Indigo Blue","靛蓝色"],
+    ["GFG50","PETG-CF","565656FF","Titan Gray","钛灰色"],
+    ["GFG50","PETG-CF","16B08EFF","Malachite Green","孔雀绿"],
+    ["GFG50","PETG-CF","000000FF","Black","黑色"],
+    ["GFG50","PETG-CF","583061FF","Violet Purple","紫罗兰色"],
+    ["GFG50","PETG-CF","9F332AFF","Brick Red","砖红色"],
+    ["GFN04","PAHT-CF","000000FF","Black","黑色"],
+    ["GFN05","PA6-CF","000000FF","Black","黑色"],
+    ["GFN06","PPA-CF","000000FF","Black","黑色"],
+    ["GFN08","PA6-GF","75AED8FF","Blue","蓝色"],
+    ["GFN08","PA6-GF","EAEAE4FF","White","白色"],
+    ["GFN08","PA6-GF","353533FF","Gray","灰色"],
+    ["GFN08","PA6-GF","C5ED48FF","Lime","柠檬绿"],
+    ["GFN08","PA6-GF","000000FF","Black","黑色"],
+    ["GFN08","PA6-GF","5B492FFF","Brown","棕色"],
+    ["GFN08","PA6-GF","FF4800FF","Orange","橙色"],
+    ["GFN08","PA6-GF","FFCE00FF","Yellow","黄色"],
+    ["GFS03","Support for PA/PET","C0DF16FF","Green","绿色"],
+    ["GFS04","PVA","F0F1A880","Clear","透明浅黄色"],
+    ["GFS05","Support for PLA/PETG","00000000","Nature","半透明"],
+    ["GFS05","Support for PLA/PETG","000000FF","Black","黑色"],
+    ["GFS06","Support for ABS","FFFFFFFF","White","白色"],
+    ["GFT01","PET-CF","000000FF","Black","黑色"],
+    ["GFT02","PPS-CF","000000FF","Black","黑色"],
+    ["GFU00","TPU 95A HF","0072CEFF","Blue","蓝色"],
+    ["GFU00","TPU 95A HF","898D8DFF","Gray","灰色"],
+    ["GFU00","TPU 95A HF","101820FF","Black","黑色"],
+    ["GFU00","TPU 95A HF","C8102EFF","Red","红色"],
+    ["GFU00","TPU 95A HF","FFFFFFFF","White","白色"],
+    ["GFU00","TPU 95A HF","F3E600FF","Yellow","黄色"],
+    ["GFU01","TPU 95A","000000FF","Black","黑色"],
+    ["GFU01","TPU 95A","FFFFFFFF","White","白色"],
+    ["GFU02","TPU for AMS","5898DDFF","Blue","蓝色"],
+    ["GFU02","TPU for AMS","939393FF","Gray","灰色"],
+    ["GFU02","TPU for AMS","90FF1AFF","Neon Green","荧光绿"],
+    ["GFU02","TPU for AMS","000000FF","Black","黑色"],
+    ["GFU02","TPU for AMS","ED0000FF","Red","红色"],
+    ["GFU02","TPU for AMS","FFFFFFFF","White","白色"],
+    ["GFU02","TPU for AMS","F9EF41FF","Yellow","黄色"],
+    ["GFA18","PLA Lite","000000FF","Black","黑色"],
+    ["GFA18","PLA Lite","EFE255FF","Yellow","黄色"],
+    ["GFA18","PLA Lite","FFFFFFFF","White","白色"],
+    ["GFA18","PLA Lite","4DAFDAFF","Cyan","天蓝色"],
+    ["GFA18","PLA Lite","C6001AFF","Red","深红色"],
+    ["GFA18","PLA Lite","999D9DFF","Gray","灰色"],
+    ["GFA17","PLA Translucent","B5001180","Red","透明红"],
+    ["GFA17","PLA Translucent","F5B6CD80","Cherry Pink","果冻粉"],
+    ["GFA17","PLA Translucent","F74E0280","Orange","透明橙"],
+    ["GFA17","PLA Translucent","F5DBAB80","Mellow Yellow","黄水晶"],
+    ["GFA17","PLA Translucent","96D8AF80","Light Jade","浅青玉"],
+    ["GFA17","PLA Translucent","B8CDE980","Ice Blue","冰蓝"],
+    ["GFA17","PLA Translucent","0047BB80","Blue","透明蓝"],
+    ["GFA17","PLA Translucent","009FA180","Teal","蓝绿色"],
+    ["GFA17","PLA Translucent","8344B080","Purple","透明紫"],
+    ["GFA17","PLA Translucent","B8ACD680","Lavender","紫罗兰"],
+    ["GFA05","PLA Silk","F772A4FF+00918BFF","South Beach","马卡龙"],
+    ["GFA05","PLA Silk","7F3696FF+006EC9FF","Aurora Purple","星云紫"],
+    ["GFA05","PLA Silk","EC984CFF+6CD4BCFF+A66EB9FF+D87694FF","Dawn Radiance","浅彩虹"],
+    ["GFU03","TPU 90A","000000FF","Black","黑色"],
+    ["GFU03","TPU 90A","FFFFFFFF","White","白色"],
+    ["GFU04","TPU 85A","F68B1BFF","Neon Orange","暖橙色"],
+    ["GFU04","TPU 85A","C3E2D6FF","Light Cyan","苍青色"],
+    ["GFU03","TPU 90A","40B6E4FF+FFFFFFFF","Frozen","冰封蓝"],
+    ["GFU03","TPU 90A","D21B3CFF+F1AAA8FF","Blaze","西瓜红"],
+    ["GFS02","Support for PLA","FFFFFFFF","White","白色"],
+    ["GFA10","PLA Tough+","000000FF","Black","黑色"],
+    ["GFA10","PLA Tough+","AFB1AEFF","Gray","浅灰色"],
+    ["GFA10","PLA Tough+","959698FF","Silver","银色"],
+    ["GFA10","PLA Tough+","FFFFFFFF","White","白色"],
+    ["GFA10","PLA Tough+","DC3A27FF","Orange","橙色"],
+    ["GFA10","PLA Tough+","F4D53FFF","Yellow","亮黄色"],
+    ["GFA10","PLA Tough+","009BD8FF","Cyan","天蓝色"],
+    ["GFA02","PLA Metal","43403DFF","Iron Gray Metallic","深空灰"],
+    ["GFA02","PLA Metal","B39B84FF","Iridium Gold Metallic","香槟金"],
+    ["GFA02","PLA Metal","1D7C6AFF","Oxide Green Metallic","极光绿"],
+    ["GFA02","PLA Metal","39699EFF","Cobalt Blue Metallic","典雅蓝"],
+    ["GFA02","PLA Metal","AA6443FF","Copper Brown Metallic","咖啡金"],
+    ["GFA18","PLA Lite","004EA8FF","Blue","蓝色"],
+    ["GFA18","PLA Lite","FFB549FF","Sunflower Yellow","橙黄色"],
+    ["GFA18","PLA Lite","00BB31FF","Green","绿色"],
+    ["GFA18","PLA Lite","FF671FFF","Orange","橙色"],
+    ["GFA18","PLA Lite","ECC3B2FF","Matte Beige","浅肤色"],
+    ["GFA18","PLA Lite","745335FF","Cocoa Brown","棕色"],
+    ["GFA18","PLA Lite","8C8B8CFF","Dark Gray","深灰"],
+    ["GFA05","PLA Silk","720062FF+3A913FFF","Mystic Magenta","北极光"],
+    ["GFA05","PLA Silk","00629BFF+000000FF","Phantom Blue","幻影蓝"],
+    ["GFU03","TPU 90A","7EB4E180","Crystal Blue","水晶蓝"],
+    ["GFU03","TPU 90A","9EA2A2FF","Quicksilver","水银色"],
+    ["GFU04","TPU 85A","F3CFB2FF","Rose Beige/Flesh","肤色"],
+    ["GFU03","TPU 90A","D6ABFF80","Grape Jelly","果冻紫"],
+    ["GFU04","TPU 85A","000000FF","Black","黑色"],
+    ["GFU04","TPU 85A","CDEA80FF","Lime Green","苹果绿"],
+    ["GFU03","TPU 90A","5C4738FF","Cocoa Brown","皮革棕"],
+    ["GFG00","PETG Basic","000000FF","Black","黑色"],
+    ["GFG00","PETG Basic","FFFFFFFF","White","白色"],
+    ["GFG00","PETG Basic","7F7E83FF","Gray","灰色"],
+    ["GFG00","PETG Basic","FCE300FF","Yellow","黄色"],
+    ["GFG00","PETG Basic","D6001CFF","Red","红色"],
+    ["GFG00","PETG Basic","001489FF","Reflex Blue","深蓝色"],
+    ["GFG00","PETG Basic","4F2C1DFF","Dark Brown","深棕色"],
+    ["GFG00","PETG Basic","009639FF","Green","绿色"],
+    ["GFG00","PETG Basic","FF671FFF","Orange","橙色"],
+    ["GFG00","PETG Basic","034638FF","Pine Green","墨绿色"],
+    ["GFG00","PETG Basic","0086D6FF","Navy Blue","湖蓝色"],
+    ["GFG00","PETG Basic","688197FF","Misty Blue","蓝灰色"],
+    ["GFG00","PETG Basic","DBC8B6FF","Dark Beige","深米色"],
+    ["GFA19","PLA Pure","FFFFFFFF","Pure White","纯净白"],
+    ["GFA19","PLA Pure","000000FF","Absolute Black","纯净黑"],
+    ["GFA19","PLA Pure","F7CED7FF","Milky Pink","水玉粉"],
+    ["GFA19","PLA Pure","A4DBE8FF","Baby Blue","雪山蓝"],
+    ["GFA19","PLA Pure","FFB673FF","Apricot","杏子黄"],
+    ["GFU06","TPU 75A (2.85mm)","000000FF","Black","黑色"],
+    ["GFG00","PETG Basic","8A75D1FF","Purple","紫色"],
+    ["GFG00","PETG Basic","FFB81CFF","Sunflower Yellow","芒果橙"],
+    ["GFG00","PETG Basic","97D700FF","Bright Green","苹果绿"],
+    ["GFG00","PETG Basic","F277C6FF","Hot Pink","粉紫色"],
+    ["GFG03","PETG Matte","FFFFFFFF","White","白色"],
+    ["GFG03","PETG Matte","000000FF","Black","黑色"],
+    ["GFG03","PETG Matte","C0DF16FF","Lime","黄绿色"],
+    ["GFG03","PETG Matte","7F7E83FF","Gray","灰色"],
+    ["GFG03","PETG Matte","FABBCBFF","Pink","粉色"],
+    ["GFG03","PETG Matte","B9D9EBFF","Baby Blue","浅蓝色"],
+    ["GFG03","PETG Matte","F0BDA5FF","Rose Beige","米玫瑰"],
+    ["GFG03","PETG Matte","A7A4E0FF","Violet","紫罗兰"],
+    ["GFG03","PETG Matte","BCE194FF","Avocado Green","牛油果绿"],
+    ["GFG03","PETG Matte","FFD100FF","Yellow","黄色"],
+    ["GFG03","PETG Matte","003087FF","Dark Blue","深蓝色"],
+    ["GFG03","PETG Matte","00A9E0FF","Cyan","蓝色"],
+    ["GFG03","PETG Matte","D6001CFF","Red","红色"],
+    ["GFG03","PETG Matte","FF671FFF","Orange","橙色"],
+    ["GFG03","PETG Matte","00C7B1FF","Turquoise","翠绿"],
+    ["GFG03","PETG Matte","EF4A81FF","Hot Pink","玫粉色"],
+    ["GFG03","PETG Matte","BF9474FF","Caramel","奶茶色"],
+    ["GFU06","TPU 75A (2.85mm)","FBDB65FF","Lemon Yellow","柠檬黄"],
+    ["GFU06","TPU 75A (2.85mm)","F1E6B2FF","Dark Ivory","奶油黄"],
+    ["GFU06","TPU 75A (2.85mm)","617354FF","Dark Green","橄榄绿"],
+    ["GFU06","TPU 75A (2.85mm)","7CCC6CFF","Grass Green","草绿色"],
+    ["GFU06","TPU 75A (2.85mm)","FFA06AFF","Mandarin Orange","橙色"],
+    ["GFU06","TPU 75A (2.85mm)","AD96DCFF","Purple","紫色"],
+    ["GFU06","TPU 75A (2.85mm)","FABBCBFF","Pink","粉色"],
+    ["GFU06","TPU 75A (2.85mm)","E4002BFF","Red","红色"],
+    ["GFU06","TPU 75A (2.85mm)","00A3E1FF","Cyan","晴空蓝"],
+    ["GFA20","PLA Palette","0090DAFF","Cyan","青色"],
+    ["GFA20","PLA Palette","E24585FF","Magenta","品红"],
+    ["GFA20","PLA Palette","FCE300FF","Yellow","黄色"],
+    ["GFA20","PLA Palette","FFFFFFFF","White","白色"],
+    ["GFA20","PLA Palette","000000FF","Key","黑色"]
+  ];
+
+  // One order-independent key for a spool's colour or colours.
+  function bambuColorKey(colors) {
+    return colors
+      .map(c => String(c || "").trim().replace(/^#/, "").toUpperCase())
+      .filter(c => c.length >= 6)
+      .map(c => (c.length >= 8 ? c.slice(0, 8) : c.slice(0, 6) + "FF"))
+      .sort()
+      .join("+");
+  }
+  const BAMBU_OFFICIAL_INDEX = BAMBU_OFFICIAL_COLORS.map(r => ({ id: r[0], line: r[1], upper: r[1].toUpperCase(), key: bambuColorKey(r[2].split("+")), en: r[3], zh: r[4] }));
+  const BAMBU_FILAMENT_IDS = new Set(BAMBU_OFFICIAL_INDEX.map(r => r.id));
+  const BAMBU_FILAMENT_LINES = new Set(BAMBU_OFFICIAL_INDEX.map(r => r.upper));
+
+  // Looks a spool up in the official list. "match" is the official entry, or null.
+  // "isBambu" means the printer identifies a Bambu filament, whose colour name must never be guessed.
+  function findOfficialBambuColor(hexStr, rawName, rawType, spool) {
+    const norm = v => String(v || "").trim().toUpperCase().replace(/^BAMBU( LAB)? /, "");
+    const name = norm(rawName);
+    const type = norm(rawType);
+    const filaId = String((spool && spool.filaId) || "").toUpperCase();
+    const given = ((spool && Array.isArray(spool.colors)) ? spool.colors : []).filter(Boolean);
+    const colors = given.length ? given : [hexStr];
+    const key = bambuColorKey(colors);
+    const knownId = BAMBU_FILAMENT_IDS.has(filaId);
+    const lineName = BAMBU_FILAMENT_LINES.has(name) ? name : (BAMBU_FILAMENT_LINES.has(type) ? type : "");
+    const isBambu = knownId || Boolean(lineName);
+
+    if (isBambu) {
+      // The printer's filament id is the most reliable; otherwise use the filament line's name.
+      const own = BAMBU_OFFICIAL_INDEX.filter(r => (knownId ? r.id === filaId : r.upper === lineName));
+      let match = own.find(r => r.key === key) || null;
+      if (!match) {
+        // Same colour code with a different transparency value, only if that leaves a single name.
+        const rgb = k => k.split("+").map(c => c.slice(0, 6)).join("+");
+        const near = own.filter(r => rgb(r.key) === rgb(key) && !/00(\+|$)/.test(r.key) && !/00(\+|$)/.test(key));
+        if (near.length && near.every(r => r.en === near[0].en)) match = near[0];
+      }
+      return { match, isBambu, line: match ? match.line : (own[0] ? own[0].line : "") };
+    }
+
+    // Only the material is known (e.g. a generic "PLA" spool): use the Basic line,
+    // or a name every line of that material agrees on.
+    let match = null;
+    if (!name || name === type || name === "\u2014") {
+      const same = BAMBU_OFFICIAL_INDEX.filter(r => r.key === key && r.upper.split(" ")[0] === type);
+      match = same.find(r => r.upper === type + " BASIC")
+        || ((same.length && same.every(r => r.en === same[0].en)) ? same[0] : null);
+    }
+    return { match, isBambu: false, line: "" };
+  }
+
+  function resolveSpoolColorInfo(hexStr, arg2 = false, arg3 = "PLA", arg4 = false, lang = "en", spool = null) {
     const isEmpty = typeof arg2 === "boolean" ? arg2 : Boolean(arg4);
     const rawName = typeof arg2 === "string" ? arg2 : "";
     const rawType = typeof arg3 === "string" ? arg3 : "PLA";
@@ -2799,15 +3205,30 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
     const trimmedRaw = String(rawName || "").trim();
     const isGeneric = genericSet.has(trimmedRaw.toUpperCase()) || genericSet.has(trimmedRaw);
     const matLabel = (rawType && rawType !== "—") ? rawType : (trimmedRaw || "PLA");
-    const localizedColorName = isZh ? (best.zh || best.name) : (isZhTw ? (best.zhTw || best.name) : best.name);
-    const displayName = isGeneric ? `${localizedColorName} • ${matLabel}` : trimmedRaw;
+    const found = findOfficialBambuColor(clean, rawName, rawType, spool);
+    const official = found.match;
+    const exactHex = "#" + clean.slice(0, 6).toUpperCase();
+    const nearestName = isZh ? (best.zh || best.name) : (isZhTw ? (best.zhTw || best.name) : best.name);
+    // Bambu filament is never guessed: an unlisted colour shows its code. For other brands the
+    // nearest palette colour is only a guess, so it is marked with "\u2248".
+    const localizedColorName = official
+      ? ((isZh && official.zh) ? official.zh : official.en)
+      : (found.isBambu ? exactHex : ("\u2248 " + nearestName));
+    const family = (official && /brown|chocolate|coffee|latte|caramel/i.test(official.en)) ? "PURPLE_BROWN" : best.family;
+    // A name that is only the filament line ("PETG HF", "Bambu PLA Basic") says nothing about the colour.
+    const isLineName = BAMBU_FILAMENT_LINES.has(trimmedRaw.toUpperCase().replace(/^BAMBU( LAB)? /, ""));
+    const isBambuName = found.isBambu && (isGeneric || isLineName);
+    const displayName = isBambuName
+      ? `${localizedColorName} • ${found.line || matLabel}`
+      : (isGeneric ? `${localizedColorName} • ${matLabel}` : trimmedRaw);
 
     return {
       colorName: localizedColorName,
-      enColorName: best.name,
-      zhColorName: (best.zh || "") + " " + (best.zhTw || ""),
+      isBambuName,
+      enColorName: official ? official.en : (found.isBambu ? exactHex : best.name),
+      zhColorName: official ? official.zh : (found.isBambu ? "" : ((best.zh || "") + " " + (best.zhTw || ""))),
       displayName,
-      family: best.family,
+      family,
       hex: "#" + clean.slice(0, 6).toUpperCase()
     };
   }
@@ -2831,10 +3252,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
             const rawColor = tr.color || "#334155";
             const rawType = (tr.type || (isUnavailable ? "—" : "PLA")).toUpperCase();
             const rawName = tr.name || rawType;
-            const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
+            const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang, tr);
             const trimmedRaw = String(rawName || "").trim();
             const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
-            const displayTitle = isUnavailable
+            const displayTitle = (isUnavailable || colorInfo.isBambuName)
               ? colorInfo.displayName
               : (isGeneric ? (colorInfo.colorName + " • " + rawName) : rawName);
             const remainVal = tr.remain;
@@ -2879,10 +3300,10 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
         const rawColor = p.extSpool.color || "#f59e0b";
         const rawType = (p.extSpool.type || "PLA").toUpperCase();
         const rawName = p.extSpool.name;
-        const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang);
+        const colorInfo = resolveSpoolColorInfo(rawColor, rawName, rawType, isUnavailable, lang, p.extSpool);
         const trimmedRaw = String(rawName || "").trim();
         const isGeneric = !isUnavailable && (genericNames.has(trimmedRaw.toUpperCase()) || genericNames.has(trimmedRaw));
-        const displayTitle = isUnavailable
+        const displayTitle = (isUnavailable || colorInfo.isBambuName)
           ? colorInfo.displayName
           : (isGeneric ? (colorInfo.colorName + " • " + rawType) : rawName);
 
@@ -6043,7 +6464,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
                 const effType = tr.type || "PLA";
                 const effRemain = tr.remain;
                 const isEmpty = Boolean(tr.empty);
-                const colorInfo = resolveSpoolColorInfo(effColor, tr.name, effType, isEmpty, activeLang);
+                const colorInfo = resolveSpoolColorInfo(effColor, tr.name, effType, isEmpty, activeLang, tr);
                 const effName = colorInfo.displayName;
                 return `
                 <div class="spool-card ${tr.active ? 'active-spool' : ''}" title="${escapeHtml(slotCode)} • ${escapeHtml(effName)}">
@@ -6071,7 +6492,7 @@ const BOXERDAWG3D_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAACA
       const effColor = p.extSpool.color || "#f59e0b";
       const effType = p.extSpool.type || "—";
       const isEmpty = Boolean(p.extSpool.empty);
-      const colorInfo = resolveSpoolColorInfo(effColor, p.extSpool.name, effType, isEmpty, activeLang);
+      const colorInfo = resolveSpoolColorInfo(effColor, p.extSpool.name, effType, isEmpty, activeLang, p.extSpool);
       const effName = colorInfo.displayName;
       filamentHtml = `
         <div class="ext-spool-deck" title="${t('ext_spool_title', activeLang)} (${escapeHtml(effName)})">

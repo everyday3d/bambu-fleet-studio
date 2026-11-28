@@ -5,6 +5,11 @@ All notable changes to **Bambu Lab Fleet Studio** will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.15] - 2026-11-28
+
+### Fixed
+- **Filament colour names (`#46`)**: The card picked the closest colour from a short list, so Bambu Cocoa Brown showed as "Dark Titanium Gray". It now includes every colour in every material from Bambu Studio's official list (342 entries, including gradient, multi-colour and clear spools) and matches them using the filament ID and colour codes the printer reports. Bambu spools show the colour and filament line, for example "Cocoa Brown • PLA Basic". Bambu filament is never guessed: a colour that isn't on the list shows its colour code. For other brands, a closest-colour name is marked with "≈". Official names are in English, plus Simplified Chinese. **Untested** on a live printer.
+
 ## [1.4.14] - 2026-11-27
 
 ### Fixed
